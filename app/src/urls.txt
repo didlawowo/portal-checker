@@ -1,0 +1,9 @@
+google.fr
+argo-cd.develop.oursain.net/
+traefik.develop.oursain.net
+grafana.develop.oursain.net/login
+kyverno.develop.oursain.net/#/
+kubecost.develop.oursain.net/overview
+keycloak.develop.oursain.net/admin/master/console/#/master/clients
+komoplane.develop.oursain.net/managed
+testkube.develop.oursain.net/tests
