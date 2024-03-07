@@ -1,28 +1,9 @@
 from flask import Flask, render_template, redirect, request
 import requests
 from kubernetes import client, config
-from kubernetes.client.rest import ApiException
 
 
 app = Flask(__name__)
-
-
-def create_or_update_config_map(api_instance, config_map):
-    try:
-        api_instance.create_namespaced_config_map(
-            namespace="portal-checker", body=config_map
-        )
-        print("🌟 ConfigMap created!")
-    except ApiException as e:
-        if e.status == 409:  # Conflict, the resource already exists
-            api_instance.replace_namespaced_config_map(
-                name=config_map["metadata"]["name"],
-                namespace="portal-checker",
-                body=config_map,
-            )
-            print("🔄 ConfigMap updated!")
-        else:
-            print("🚨 Error creating ConfigMap: %s\n" % e)
 
 
 @app.route("/refresh", methods=["GET"])
@@ -40,15 +21,8 @@ def get_all_ingress_urls():
     # write url.txt to disk
     with open("urls.txt", "w", encoding="utf-8") as file:
         file.write("\n".join(urls))
-    print("🌟 urls.txt created!")
-    # config_map = {
-    #     "apiVersion": "v1",
-    #     "kind": "ConfigMap",
-    #     "metadata": {"name": "portal-checker", "namespace": "portal-checker"},
-    #     "data": config_map_data,
-    # }
-    # print(config_map)
-    # create_or_update_config_map(api_instance, config_map)
+    print("🌟 urls.txt updated!")
+
     origin_url = request.referrer
     if origin_url:
         return redirect(origin_url)

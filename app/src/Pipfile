@@ -8,7 +8,6 @@ flask = "==3.0.0"
 requests = "==2.26.0"
 werkzeug = "==3.0.0"
 kubernetes = "==28.1.0"
-pyyaml = "==6.0.1"
 gunicorn = "==20.1.0"
 
 [dev-packages]

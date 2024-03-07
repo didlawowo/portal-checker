@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Ingress Checker</title>
+    <!-- Include Tailwind CSS via CDN -->
+    <link href="https://cdn.tailwindcss.com" rel="stylesheet">
+    <style>
+        .status-200::before {
+            content: "\2705"; /* Check emoji for status 200 */
+            color: green;
+            margin-right: 5px;
+        }
+        .status-401::before {
+            content: "\2757"; /* Exclamation emoji for status 401 */
+            color: orange;
+            margin-right: 5px;
+        }
+    </style>
+    <script>
+        function refreshPage() {
+            window.location.href = '/refresh';
+        }
+    </script>
+</head>
+<body class="bg-gray-100 font-sans">
+    <h1 class="text-3xl text-blue-500 text-center font-bold my-4">Portal Ingress Checker</h1>
+    <div class="container mx-auto px-4">
+        <div class="flex justify-end mb-3">
+            <button onclick="refreshPage()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Refresh 🔃
+            </button>
+        </div>
+        <div class="flex flex-col">
+            <div class="overflow-x-auto sm:-mx-6 lg:-mx-8">
+                <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
+                    <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        URL
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Status
+                                    </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Details
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for url, status in results %}
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <a href="https://{{ url }}" target="_blank" class="text-blue-600 hover:text-blue-800">
+                                            https://{{ url }}
+                                        </a>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap status-{{ status }}">
+                                        {{ status }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        {% if status != 200 and status != 401 %}
+                                            <div class="text-red-600">
+                                                Error: {{ status }} - Not Authorized or Not Found
+                                            </div>
+                                        {% else %}
+                                            <div class="text-green-600"></div>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
