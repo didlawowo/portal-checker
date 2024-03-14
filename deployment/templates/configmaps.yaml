@@ -1,0 +1,15 @@
+
+{{- range $file := .Values.configMaps.files }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $file.name }}
+  labels: {{- include "application.labels" $ | nindent 4 }}
+  annotations:
+    "helm.sh/hook-weight": "-1"
+    checksum/config: {{ (tpl ($.Files.Glob $file.path).AsConfig $ ) | sha256sum }}
+  namespace: {{ $.Release.Namespace }}
+data:
+{{ ($.Files.Glob $file.path).AsConfig | indent 2 }}
+{{- end }}

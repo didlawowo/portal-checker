@@ -1,0 +1,51 @@
+{{- range $name, $job := $.Values.cronJobs }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ template "application.fullname" $ }}-{{ $name }}
+  labels: {{- include "application.labels" $ | nindent 4 }}
+  namespace: {{ $.Release.Namespace }}
+spec:
+  concurrencyPolicy: Forbid
+  failedJobsHistoryLimit: 1
+  schedule: {{ $job.schedule }}
+  successfulJobsHistoryLimit: 1
+  suspend: {{ not $job.enabled }}
+  jobTemplate:
+    metadata:
+      labels: {{- include "application.labels" $ | nindent 8 }}
+    spec:
+      template:
+        metadata:
+          labels: {{- include "application.labels" $ | nindent 12 }}
+        spec:
+          restartPolicy: {{ $job.restartPolicy }}
+          nodeSelector: 
+            kubernetes.io/arch: "amd64"
+          serviceAccountName: {{ default (include "application.fullname" $ ) $.Values.serviceAccount.name }}
+          containers:
+            - name: {{ $name }}
+              image: {{ $job.image }}
+              imagePullPolicy: {{ $job.imagePullPolicy }}
+              command: {{ $job.command }}
+              {{- with $job.args }}
+              args:
+              {{- toYaml . | nindent 16 }}
+              {{- end }}
+              {{- with $job.resources }}
+              resources: {{- toYaml . | nindent 16 }}
+              {{- end }}
+              {{- with $job.env }}
+              env: {{- toYaml . | nindent 16 }}
+              {{- end }}
+              {{- with $job.envFrom }}
+              envFrom: {{- toYaml . | nindent 16 }}
+              {{- end }}
+              {{- with $job.volumeMounts }}
+              volumeMounts: {{- toYaml . | nindent 16 }}
+              {{- end }}
+    {{- with $job.volumes }}
+      volumes: {{- toYaml . | nindent 8 }}
+    {{- end }}
+{{- end }}

@@ -33,5 +33,5 @@ jobs:
     - name: Push Docker image
       run: docker push ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
-    # - name: Update values.yaml with last image tag
-    #   run: "cd continuous-delivery/applicationsets/portal-checker\nsed -i 's|tag:.*|tag: '${{ github.sha }}'|' values.yaml \ngit config --global user.name 'GitHub Actions'\ngit config --global user.email 'actions@github.com'\ngit add values.yaml\ngit commit -m \"Update image tag with ${{ github.sha }}\"\ngit push\n"
+    - name: Update values.yaml with last image tag
+      run: "cd deployment sed -i 's|tag:.*|tag: '${{ github.sha }}'|' values.yaml \ngit config --global user.name 'GitHub Actions'\ngit config --global user.email 'actions@github.com'\ngit add values.yaml\ngit commit -m \"Update image tag with ${{ github.sha }}\"\ngit push\n"

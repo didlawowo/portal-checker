@@ -1,0 +1,123 @@
+image:
+  repository: fizzbuzz2/portal-checker
+  tag: v1.2.4
+  pullPolicy: "IfNotPresent"
+  pullSecrets:
+  - name: registry-credentials
+
+
+domainName: "portal.develop.oursain.net"
+
+autoscaling:
+  enabled: false
+
+replicas: 1
+
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 25%
+    maxSurge: 25%
+
+serviceAccount:
+  create: true
+  name: portal-checker
+  # annotations:
+  #   iam.gke.io/gcp-service-account: portal-checker@gcp-project-id.iam.gserviceaccount.com
+
+cronJobs: []
+# - name: delete-zero-replica-replicasets
+#   schedule: "0 */3 * * *" # Runs every 3 hours
+#   jobTemplate:
+#     spec:
+#       template:
+#         spec:
+#           containers:
+#           - name: kubectl-container
+#             image: bitnami/kubectl:latest
+#             command: ["/bin/bash"]
+#             args:
+#             - -c
+#             - "for ns in $(kubectl get ns --no-headers | cut -d \" \" -f1); do\n  kubectl get rs -n \"$ns\" --no-headers | awk '$2==\"0\" {print $1}' | \n  while read rs; do\n    kubectl delete rs \"$rs\" -n \"$ns\";\n  done;\ndone\n"
+#           restartPolicy: OnFailure
+
+application:
+  ports:
+  - name: http
+    containerPort: 5000
+    protocol: TCP
+  containerName: portal-checker
+  command: []
+  args: []
+
+service:
+  port: 80
+  targetPort: 5000
+  type: ClusterIP
+  portName: http
+
+externalSecrets: []
+
+secrets:
+  dotenv: []
+  # - name: app-dotenv
+  #   path: values/prod/secrets/app.env
+  files: []
+  # - name: secret-file
+  #   path: values/prod/secrets/file
+
+
+configMaps:
+  files: []
+  dotenv: []
+
+volumeMounts: []
+# - name: portal
+#   mountPath: /app/url.txt
+
+volumes: []
+# - name: portal
+#   configMap:
+#     name: portal
+
+
+podAnnotations: {}
+
+initContainers: []
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 50m
+    memory: 128Mi
+
+env: []
+
+envFrom: []
+
+nodeSelector:
+  kubernetes.io/arch: amd64
+
+livenessProbe: {}
+# httpGet:
+#   scheme: HTTP
+#   path: /
+#   port: 5000
+# initialDelaySeconds: 10
+# periodSeconds: 30
+# timeoutSeconds: 2
+# successThreshold: 1
+# failureThreshold: 3
+
+readinessProbe: {}
+# httpGet:
+#   scheme: HTTP
+#   path: /
+#   port: 5000
+# initialDelaySeconds: 5
+# periodSeconds: 30
+# timeoutSeconds: 2
+# successThreshold: 1
+# failureThreshold: 3
