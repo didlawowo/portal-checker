@@ -1,0 +1,9 @@
+
+services:
+    app:
+      ports:
+        - "5000:5000"
+      build:
+        platforms:
+          - linux/amd64
+        context: . # docker-compose.yml in current directory
