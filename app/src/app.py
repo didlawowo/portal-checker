@@ -1,27 +1,30 @@
 from flask import Flask, render_template, redirect, request
 import requests
 from kubernetes import client, config
-
+from loguru import logger
 
 app = Flask(__name__)
 
 
 @app.route("/refresh", methods=["GET"])
 def get_all_ingress_urls():
+    """Get all ingress URLs and write them to a file."""
+
     config.load_incluster_config()
+    # config.load_kube_config()
     v1 = client.NetworkingV1Api()
 
     ingress_list = v1.list_ingress_for_all_namespaces()
-    print(ingress_list.items)
+
     urls = [rule.host for ingress in ingress_list.items for rule in ingress.spec.rules]
-    print(urls)
-    if urls == None:
+    logger.info(f"🌟 {len(urls)} URLs found!")
+    if urls is None:
         return "No ingress found!"
     # config_map_data = {"urls.txt": "\n".join(urls)}
     # write url.txt to disk
     with open("urls.txt", "w", encoding="utf-8") as file:
         file.write("\n".join(urls))
-    print("🌟 urls.txt updated!")
+    logger.info("🌟 urls.txt updated!")
 
     origin_url = request.referrer
     if origin_url:
@@ -31,6 +34,15 @@ def get_all_ingress_urls():
 
 
 def test_urls(file_path):
+    """test URLs from a file
+
+    Args:
+        file_path (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+
     with open(file_path, "r", encoding="utf-8") as file:
         urls = file.read().splitlines()
 
@@ -50,6 +62,11 @@ def test_urls(file_path):
 
 @app.route("/")
 def index():
+    """_summary_
+
+    Returns:
+        _type_: _description_
+    """
     file_path = "urls.txt"  # Change this to your input file path
     results = test_urls(file_path)
     return render_template("index.html", results=results)
