@@ -2,6 +2,7 @@ from flask import Flask, render_template, redirect, request
 import requests
 from kubernetes import client, config
 from loguru import logger
+import os
 
 app = Flask(__name__)
 
@@ -9,9 +10,10 @@ app = Flask(__name__)
 @app.route("/refresh", methods=["GET"])
 def get_all_ingress_urls():
     """Get all ingress URLs and write them to a file."""
-
-    config.load_incluster_config()
-    # config.load_kube_config()
+    if os.getenv("FLASK_ENV") == "development":
+        config.load_kube_config()
+    else:
+        config.load_incluster_config()
     v1 = client.NetworkingV1Api()
 
     ingress_list = v1.list_ingress_for_all_namespaces()

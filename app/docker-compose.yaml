@@ -6,4 +6,8 @@ services:
       build:
         platforms:
           - linux/amd64
+          - linux/arm64
         context: . # docker-compose.yml in current directory
+      environment:
+        - FLASK_APP=app.py
+        - FLASK_ENV=development
