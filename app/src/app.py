@@ -52,7 +52,7 @@ def test_urls(file_path):
     for url in urls:
         try:
             response = requests.get(
-                f"https://{url}" if not url.startswith("http") else url, timeout=10
+                f"https://{url}" if not url.startswith("http") else url, timeout=1
             )
             status_code = response.status_code
             results.append((url, status_code))
@@ -64,7 +64,7 @@ def test_urls(file_path):
 
 @app.route("/")
 def index():
-    """_summary_
+    """show ingress in cluster
 
     Returns:
         _type_: _description_
