@@ -22,6 +22,8 @@ def get_all_ingress_urls():
     logger.info(f"🌟 {len(urls)} URLs found!")
     if urls is None:
         return "No ingress found!"
+    # filter portal-checker url from list
+    urls = [url for url in urls if "portal-checker" not in url]
     # config_map_data = {"urls.txt": "\n".join(urls)}
     # write url.txt to disk
     with open("urls.txt", "w", encoding="utf-8") as file:

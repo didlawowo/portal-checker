@@ -3,6 +3,7 @@ FROM python:3.11.0-alpine
 WORKDIR /app
 RUN apk update && apk upgrade
 COPY requirements.txt /app/requirements.txt
+RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . /app
