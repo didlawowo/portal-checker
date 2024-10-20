@@ -20,6 +20,7 @@ tasks:
     desc: Remove Docker image
     cmds:
     - docker rmi {{.IMAGE_NAME}}
+
 default:
   desc: List available tasks
   cmds:
