@@ -7,7 +7,7 @@ tasks:
   build:
     desc: Build Docker image
     cmds:
-    - docker build -t {{.IMAGE_NAME}} .
+    - docker compose build --push
   push:
     desc: Push Docker image to registry
     cmds:
