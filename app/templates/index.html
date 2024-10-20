@@ -4,83 +4,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Ingress Checker</title>
+    <title>Portal Ingress Checker 🚪</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f7fafc;
+            font-family: 'Roboto', sans-serif;
+            background-color: #f0f4f8;
             margin: 0;
             display: flex;
             justify-content: center;
             align-items: center;
-
+            min-height: 100vh;
+            color: #2d3748;
         }
 
         .container {
             width: 90%;
             max-width: 840px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 24px;
         }
 
+
+        h1 {
+            text-align: center;
+            color: #4a5568;
+        }
+
+
         .refresh-btn {
-            background-color: #3182ce;
+            background-color: #4299e1;
             color: white;
-            padding: 8px 16px;
+            padding: 12px 24px;
             border: none;
-            border-radius: 4px;
+            border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
             display: block;
-            margin: 0 auto 16px auto;
+            margin: 0 auto 24px auto;
+            transition: background-color 0.3s ease;
         }
 
+
         .refresh-btn:hover {
-            background-color: #2c5282;
+            background-color: #3182ce;
         }
+
 
         .status-200::before {
             content: "✅";
-            color: green;
             margin-right: 5px;
         }
 
+
         .status-401::before {
-            content: "❗";
-            color: orange;
+            content: "⚠️";
             margin-right: 5px;
         }
+
 
         table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0 8px;
         }
 
         th,
         td {
             text-align: left;
-            padding: 8px;
-            border: 1px solid #dee2e6;
+            padding: 16px;
+            border: none;
         }
 
         th {
-            background-color: #f7fafc;
+            background-color: #edf2f7;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.05em;
         }
 
-        tr:nth-child(even) {
-            background-color: #e2e8f0;
+        tbody tr {
+            background-color: #f7fafc;
+            transition: transform 0.2s ease;
+        }
+
+        tbody tr:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        a {
+            color: #4299e1;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h1>Portal Ingress Checker</h1>
-        <button onclick="refreshPage()" class="refresh-btn">Refresh 🔃</button>
+        <h1>🚪 Portal Ingress Checker 🔍</h1>
+        <button onclick="refreshPage()" class="refresh-btn">Refresh 🔄</button>
         <table>
             <thead>
                 <tr>
-                    <th>URL</th>
-                    <th>Status</th>
-                    <th>Details</th>
+                    <th>URL 🔗</th>
+                    <th>Status 📊</th>
+                    <th>Details ℹ️</th>
                 </tr>
             </thead>
             <tbody>
@@ -90,7 +126,7 @@
                     <td class="status-{{ status }}">{{ status }}</td>
                     <td>
                         {% if status != 200 and status != 401 %}
-                        <span style="color: red;">Not Authorized or Not Found</span>
+                        <span style="color: #e53e3e;">❌ Not Authorized or Not Found</span>
                         {% else %}
                         <span></span>
                         {% endif %}

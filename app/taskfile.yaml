@@ -1,0 +1,26 @@
+version: '3'
+
+vars:
+  IMAGE_NAME: fizzbuzz2/portal-checker:v1.6.0
+
+tasks:
+  build:
+    desc: Build Docker image
+    cmds:
+    - docker build -t {{.IMAGE_NAME}} .
+  push:
+    desc: Push Docker image to registry
+    cmds:
+    - docker push {{.IMAGE_NAME}}
+  run:
+    desc: Run the Docker container
+    cmds:
+    - docker run -p 8080:80 {{.IMAGE_NAME}}
+  clean:
+    desc: Remove Docker image
+    cmds:
+    - docker rmi {{.IMAGE_NAME}}
+default:
+  desc: List available tasks
+  cmds:
+  - task --list

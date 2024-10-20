@@ -4,3 +4,4 @@ Pipfile.lock
 Dockerfile
 docker-compose.yml
 .gitignore
+task.yaml
