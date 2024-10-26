@@ -1,0 +1,12 @@
+argo-workflows.dc-tech.work
+helm-dashboard.dc-tech.work
+keycloak.dc-tech.work
+traefik.home.oursain.net
+hubble.dc-tech.work
+longhorn.home.oursain.net
+airflow.dc-tech.work
+mlflow.dc-tech.work
+ollama.dc-tech.work
+qdrant.dc-tech.work
+ray.dc-tech.work
+zenml.dc-tech.work 

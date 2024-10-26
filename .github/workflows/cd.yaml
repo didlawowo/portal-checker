@@ -26,8 +26,7 @@ jobs:
         password: ${{ env.DOCKERHUB_KEY }}
 
     - name: Build Docker image
-      run: |
-        cd apps/portal-checker/app
+      run: 
         docker build -t ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }} .
 
     - name: Push Docker image

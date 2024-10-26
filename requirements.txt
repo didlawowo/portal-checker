@@ -3,6 +3,7 @@ cachetools==5.5.0
 certifi==2024.8.30
 charset-normalizer==2.0.12
 click==8.1.7
+ddtrace
 Flask==3.0.0
 google-auth==2.35.0
 gunicorn==20.1.0
