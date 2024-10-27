@@ -1,10 +1,9 @@
-name: CD
+name: build
 
 on:
   push:
     branches:
     - main
-
 
 env:
   DOCKERHUB_USERNAME: ${{ secrets.DOCKER_USERNAME }}

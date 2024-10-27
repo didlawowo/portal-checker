@@ -1,9 +1,11 @@
+import traceback
 from flask import Flask, render_template, redirect, request
 import requests
 from kubernetes import client, config
 from loguru import logger
 from ddtrace import tracer
 import ddtrace
+import json
 
 import os
 
