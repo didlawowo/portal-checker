@@ -3,8 +3,9 @@ from flask import Flask, render_template, redirect, request
 import requests
 from kubernetes import client, config
 from loguru import logger
-from ddtrace import tracer
-import ddtrace
+
+# from ddtrace import tracer
+# import ddtrace
 import json
 
 import os
@@ -12,32 +13,32 @@ import os
 app = Flask(__name__)
 
 # Network sockets
-tracer.configure(
-    https=False,
-    hostname="custom-hostname",
-    port="1234",
-)
+# tracer.configure(
+#     https=False,
+#     hostname="custom-hostname",
+#     port="1234",
+# )
 
-# Unix domain socket configuration
-tracer.configure(
-    uds_path="/var/run/datadog/apm.socket",
-)
+# # Unix domain socket configuration
+# tracer.configure(
+#     uds_path="/var/run/datadog/apm.socket",
+# )
 
 
-def tracer_injection(log: dict):
-    """Get correlation ids from current tracer context.
+# def tracer_injection(log: dict):
+#     """Get correlation ids from current tracer context.
 
-    Docs:
-        https://docs.datadoghq.com/tracing/connect_logs_and_traces/python/
-    """
-    span = tracer.current_span()
-    trace_id, span_id = (span.trace_id, span.span_id) if span else (None, None)
+#     Docs:
+#         https://docs.datadoghq.com/tracing/connect_logs_and_traces/python/
+#     """
+#     span = tracer.current_span()
+#     trace_id, span_id = (span.trace_id, span.span_id) if span else (None, None)
 
-    log["dd.trace_id"] = str(trace_id or 0)
-    log["dd.span_id"] = str(span_id or 0)
-    log["dd.env"] = ddtrace.config.env or ""
-    log["dd.service"] = ddtrace.config.service or ""
-    log["dd.version"] = ddtrace.config.version or ""
+#     log["dd.trace_id"] = str(trace_id or 0)
+#     log["dd.span_id"] = str(span_id or 0)
+#     log["dd.env"] = ddtrace.config.env or ""
+#     log["dd.service"] = ddtrace.config.service or ""
+#     log["dd.version"] = ddtrace.config.version or ""
 
 
 def serialize(record):
@@ -81,9 +82,12 @@ def serialize(record):
         }
         log.update(error_data)
 
-    log.update(tracer_injection(log))
+    # log.update(tracer_injection(log))
 
     return json.dumps(log)
+
+
+logger.add(serialize=serialize, sink="stdout")
 
 
 @app.route("/refresh", methods=["GET"])
@@ -107,7 +111,7 @@ def get_all_ingress_urls():
     # write url.txt to disk
     with open("urls.txt", "w", encoding="utf-8") as file:
         file.write("\n".join(urls))
-    logger.info("🌟 urls.txt updated!")
+    logger.success("🌟 urls.txt updated!")
 
     origin_url = request.referrer
     if origin_url:
