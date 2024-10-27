@@ -3,12 +3,12 @@ image:
   tag: 92120fe
   pullPolicy: "IfNotPresent"
   pullSecrets:
-    - name: registry-credentials
+  - name: registry-credentials
 commonLabels:
   tags.datadoghq.com/env: home
   tags.datadoghq.com/service: portal-checker
   tags.datadoghq.com/version: v1.7.0
-  admission.datadoghq.com/enabled: "true"
+  # admission.datadoghq.com/enabled: "true"
 domainName: "portal.develop.oursain.net"
 autoscaling:
   enabled: false
@@ -26,9 +26,9 @@ serviceAccount:
 cronJobs: []
 application:
   ports:
-    - name: http
-      containerPort: 5000
-      protocol: TCP
+  - name: http
+    containerPort: 5000
+    protocol: TCP
   containerName: portal-checker
   command: []
   args: []
