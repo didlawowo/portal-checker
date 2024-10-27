@@ -28,7 +28,7 @@ jobs:
       - name: Get repository name and SHA
         id: vars
         run: |
-          REPO_NAME=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          REPO_NAME=$(echo "${{ github.repository }}" | cut -d'/' -f2 | tr '[:upper:]' '[:lower:]')
           echo "REPO_NAME=${REPO_NAME}" >> $GITHUB_OUTPUT
           echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
       
@@ -36,7 +36,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: ${{ steps.vars.outputs.REPO_NAME }}:${{ steps.vars.outputs.SHORT_SHA }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/${{ steps.vars.outputs.REPO_NAME }}:${{ steps.vars.outputs.SHORT_SHA }}
           context: .
       
       - name: Update Helm values
