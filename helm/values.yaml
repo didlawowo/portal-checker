@@ -1,14 +1,14 @@
 image:
   repository: fizzbuzz2/portal-checker
-  tag: v1.6.0
+  tag: v1.7.0
   pullPolicy: "IfNotPresent"
   pullSecrets:
   - name: registry-credentials
 
 commonLabels:
-  tags.datadoghq.com/env: <env>
-  tags.datadoghq.com/service: <service>
-  tags.datadoghq.com/version: <version>
+  tags.datadoghq.com/env: home
+  tags.datadoghq.com/service: portal-checker
+  tags.datadoghq.com/version: v1.7.0
   admission.datadoghq.com/enabled: "true"
 
 domainName: "portal.develop.oursain.net"
@@ -96,7 +96,7 @@ env:
 - name: DD_APPSEC_SCA_ENABLED
   value: "true"
 - name: DD_GIT_COMMIT_SHA
-  value: 0ed47b1
+  value: tag
 - name: DD_GIT_REPOSITORY_URL
   value: https://github.com/didlawowo/portal-checker
 
