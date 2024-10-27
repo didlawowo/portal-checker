@@ -1,54 +1,43 @@
 image:
-  repository: fizzbuzz2/portal-checker
-  tag: c60dc070cd899b1ecacfa233d62dfc89cde718b0
+  repository: portal-checker
+  tag: f09de56
   pullPolicy: "IfNotPresent"
   pullSecrets:
-  - name: registry-credentials
-
+    - name: registry-credentials
 commonLabels:
   tags.datadoghq.com/env: home
   tags.datadoghq.com/service: portal-checker
   tags.datadoghq.com/version: v1.7.0
   admission.datadoghq.com/enabled: "true"
-
 domainName: "portal.develop.oursain.net"
-
 autoscaling:
   enabled: false
-
 replicas: 1
-
 strategy:
   type: RollingUpdate
   rollingUpdate:
     maxUnavailable: 25%
     maxSurge: 25%
-
 serviceAccount:
   create: true
   name: portal-checker
   # annotations:
   #   iam.gke.io/gcp-service-account: portal-checker@gcp-project-id.iam.gserviceaccount.com
-
 cronJobs: []
-
 application:
   ports:
-  - name: http
-    containerPort: 5000
-    protocol: TCP
+    - name: http
+      containerPort: 5000
+      protocol: TCP
   containerName: portal-checker
   command: []
   args: []
-
 service:
   port: 80
   targetPort: 5000
   type: ClusterIP
   portName: http
-
 externalSecrets: []
-
 secrets:
   dotenv: []
   # - name: app-dotenv
@@ -56,12 +45,9 @@ secrets:
   files: []
   # - name: secret-file
   #   path: values/prod/secrets/file
-
-
 configMaps:
   files: []
   dotenv: []
-
 volumeMounts: []
 # - name: portal
 #   mountPath: /app/url.txt
@@ -71,13 +57,9 @@ volumes: []
 #   configMap:
 #     name: portal
 
-
 podAnnotations:
   admission.datadoghq.com/python-lib.version: v2.14.4
-
-
 initContainers: []
-
 resources:
   limits:
     cpu: 200m
@@ -85,25 +67,21 @@ resources:
   requests:
     cpu: 50m
     memory: 128Mi
-
 env:
-- name: DD_PROFILING_ENABLED
-  value: "true"
-- name: DD_LOGS_INJECTION
-  value: "true"
-- name: DD_IAST_ENABLED
-  value: "true"
-- name: DD_APPSEC_SCA_ENABLED
-  value: "true"
-- name: DD_GIT_COMMIT_SHA
-  value: c60dc070cd899b1ecacfa233d62dfc89cde718b0
-- name: DD_GIT_REPOSITORY_URL
-  value: https://github.com/didlawowo/portal-checker
-
+  - name: DD_PROFILING_ENABLED
+    value: "true"
+  - name: DD_LOGS_INJECTION
+    value: "true"
+  - name: DD_IAST_ENABLED
+    value: "true"
+  - name: DD_APPSEC_SCA_ENABLED
+    value: "true"
+  - name: DD_GIT_COMMIT_SHA
+    value: c60dc070cd899b1ecacfa233d62dfc89cde718b0
+  - name: DD_GIT_REPOSITORY_URL
+    value: https://github.com/didlawowo/portal-checker
 envFrom: []
-
 nodeSelector: {}
-
 livenessProbe: {}
 # httpGet:
 #   scheme: HTTP
