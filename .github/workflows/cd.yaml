@@ -41,7 +41,7 @@ jobs:
       
       - name: Update Helm values
         run: |
-          yq e -i '.image.repository = "${{ steps.vars.outputs.REPO_NAME }}"' helm/values.yaml
+          yq e -i '.image.repository = "${{ secrets.DOCKER_USERNAME }}/${{ steps.vars.outputs.REPO_NAME }}"' helm/values.yaml
           yq e -i '.image.tag = "${{ steps.vars.outputs.SHORT_SHA }}"' helm/values.yaml
       
       - name: Configure Git
