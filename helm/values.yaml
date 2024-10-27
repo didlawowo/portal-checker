@@ -3,7 +3,7 @@ image:
   tag: c37f5e1
   pullPolicy: "IfNotPresent"
   pullSecrets:
-    - name: registry-credentials
+  - name: registry-credentials
 commonLabels:
   tags.datadoghq.com/env: home
   tags.datadoghq.com/service: portal-checker
@@ -26,9 +26,9 @@ serviceAccount:
 cronJobs: []
 application:
   ports:
-    - name: http
-      containerPort: 5000
-      protocol: TCP
+  - name: http
+    containerPort: 5000
+    protocol: TCP
   containerName: portal-checker
   command: []
   args: []
@@ -68,18 +68,18 @@ resources:
     cpu: 50m
     memory: 128Mi
 env:
-  - name: DD_PROFILING_ENABLED
-    value: "true"
-  - name: DD_LOGS_INJECTION
-    value: "true"
-  - name: DD_IAST_ENABLED
-    value: "true"
-  - name: DD_APPSEC_SCA_ENABLED
-    value: "true"
-  - name: DD_GIT_COMMIT_SHA
-    value: c60dc070cd899b1ecacfa233d62dfc89cde718b0
-  - name: DD_GIT_REPOSITORY_URL
-    value: https://github.com/didlawowo/portal-checker
+# - name: DD_PROFILING_ENABLED
+#   value: "true"
+# - name: DD_LOGS_INJECTION
+#   value: "true"
+# - name: DD_IAST_ENABLED
+#   value: "true"
+# - name: DD_APPSEC_SCA_ENABLED
+#   value: "true"
+# - name: DD_GIT_COMMIT_SHA
+#   value: c60dc070cd899b1ecacfa233d62dfc89cde718b0
+# - name: DD_GIT_REPOSITORY_URL
+#   value: https://github.com/didlawowo/portal-checker
 envFrom: []
 nodeSelector: {}
 livenessProbe: {}
