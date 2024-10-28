@@ -4,20 +4,18 @@ on:
   push:
     branches:
     - main
-    paths:
-    - "infrastructure/**"
-    - "stack-rbac/**"
+ 
 
 jobs:
   build:
     name: Build
-    runs-on: pulumi-runner
-    permissions: read-all
+    runs-on: ubuntu-latest
+ 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
-    - uses: sonarsource/sonarqube-scan-action@master
+    - uses: sonarsource/sonarqube-scan-action@v3
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
