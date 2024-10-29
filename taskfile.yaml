@@ -13,6 +13,11 @@ tasks:
     desc: Run the Docker container
     cmds:
     - docker compose up -d
+  helm-template:
+    desc: template helm chart
+    cmds:
+    - helm template ./helm
+
 
 default:
   desc: List available tasks
