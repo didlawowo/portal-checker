@@ -14,4 +14,4 @@ EXPOSE 5000
 
 # CMD ["ddtrace-run","gunicorn", "-b", "0.0.0.0:5000", "app:app", "--timeout 200"]
 
-CMD ["uvicorn",   "app:app", "--host", "0.0.0.0"]
+CMD ["uvicorn",   "app:app", "--host", "0.0.0.0", "--port",  "5000"]
