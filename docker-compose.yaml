@@ -1,7 +1,7 @@
 
 services:
     app:
-      image: fizzbuzz2/portal-checker:v1.7.0
+      image: fizzbuzz2/portal-checker:v1.8.1
       ports:
         - "5001:5000"
       build:

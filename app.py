@@ -7,6 +7,7 @@ from loguru import logger
 # from ddtrace import tracer
 # import ddtrace
 import json
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 import os
 
@@ -157,5 +158,6 @@ def index():
 
 
 if __name__ == "__main__":
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
     ingress_urls = get_all_ingress_urls()
     app.run(host="0.0.0.0", port=5000)
