@@ -7,7 +7,7 @@ on:
 
 
 jobs:
-  build:
+  scan:
     name: sonar-scan
     runs-on: arc-runner-set-portal-checker
 
