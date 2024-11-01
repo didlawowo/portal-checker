@@ -4,7 +4,7 @@ WORKDIR /app
 RUN apk update && apk upgrade
 COPY requirements.txt .
 RUN pip install --upgrade pip uv 
-RUN uv pip install --system -r requirements.txt
+RUN uv pip install --system  -r requirements.txt
 
 COPY templates .
 COPY app.py .
