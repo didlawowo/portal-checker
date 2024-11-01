@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     name: Build
-    runs-on: arc-runner-set-portal
+    runs-on: arc-runner-set-portal-checker
 
     steps:
     - uses: actions/checkout@v4
