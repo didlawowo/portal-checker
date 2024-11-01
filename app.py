@@ -87,9 +87,6 @@ def serialize(record):
     return json.dumps(log)
 
 
-logger.add(serialize=serialize, sink="stdout")
-
-
 @app.route("/refresh", methods=["GET"])
 def get_all_ingress_urls():
     """Get all ingress URLs and write them to a file."""

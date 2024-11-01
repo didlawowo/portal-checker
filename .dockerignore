@@ -1,0 +1,10 @@
+docker-compose.yaml
+.envrc
+*.md
+sonar-project.properties
+Pipfile
+taskfile.yaml
+.gitignore
+.github
+helm
+.vscode
