@@ -146,14 +146,14 @@ def test_urls(file_path):
     return results
 
 
-@app.route("/favicon.ico")
+@app.route("/static/favicon.ico")
 def favicon():
     return send_from_directory(
         os.path.join(app.root_path, "static"), "favicon.ico", mimetype="image/ico"
     )
 
 
-@app.route("/image.png")
+@app.route("/static/image.png")
 def logo():
     return send_from_directory(
         os.path.join(app.root_path, "static"), "image.png", mimetype="image/png"
