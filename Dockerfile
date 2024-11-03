@@ -7,7 +7,7 @@ RUN pip install --upgrade pip uv
 RUN uv pip install --system  -r requirements.txt
 
 COPY templates /app/templates
-
+COPY static /app/static
 COPY app.py .
 COPY urls.txt .
 
