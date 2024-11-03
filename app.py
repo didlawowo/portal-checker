@@ -1,5 +1,6 @@
 import traceback
-from flask import Flask, render_template, redirect, request
+from flask import Flask, render_template, redirect, request, send_from_directory
+
 import requests
 from kubernetes import client, config
 from loguru import logger
@@ -143,6 +144,13 @@ def test_urls(file_path):
             results.append((url, str(e)))
 
     return results
+
+
+@app.route("/favicon.png")
+def favicon():
+    return send_from_directory(
+        os.path.join(app.root_path, "static"), "favicon.png", mimetype="image/png"
+    )
 
 
 @app.route("/")
