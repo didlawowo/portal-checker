@@ -1,106 +1,118 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 
 <head>
-    <meta http-equiv="refresh" content="120">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon.ico">
-
+    <meta http-equiv="refresh" content="120">
     <title>Portal Ingress Checker</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #f0f4f8;
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #f3f4f6;
             margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            color: #2d3748;
+            padding: 20px;
         }
 
         .container {
-            width: 90%;
-            max-width: 1040px;
-            background-color: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            padding: 24px;
-        }
-
-
-        h1 {
-            text-align: center;
-            color: #4a5568;
-        }
-
-
-        .refresh-btn {
-            background-color: #4299e1;
-            color: white;
-            padding: 12px 24px;
-            border: none;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
             border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .version-badge {
+            background: #3b82f6;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 14px;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input[type="search"] {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+        }
+
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
             cursor: pointer;
-            font-weight: bold;
-            display: block;
-            margin: 0 auto 24px auto;
-            transition: background-color 0.3s ease;
         }
 
-
-        .refresh-btn:hover {
-            background-color: #3182ce;
+        button:hover {
+            background: #2563eb;
         }
-
-
-        .status-200::before {
-            content: "✅";
-            margin-right: 5px;
-        }
-
-
-        .status-401::before {
-            content: "⚠️";
-            margin-right: 5px;
-        }
-
 
         table {
             width: 100%;
-            border-collapse: separate;
-            border-spacing: 0 8px;
-        }
-
-        th,
-        td {
-            text-align: left;
-            padding: 16px;
-            border: none;
+            border-collapse: collapse;
         }
 
         th {
-            background-color: #edf2f7;
-            font-weight: bold;
-            text-transform: uppercase;
-            font-size: 0.85em;
-            letter-spacing: 0.05em;
+            text-align: left;
+            padding: 12px;
+            background: #f9fafb;
+            cursor: pointer;
+            user-select: none;
         }
 
-        tbody tr {
-            background-color: #f7fafc;
-            transition: transform 0.2s ease;
+        th:hover {
+            background: #f3f4f6;
         }
 
-        tbody tr:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        td {
+            padding: 12px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 9999px;
+            font-weight: 500;
+        }
+
+        .status-200 {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-401 {
+            background: #fef9c3;
+            color: #854d0e;
+        }
+
+        .status-error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        tr:hover {
+            background: #f9fafb;
         }
 
         a {
-            color: #4299e1;
+            color: #2563eb;
             text-decoration: none;
         }
 
@@ -111,45 +123,117 @@
 </head>
 
 <body>
-
     <div class="container">
-        <div
-            style="position: absolute; top: 10px; right: 10px; font-size: 12px; color: #ffffff; background-color: #4299e1; padding: 5px 10px; border-radius: 15px;">
-            v1.8.1</div>
-        <h1>Portal Ingress Checker
-            <img src="/static/image.png" alt="Kubernetes Logo" style="height: 50px;">
-        </h1>
+        <div class="header">
+            <h1>Portal Ingress Checker</h1>
+            <span class="version-badge">v1.9.0</span>
+        </div>
 
-        <button onclick="refreshPage()" class="refresh-btn">Refresh 🔄</button>
+        <div class="search-bar">
+            <input type="search" id="searchInput" placeholder="Rechercher...">
+            <button onclick="window.location.href='/refresh'">Refresh 🔄</button>
+        </div>
+
         <table>
             <thead>
                 <tr>
-                    <th style="width: 40%;">URL 🔗</th>
-                    <th>Status 📊</th>
-                    <th style="width: 30%;">Details ℹ️</th>
+                    <th onclick="sortTable('url')">URL 🔗 <span id="urlSort"></span></th>
+                    <th onclick="sortTable('status')">Status 📊 <span id="statusSort"></span></th>
+                    <th>Details ℹ️</th>
                 </tr>
             </thead>
-            <tbody>
-                {% for url, status in results %}
-                <tr>
-                    <td><a href="https://{{ url }}" target="_blank">https://{{ url }}</a></td>
-                    <td class="status-{{ status }}">{{ status }}</td>
-                    <td>
-                        {% if status != 200 and status != 401 %}
-                        <span style="color: #e53e3e;">❌ Not Authorized or Not Found</span>
-                        {% else %}
-                        <span></span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
+            <tbody id="resultsTable"></tbody>
         </table>
     </div>
+
     <script>
-        function refreshPage() {
-            window.location.href = '/refresh';
+        // Récupération des données depuis Flask
+        const initialData = {{ results | tojson | safe }};
+        let currentData = [...initialData];
+        let sortConfig = {
+            field: 'url',
+            direction: 'asc'
+        };
+
+        // Fonction pour mettre à jour les flèches de tri
+        function updateSortArrows() {
+            document.getElementById('urlSort').textContent =
+                sortConfig.field === 'url' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '';
+            document.getElementById('statusSort').textContent =
+                sortConfig.field === 'status' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '';
         }
+
+        // Fonction pour trier les données
+        function sortTable(field) {
+            if (sortConfig.field === field) {
+                sortConfig.direction = sortConfig.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortConfig.field = field;
+                sortConfig.direction = 'asc';
+            }
+
+            currentData.sort((a, b) => {
+                let comparison = 0;
+                if (a[field] < b[field]) comparison = -1;
+                if (a[field] > b[field]) comparison = 1;
+                return sortConfig.direction === 'asc' ? comparison : -comparison;
+            });
+
+            updateSortArrows();
+            renderTable();
+        }
+
+        // Fonction pour obtenir la classe CSS du status
+        function getStatusClass(status) {
+            if (status === 200) return 'status-200';
+            if (status === 401) return 'status-401';
+            return 'status-error';
+        }
+
+        // Fonction pour obtenir l'emoji du status
+        function getStatusEmoji(status) {
+            if (status === 200) return '✅';
+            if (status === 401) return '⚠️';
+            return '❌';
+        }
+
+        // Fonction pour rendre le tableau
+        function renderTable() {
+            const tbody = document.getElementById('resultsTable');
+            tbody.innerHTML = '';
+
+            currentData.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><a href="https://${item.url}" target="_blank">https://${item.url}</a></td>
+                    <td>
+                        <span class="status-badge ${getStatusClass(item.status)}">
+                            ${getStatusEmoji(item.status)} ${item.status}
+                        </span>
+                    </td>
+                    <td>${item.details || ''}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Fonction de recherche
+        function handleSearch(event) {
+            const searchTerm = event.target.value.toLowerCase();
+            currentData = initialData.filter(item =>
+                item.url.toLowerCase().includes(searchTerm) ||
+                item.status.toString().includes(searchTerm) ||
+                (item.details || '').toLowerCase().includes(searchTerm)
+            );
+            renderTable();
+        }
+
+        // Écouteurs d'événements
+        document.getElementById('searchInput').addEventListener('input', handleSearch);
+
+        // Rendu initial
+        updateSortArrows();
+        renderTable();
     </script>
 </body>
 

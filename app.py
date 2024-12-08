@@ -1,13 +1,12 @@
-import traceback
 from flask import Flask, render_template, redirect, request, send_from_directory
 
 import requests
 from kubernetes import client, config
 from loguru import logger
+from typing import Union
 
 # from ddtrace import tracer
 # import ddtrace
-import json
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 import os
@@ -43,50 +42,71 @@ app = Flask(__name__)
 #     log["dd.version"] = ddtrace.config.version or ""
 
 
-def serialize(record):
-    """Serialize the JSON log.
-    Notes:
-    https://docs.datadoghq.com/tracing/connect_logs_and_traces/python/
+# Configuration
+SLACK_NOTIFICATIONS_ENABLED = (
+    os.getenv("ENABLE_SLACK_NOTIFICATIONS", "false").lower() == "true"
+)
+SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL", "")
+
+
+def send_slack_alert(url: str, status_code: Union[int, str], details: str = "") -> None:
     """
+    Envoie une alerte sur Slack si un ingress a un problème
 
-    log = {
-        # expected by datadog
-        "status": str(record["level"].name),
-        "message": str(record["message"]),
-        "logger": {"thread_name": str(record["thread"].name)},
-        # from loguru
-        "elapsed": f"{record['elapsed']}",
-        "file": f"{record['file']}",
-        "function": f"{record['function']}",
-        "level": f"{record['level']}",
-        "line": f"{record['line']}",
-        "module": f"{record['module']}",
-        "name": f"{record['name']}",
-        "process": f"{record['process']}",
-        "thread": f"{record['thread']}",
-        "time": f"{record['time']}",
-        "extra": f"{record['extra']}",  # used by notify
-    }
+    Args:
+        url (str): L'URL qui a un problème
+        status_code (Union[int, str]): Le code de statut HTTP
+        details (str, optional): Détails supplémentaires. Defaults to "".
+    """
+    if not SLACK_NOTIFICATIONS_ENABLED or not SLACK_WEBHOOK_URL:
+        return
 
-    if record["exception"] is not None:
-        error_data = {
-            "error": {
-                "stack": "".join(
-                    traceback.format_exception(
-                        record["exception"].type,
-                        record["exception"].value,
-                        record["exception"].traceback,
-                    )
-                ),
-                "kind": getattr(record["exception"].type, "__name__", "None"),
-                "message": str(record["exception"].value),
-            },
+    try:
+        # Conversion du status_code en int si c'est une string
+        if isinstance(status_code, str):
+            try:
+                status_code = int(status_code)
+            except ValueError:
+                # Si le status n'est pas un nombre, c'est probablement une erreur
+                status_code = 500
+
+        # On n'envoie pas d'alerte pour les codes 2xx et 4xx
+        if 200 <= status_code < 300 or 400 <= status_code < 500:
+            return
+
+        message = {
+            "blocks": [
+                {
+                    "type": "header",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "🚨 Alerte Ingress",
+                        "emoji": True,
+                    },
+                },
+                {
+                    "type": "section",
+                    "fields": [
+                        {"type": "mrkdwn", "text": f"*URL:*\n{url}"},
+                        {"type": "mrkdwn", "text": f"*Status:*\n{status_code}"},
+                    ],
+                },
+            ]
         }
-        log.update(error_data)
 
-    # log.update(tracer_injection(log))
+        if details:
+            message["blocks"].append(
+                {
+                    "type": "section",
+                    "text": {"type": "mrkdwn", "text": f"*Détails:*\n{details}"},
+                }
+            )
 
-    return json.dumps(log)
+        response = requests.post(SLACK_WEBHOOK_URL, json=message, timeout=5)
+        response.raise_for_status()
+
+    except Exception as e:
+        print(f"Erreur lors de l'envoi de l'alerte Slack: {str(e)}")
 
 
 @app.route("/refresh", methods=["GET"])
@@ -120,30 +140,45 @@ def get_all_ingress_urls():
 
 
 def test_urls(file_path):
-    """test URLs from a file
+    """test URLs from a file and return formatted results for the new template
 
     Args:
-        file_path (_type_): _description_
+        file_path (str): Path to the file containing URLs
 
     Returns:
-        _type_: _description_
+        list: List of dictionaries containing URL status information
     """
-
     with open(file_path, "r", encoding="utf-8") as file:
         urls = file.read().splitlines()
 
-    results = []
+    formatted_results = []
     for url in urls:
         try:
-            response = requests.get(
-                f"https://{url}" if not url.startswith("http") else url, timeout=1
-            )
+            full_url = f"https://{url}" if not url.startswith("http") else url
+            response = requests.get(full_url, timeout=1)
             status_code = response.status_code
-            results.append((url, status_code))
-        except requests.RequestException as e:
-            results.append((url, str(e)))
 
-    return results
+            details = ""
+            # Ajout des détails en fonction du status code
+            if status_code != 200 and status_code != 401:
+                details = "❌ Not Authorized or Not Found"
+
+            formatted_results.append(
+                {"url": url, "status": status_code, "details": details}
+            )
+            send_slack_alert(url, status_code, details)
+
+        except requests.RequestException as e:
+            # Gestion des erreurs de requête
+            formatted_results.append(
+                {
+                    "url": url,
+                    "status": 500,  # ou un autre code d'erreur approprié
+                    "details": f"❌ Error: {str(e)}",
+                }
+            )
+
+    return formatted_results
 
 
 @app.route("/static/favicon.ico")
@@ -169,6 +204,8 @@ def index():
     """
     file_path = "urls.txt"  # Change this to your input file path
     results = test_urls(file_path)
+
+    # results_json = json.dumps(results)
     return render_template("index.html", results=results)
 
 
