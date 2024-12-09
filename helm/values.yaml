@@ -1,9 +1,9 @@
 image:
   repository: fizzbuzz2/portal-checker
-  tag: "6573557"
+  tag: "cc94b64"
   pullPolicy: "IfNotPresent"
   pullSecrets:
-  - name: registry-credentials
+    - name: registry-credentials
 commonLabels:
   tags.datadoghq.com/env: home
   tags.datadoghq.com/service: portal-checker
@@ -27,9 +27,9 @@ serviceAccount:
 cronJobs: []
 application:
   ports:
-  - name: http
-    containerPort: 5000
-    protocol: TCP
+    - name: http
+      containerPort: 5000
+      protocol: TCP
   containerName: portal
   command: []
   args: []
@@ -69,8 +69,8 @@ resources:
     cpu: 50m
     memory: 128Mi
 env:
-  # - name: DD_PROFILING_ENABLED
-  #   value: "true"
+# - name: DD_PROFILING_ENABLED
+#   value: "true"
 
 # - name: DD_LOGS_INJECTION
 #   value: "true"
@@ -96,7 +96,6 @@ livenessProbe: {}
 # failureThreshold: 3
 
 readinessProbe: {}
-
 # httpGet:
 #   scheme: HTTP
 #   path: /
