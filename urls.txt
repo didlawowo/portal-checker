@@ -18,3 +18,4 @@ open-webui.dc-tech.work
 n8n.dc-tech.work
 keycloak.dc-tech.work
 sonarqube.dc-tech.work
+wren-ai.dc-tech.work

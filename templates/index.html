@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="120">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <title>Portal Ingress Checker</title>
     <style>
         body {
@@ -137,9 +138,9 @@
         <table>
             <thead>
                 <tr>
-                    <th onclick="sortTable('url')">URL 🔗 <span id="urlSort"></span></th>
-                    <th onclick="sortTable('status')">Status 📊 <span id="statusSort"></span></th>
-                    <th>Details ℹ️</th>
+                    <th onclick="sortTable('url')" style="width: 400px;">URL<span id="urlSort"></span></th>
+                    <th onclick="sortTable('status')" style="width: 100px;">Status<span id="statusSort"></span></th>
+                    <th>Details</th>
                 </tr>
             </thead>
             <tbody id="resultsTable"></tbody>
