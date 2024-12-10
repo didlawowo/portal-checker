@@ -3,12 +3,11 @@ image:
   tag: "f843c89"
   pullPolicy: "IfNotPresent"
   pullSecrets:
-    - name: registry-credentials
+  - name: registry-credentials
 commonLabels:
   tags.datadoghq.com/env: home
   tags.datadoghq.com/service: portal-checker
   tags.datadoghq.com/version: v1.7.0
-  ad.datadoghq.com/portal.logs: '[{"source":"python", "service":"portal-checker}]'
   # admission.datadoghq.com/enabled: "true"
 domainName: "portal.develop.oursain.net"
 autoscaling:
@@ -27,9 +26,9 @@ serviceAccount:
 cronJobs: []
 application:
   ports:
-    - name: http
-      containerPort: 5000
-      protocol: TCP
+  - name: http
+    containerPort: 5000
+    protocol: TCP
   containerName: portal
   command: []
   args: []
@@ -59,7 +58,8 @@ volumes: []
 #     name: portal
 
 podAnnotations:
-  admission.datadoghq.com/python-lib.version: v2.14.4
+  ad.datadoghq.com/portal.logs: '[{"source":"python", "service":"portal-checker}]'
+
 initContainers: []
 resources:
   limits:
@@ -68,8 +68,8 @@ resources:
   requests:
     cpu: 50m
     memory: 128Mi
-env:
-# - name: DD_PROFILING_ENABLED
+env: # - name: DD_PROFILING_ENABLED
+
 #   value: "true"
 
 # - name: DD_LOGS_INJECTION
@@ -96,6 +96,7 @@ livenessProbe: {}
 # failureThreshold: 3
 
 readinessProbe: {}
+
 # httpGet:
 #   scheme: HTTP
 #   path: /
