@@ -3,11 +3,11 @@ image:
   tag: "318c320"
   pullPolicy: "IfNotPresent"
   pullSecrets:
-    - name: registry-credentials
+  - name: registry-credentials
 commonLabels:
   tags.datadoghq.com/env: home
   tags.datadoghq.com/service: portal-checker
-  tags.datadoghq.com/version: v1.7.0
+  tags.datadoghq.com/version: v1.8.0
   # admission.datadoghq.com/enabled: "true"
 domainName: "portal.develop.oursain.net"
 autoscaling:
@@ -26,10 +26,10 @@ serviceAccount:
 cronJobs: []
 application:
   ports:
-    - name: http
-      containerPort: 5000
-      protocol: TCP
-  containerName: portal
+  - name: http
+    containerPort: 5000
+    protocol: TCP
+  containerName: portal-checker
   command: []
   args: []
 service:
@@ -57,8 +57,10 @@ volumes: []
 #   configMap:
 #     name: portal
 
+ingressClassName: traefik
+
 podAnnotations:
-  ad.datadoghq.com/portal.logs: '[{"source":"python", "service":"portal-checker}]'
+  ad.datadoghq.com/portal-checker.logs: '[{"source":"python", "service":"portal-checker}]'
 initContainers: []
 resources:
   limits:
@@ -67,39 +69,28 @@ resources:
   requests:
     cpu: 50m
     memory: 128Mi
-env: # - name: DD_PROFILING_ENABLED
-#   value: "true"
 
-# - name: DD_LOGS_INJECTION
-#   value: "true"
-# - name: DD_IAST_ENABLED
-#   value: "true"
-# - name: DD_APPSEC_SCA_ENABLED
-#   value: "true"
-# - name: DD_GIT_COMMIT_SHA
-#   value: c60dc070cd899b1ecacfa233d62dfc89cde718b0
-# - name: DD_GIT_REPOSITORY_URL
-#   value: https://github.com/didlawowo/portal-checker
 envFrom: []
 nodeSelector: {}
-livenessProbe: {}
-# httpGet:
-#   scheme: HTTP
-#   path: /
-#   port: 5000
-# initialDelaySeconds: 10
-# periodSeconds: 30
-# timeoutSeconds: 2
-# successThreshold: 1
-# failureThreshold: 3
+livenessProbe:
+  httpGet:
+    scheme: HTTP
+    path: /
+    port: 5000
+  initialDelaySeconds: 10
+  periodSeconds: 30
+  timeoutSeconds: 2
+  successThreshold: 1
+  failureThreshold: 3
 
-readinessProbe: {}
-# httpGet:
-#   scheme: HTTP
-#   path: /
-#   port: 5000
-# initialDelaySeconds: 5
-# periodSeconds: 30
-# timeoutSeconds: 2
-# successThreshold: 1
-# failureThreshold: 3
+readinessProbe:
+
+  httpGet:
+    scheme: HTTP
+    path: /
+    port: 5000
+  initialDelaySeconds: 5
+  periodSeconds: 30
+  timeoutSeconds: 2
+  successThreshold: 1
+  failureThreshold: 3

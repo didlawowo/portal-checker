@@ -1,7 +1,7 @@
 version: '3'
 
 vars:
-  IMAGE_NAME: fizzbuzz2/portal-checker:v1.7.1
+  IMAGE_NAME: fizzbuzz2/portal-checker:v1.7.2
 
 tasks:
   build:
@@ -17,7 +17,6 @@ tasks:
     desc: template helm chart
     cmds:
     - helm template ./helm
-
 
 default:
   desc: List available tasks
