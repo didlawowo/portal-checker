@@ -1,9 +1,9 @@
 image:
   repository: fizzbuzz2/portal-checker
-  tag: "318c320"
+  tag: "db778b4"
   pullPolicy: "IfNotPresent"
   pullSecrets:
-  - name: registry-credentials
+    - name: registry-credentials
 commonLabels:
   tags.datadoghq.com/env: home
   tags.datadoghq.com/service: portal-checker
@@ -26,9 +26,9 @@ serviceAccount:
 cronJobs: []
 application:
   ports:
-  - name: http
-    containerPort: 5000
-    protocol: TCP
+    - name: http
+      containerPort: 5000
+      protocol: TCP
   containerName: portal-checker
   command: []
   args: []
@@ -58,7 +58,6 @@ volumes: []
 #     name: portal
 
 ingressClassName: traefik
-
 podAnnotations:
   ad.datadoghq.com/portal-checker.logs: '[{"source":"python", "service":"portal-checker}]'
 initContainers: []
@@ -69,7 +68,6 @@ resources:
   requests:
     cpu: 50m
     memory: 128Mi
-
 envFrom: []
 nodeSelector: {}
 livenessProbe:
@@ -82,9 +80,7 @@ livenessProbe:
   timeoutSeconds: 2
   successThreshold: 1
   failureThreshold: 3
-
 readinessProbe:
-
   httpGet:
     scheme: HTTP
     path: /
