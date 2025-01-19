@@ -3,9 +3,9 @@ FROM python:3.12-alpine3.20
 # Créer un utilisateur non-root
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-# Installation des dépendances système
-RUN apk update && apk upgrade && \
-    apk add --no-cache gcc musl-dev # 🔧 Nécessaire pour certaines compilations Python
+# # Installation des dépendances système
+# RUN apk update && apk upgrade && \
+#     apk add --no-cache gcc musl-dev # 🔧 Nécessaire pour certaines compilations Python
 
 WORKDIR /app
 
