@@ -9,10 +9,11 @@ tasks:
     cmds:
     - docker compose build --push
 
-  run:
-    desc: Run the Docker container
+  run-dev:
+    desc: Run
     cmds:
     - flask run
+
   helm-template:
     desc: template helm chart
     cmds:

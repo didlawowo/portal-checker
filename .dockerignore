@@ -2,9 +2,11 @@ docker-compose.yaml
 .envrc
 *.md
 sonar-project.properties
-Pipfile
+Pipfile*
 taskfile.yaml
 .gitignore
-.github
-helm
+.github/
+helm/
+.vscode
+Dockerfile
 .vscode

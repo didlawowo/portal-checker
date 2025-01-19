@@ -127,7 +127,7 @@
     <div class="container">
         <div class="header">
             <h1>Portal Ingress Checker</h1>
-            <span class="version-badge">v1.9.0</span>
+            <span class="version-badge">v2.0.0</span>
         </div>
 
         <div class="search-bar">
@@ -149,7 +149,7 @@
 
     <script>
         // Récupération des données depuis Flask
-        const initialData = {{ results | tojson | safe }};
+        window.initialData = {{ results | tojson | safe }};
         let currentData = [...initialData];
         let sortConfig = {
             field: 'url',
