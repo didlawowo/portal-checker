@@ -1,9 +1,9 @@
 image:
   repository: fizzbuzz2/portal-checker
-  tag: "034f9b5"
+  tag: "56e2199"
   pullPolicy: "IfNotPresent"
   pullSecrets:
-  - name: registry-credentials
+    - name: registry-credentials
 commonLabels:
   tags.datadoghq.com/env: home
   tags.datadoghq.com/service: portal-checker
@@ -26,9 +26,9 @@ serviceAccount:
 cronJobs: []
 application:
   ports:
-  - name: http
-    containerPort: 5000
-    protocol: TCP
+    - name: http
+      containerPort: 5000
+      protocol: TCP
   containerName: portal-checker
   command: []
   args: []
