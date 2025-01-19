@@ -5,6 +5,7 @@ from kubernetes import client, config
 from loguru import logger
 from typing import Union, List, Dict
 import os
+import jsonify
 
 app = Flask(__name__)
 
@@ -14,9 +15,17 @@ SLACK_NOTIFICATIONS_ENABLED = (
 )
 SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL", "")
 TIMEOUT = int(os.getenv("REQUEST_TIMEOUT", "5"))  # ⚙️ Timeout configurable
-MAX_CONCURRENT_REQUESTS = int(os.getenv("MAX_CONCURRENT_REQUESTS", "10"))  # 🔄 Contrôle de la concurrence
+MAX_CONCURRENT_REQUESTS = int(
+    os.getenv("MAX_CONCURRENT_REQUESTS", "10")
+)  # 🔄 Contrôle de la concurrence
 
-async def send_slack_alert_async(session: aiohttp.ClientSession, url: str, status_code: Union[int, str], details: str = "") -> None:
+
+async def send_slack_alert_async(
+    session: aiohttp.ClientSession,
+    url: str,
+    status_code: Union[int, str],
+    details: str = "",
+) -> None:
     """Version asynchrone de l'alerte Slack"""
     if not SLACK_NOTIFICATIONS_ENABLED or not SLACK_WEBHOOK_URL:
         return
@@ -59,15 +68,18 @@ async def send_slack_alert_async(session: aiohttp.ClientSession, url: str, statu
                 }
             )
 
-        async with session.post(SLACK_WEBHOOK_URL, json=message, timeout=TIMEOUT) as response:
+        async with session.post(
+            SLACK_WEBHOOK_URL, json=message, timeout=TIMEOUT
+        ) as response:
             await response.text()
 
     except Exception as e:
         logger.error(f"Erreur lors de l'envoi de l'alerte Slack: {str(e)}")
 
+
 async def test_single_url(session: aiohttp.ClientSession, url: str) -> Dict:
     """Test une seule URL de manière asynchrone
-    
+
     Args:
         session: Session aiohttp pour réutiliser les connexions
         url: URL à tester
@@ -99,9 +111,10 @@ async def test_single_url(session: aiohttp.ClientSession, url: str) -> Dict:
             "details": f"❌ Error: {str(e)}",
         }
 
+
 async def test_urls_async(file_path: str) -> List[Dict]:
     """Test plusieurs URLs en parallèle avec limitation de concurrence
-    
+
     Args:
         file_path: Chemin du fichier contenant les URLs
     Returns:
@@ -112,19 +125,27 @@ async def test_urls_async(file_path: str) -> List[Dict]:
 
     # ⚡ Utilisation d'un connector TCP avec réutilisation des connexions
     connector = aiohttp.TCPConnector(limit=MAX_CONCURRENT_REQUESTS, force_close=False)
-    
+
     async with aiohttp.ClientSession(connector=connector) as session:
         # 🔀 Création des tâches avec semaphore pour limiter la concurrence
         sem = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
+
         async def bounded_test(url):
             async with sem:
                 return await test_single_url(session, url)
-        
+
         # Exécution parallèle des tests
         tasks = [bounded_test(url) for url in urls]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
     return [r for r in results if isinstance(r, dict)]
+
+
+@app.route("/health")
+def health():
+    """Endpoint de santé pour vérifier que l'application est en ligne"""
+    return jsonify({"status": "ok"}), 200
+
 
 @app.route("/")
 async def index():
@@ -132,6 +153,7 @@ async def index():
     file_path = "urls.txt"
     results = await test_urls_async(file_path)
     return render_template("index.html", results=results)
+
 
 @app.route("/refresh", methods=["GET"])
 def get_all_ingress_urls():
@@ -161,17 +183,20 @@ def get_all_ingress_urls():
 
     return redirect("/")
 
+
 @app.route("/static/favicon.ico")
 def favicon():
     return send_from_directory(
         os.path.join(app.root_path, "static"), "favicon.ico", mimetype="image/ico"
     )
 
+
 @app.route("/static/image.png")
 def logo():
     return send_from_directory(
         os.path.join(app.root_path, "static"), "image.png", mimetype="image/png"
     )
+
 
 if __name__ == "__main__":
     # 🔧 Configuration pour supporter asyncio avec Flask
@@ -180,8 +205,7 @@ if __name__ == "__main__":
     from hypercorn.config import Config
     from werkzeug.middleware.proxy_fix import ProxyFix
 
-
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
     asgi_app = WsgiToAsgi(app)
-    
+
     asyncio.run(serve(asgi_app, Config()))
