@@ -1,10 +1,10 @@
-FROM python:3.12.0-alpine
+FROM python:3.12-alpine3.20
 
 WORKDIR /app
 RUN apk update && apk upgrade
 COPY requirements.txt .
-RUN pip install --upgrade pip uv 
-RUN uv pip install --system  -r requirements.txt
+RUN pip install --upgrade pip uv
+RUN uv pip install --system -r requirements.txt
 
 COPY templates /app/templates
 COPY static /app/static
