@@ -1,0 +1,40 @@
+name: Generate Changelog
+
+on:
+  push:
+    tags:
+      - 'v*' # Déclenche sur les tags qui commencent par v
+
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Important pour avoir l'historique complet
+          
+      - name: Generate changelog
+        run: |
+          # Récupère le dernier tag
+          LATEST_TAG=$(git describe --tags --abbrev=0)
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^)
+          
+          # Génère le changelog
+          echo "# Changelog pour $LATEST_TAG" > CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "## 🚀 Nouvelles fonctionnalités" >> CHANGELOG.md
+          git log $PREVIOUS_TAG..$LATEST_TAG --pretty=format:"- %s" --grep="^feat:" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "## 🐛 Corrections de bugs" >> CHANGELOG.md
+          git log $PREVIOUS_TAG..$LATEST_TAG --pretty=format:"- %s" --grep="^fix:" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "## 📝 Autres changements" >> CHANGELOG.md
+          git log $PREVIOUS_TAG..$LATEST_TAG --pretty=format:"- %s" --grep="^(chore|docs|style|refactor|perf|test):" >> CHANGELOG.md
+          
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
