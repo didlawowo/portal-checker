@@ -8,10 +8,12 @@ import os
 import sys 
 
 app = Flask(__name__)
+log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
+
 logger.remove()  # Retire le handler par défaut
 logger.add(
     sys.stderr, 
-    level="INFO",
+    level=log_level,
     format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | {level} | {message}"
 )
 # Configuration
