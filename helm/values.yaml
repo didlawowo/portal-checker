@@ -1,18 +1,15 @@
 image:
   repository: fizzbuzz2/portal-checker
-  tag: "e031ea8"
+  tag: "6d0393c"
   pullPolicy: "IfNotPresent"
   pullSecrets:
-  - name: registry-credentials
-
+    - name: registry-credentials
 commonLabels:
-
   tags.datadoghq.com/env: home
   tags.datadoghq.com/service: portal-checker
   tags.datadoghq.com/version: v1.8.0
   # admission.datadoghq.com/enabled: "true"
 domainName: "portal.develop.oursain.net"
-
 autoscaling:
   enabled: false
 replicas: 1
@@ -21,29 +18,25 @@ strategy:
   rollingUpdate:
     maxUnavailable: 25%
     maxSurge: 25%
-
 serviceAccount:
   create: true
   name: portal-checker
   # annotations:
   #   iam.gke.io/gcp-service-account: portal-checker@gcp-project-id.iam.gserviceaccount.com
 cronJobs: []
-
 application:
   ports:
-  - name: http
-    containerPort: 5000
-    protocol: TCP
+    - name: http
+      containerPort: 5000
+      protocol: TCP
   containerName: portal-checker
   command: []
   args: []
-
 service:
   port: 80
   targetPort: 5000
   type: ClusterIP
   portName: http
-
 externalSecrets: []
 secrets:
   dotenv: []
@@ -59,9 +52,8 @@ volumeMounts: []
 # - name: portal
 #   mountPath: /app/url.txt
 env:
-- name: LOG_LEVEL
-  value: "INFO"
-
+  - name: LOG_LEVEL
+    value: "INFO"
 volumes: []
 # - name: portal
 #   configMap:
