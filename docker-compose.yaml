@@ -1,12 +1,12 @@
 
 services:
   app:
-    image: fizzbuzz2/portal-checker:v2.0.0
+    # image: fizzbuzz2/portal-checker:8a14a99
     ports:
-      - "5001:5000"
+      - "5002:5000"
     build:
       platforms:
-        - linux/amd64
+        # - linux/amd64
         - linux/arm64
       context: . 
     environment:

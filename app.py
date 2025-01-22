@@ -5,10 +5,15 @@ from kubernetes import client, config
 from loguru import logger
 from typing import Union, List, Dict
 import os
-import jsonify
+import sys 
 
 app = Flask(__name__)
-
+logger.remove()  # Retire le handler par défaut
+logger.add(
+    sys.stderr, 
+    level="INFO",
+    format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | {level} | {message}"
+)
 # Configuration
 SLACK_NOTIFICATIONS_ENABLED = (
     os.getenv("ENABLE_SLACK_NOTIFICATIONS", "false").lower() == "true"
@@ -144,7 +149,8 @@ async def test_urls_async(file_path: str) -> List[Dict]:
 @app.route("/health")
 def health():
     """Endpoint de santé pour vérifier que l'application est en ligne"""
-    return jsonify({"status": "ok"}), 200
+    logger.debug("ok")
+    return  {"status": "ok"}, 200
 
 
 @app.route("/")
