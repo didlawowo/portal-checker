@@ -1,13 +1,20 @@
 version: '3'
 
-vars:
-  IMAGE_NAME: fizzbuzz2/portal-checker:v1.7.2
-
 tasks:
   build:
     desc: Build Docker image
     cmds:
     - docker compose build --push
+
+  run:
+    desc: Run
+    cmds:
+    - docker compose up -d
+
+  shell:
+    desc: Run shell
+    cmds:
+    - pipenv shell
 
   run-dev:
     desc: Run

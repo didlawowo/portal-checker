@@ -173,8 +173,15 @@ def get_all_ingress_urls():
     v1 = client.NetworkingV1Api()
 
     ingress_list = v1.list_ingress_for_all_namespaces()
+    httproute_list = v1.list_httproute_for_all_namespaces()
 
-    urls = [rule.host for ingress in ingress_list.items for rule in ingress.spec.rules]
+    urls_httproute = [rule.host for httproute in httproute_list.items for rule in httproute.spec.hostnames]
+    urls_ingress = [rule.host for ingress in ingress_list.items for rule in ingress.spec.rules]
+    # sum
+    urls = urls_httproute + urls_ingress
+    # remove duplicates
+    urls = list(set(urls))
+    
     logger.info(f"🌟 {len(urls)} URLs found!")
     if urls is None:
         return "No ingress found!"
