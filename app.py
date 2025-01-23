@@ -10,7 +10,6 @@ import sys
 app = Flask(__name__)
 log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
 
-logger.remove()  # Retire le handler par défaut
 logger.add(
     sys.stderr, 
     level=log_level,
@@ -171,9 +170,14 @@ def get_all_ingress_urls():
     else:
         config.load_incluster_config()
     v1 = client.NetworkingV1Api()
+    v1Gateway = client.CustomObjectsApi()
 
     ingress_list = v1.list_ingress_for_all_namespaces()
-    httproute_list = v1.list_httproute_for_all_namespaces()
+    httproute_list = v1Gateway.list_namespaced_custom_object(
+        group="gateway.networking.k8s.io",
+        version="v1",
+        plural="httproutes"
+    )
 
     urls_httproute = [rule.host for httproute in httproute_list.items for rule in httproute.spec.hostnames]
     urls_ingress = [rule.host for ingress in ingress_list.items for rule in ingress.spec.rules]
