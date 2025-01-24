@@ -6,13 +6,14 @@ from loguru import logger
 from typing import Union, List, Dict
 import os
 import sys 
+from icecream import ic
 
 app = Flask(__name__)
-log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
+LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
 
 logger.add(
     sys.stderr, 
-    level=log_level,
+    level=LOG_LEVEL,
     format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | {level} | {message}"
 )
 # Configuration
@@ -96,12 +97,15 @@ async def test_single_url(session: aiohttp.ClientSession, url: str) -> Dict:
         full_url = f"https://{url}" if not url.startswith("http") else url
         async with session.get(full_url, timeout=TIMEOUT) as response:
             status_code = response.status
-
+            # logger.debug(f"Test de l'URL {url} : {status_code}")
             details = ""
             if status_code != 200 and status_code != 401:
                 details = "❌ Not Authorized or Not Found"
-
-            await send_slack_alert_async(session, url, status_code, details)
+                logger.error(f"Erreur pour l'URL {full_url}")
+                ic(response)
+                # Envoyer une alerte Slack
+                if SLACK_NOTIFICATIONS_ENABLED:
+                    await send_slack_alert_async(session, url, status_code, details)
             return {"url": url, "status": status_code, "details": details}
 
     except asyncio.TimeoutError:
@@ -169,39 +173,55 @@ def get_all_ingress_urls():
         config.load_kube_config()
     else:
         config.load_incluster_config()
+        
     v1 = client.NetworkingV1Api()
+    core = client.CoreV1Api()
     v1Gateway = client.CustomObjectsApi()
+    
+    # 📝 Liste pour stocker toutes les URLs
+    urls = []
+    
+    # 🌐 Récupération des HTTPRoutes
+    httproute_list = []
+    for ns in core.list_namespace().items:
+        # logger.info(f"Namespace: {ns.metadata.name}")
+        try:
+            httproute = v1Gateway.list_namespaced_custom_object(
+                group="gateway.networking.k8s.io",
+                version="v1beta1",
+                plural="httproutes",
+                namespace=ns.metadata.name
+            )
+            if 'items' in httproute:
+                httproute_list.extend(httproute['items'])
+        except client.exceptions.ApiException:
+            continue
 
+    # 🔄 Traitement des HTTPRoutes
+    for route in httproute_list:
+        if 'spec' in route and 'hostnames' in route['spec']:
+            urls.extend(route['spec']['hostnames'])
+
+    # 🔄 Traitement des Ingress classiques
     ingress_list = v1.list_ingress_for_all_namespaces()
-    httproute_list = v1Gateway.list_namespaced_custom_object(
-        group="gateway.networking.k8s.io",
-        version="v1",
-        plural="httproutes"
-    )
-
-    urls_httproute = [rule.host for httproute in httproute_list.items for rule in httproute.spec.hostnames]
-    urls_ingress = [rule.host for ingress in ingress_list.items for rule in ingress.spec.rules]
-    # sum
-    urls = urls_httproute + urls_ingress
-    # remove duplicates
-    urls = list(set(urls))
+    for ingress in ingress_list.items:
+        if ingress.spec.rules:
+            urls.extend(rule.host for rule in ingress.spec.rules if rule.host)
+    
+    # ⚡ Nettoyage et déduplication
+    urls = list(set(urls))  # Remove duplicates
+    urls = [url for url in urls if url and "portal-checker" not in url]
     
     logger.info(f"🌟 {len(urls)} URLs found!")
-    if urls is None:
-        return "No ingress found!"
-    # filter portal-checker url from list
-    urls = [url for url in urls if "portal-checker" not in url]
-    # write url.txt to disk
+    
+    # 💾 Sauvegarde dans le fichier
     with open("urls.txt", "w", encoding="utf-8") as file:
         file.write("\n".join(urls))
     logger.success("🌟 urls.txt updated!")
 
+    # 🔄 Redirection
     origin_url = request.referrer
-    if origin_url:
-        return redirect(origin_url)
-
-    return redirect("/")
-
+    return redirect(origin_url) if origin_url else redirect("/")
 
 @app.route("/static/favicon.ico")
 def favicon():
