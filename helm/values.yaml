@@ -3,13 +3,13 @@ image:
   tag: "1ceccf5"
   pullPolicy: "IfNotPresent"
   pullSecrets:
-    - name: registry-credentials
+  - name: registry-credentials
 commonLabels:
   tags.datadoghq.com/env: home
   tags.datadoghq.com/service: portal-checker
-  tags.datadoghq.com/version: v1.8.0
+  tags.datadoghq.com/version: v2.1.0
   # admission.datadoghq.com/enabled: "true"
-domainName: "portal.develop.oursain.net"
+domainName: "portal-checker.dc-tech.wor"
 autoscaling:
   enabled: false
 replicas: 1
@@ -26,9 +26,9 @@ serviceAccount:
 cronJobs: []
 application:
   ports:
-    - name: http
-      containerPort: 5000
-      protocol: TCP
+  - name: http
+    containerPort: 5000
+    protocol: TCP
   containerName: portal-checker
   command: []
   args: []
@@ -52,8 +52,8 @@ volumeMounts: []
 # - name: portal
 #   mountPath: /app/url.txt
 env:
-  - name: LOG_LEVEL
-    value: "INFO"
+- name: LOG_LEVEL
+  value: "INFO"
 volumes: []
 # - name: portal
 #   configMap:
