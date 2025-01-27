@@ -1,6 +1,6 @@
 image:
   repository: fizzbuzz2/portal-checker
-  tag: "6605521"
+  tag: "170d278"
   pullPolicy: "IfNotPresent"
   pullSecrets:
     - name: registry-credentials
