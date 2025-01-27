@@ -1,11 +1,20 @@
-# portal-checker
+# Portal Checker
 
-## run
+Monitor HTTP URLs by parsing ingress rules and httproute in your kubernetes cluster for availability and provide a little dashboard to show that.
 
-docker compose up
+![alt text](assets/image.png)
 
-## build
 
-```shell
- docker buildx build --platform linux/amd64,linux/arm64 -t fizzbuzz2/portal-checker:v1.5.0 . --push
- ```
+## Features
+
+- URL health monitoring
+- Response code tracking
+- Integration with Slack (beta)
+
+## Installation
+
+### Using Helm
+
+```bash
+helm install portal-checker helm \
+  --namespace monitoring \
