@@ -4,7 +4,6 @@ Monitor HTTP URLs by parsing ingress rules and httproute in your kubernetes clus
 
 ![alt text](assets/image.png)
 
-
 ## Features
 
 - URL health monitoring
@@ -18,3 +17,12 @@ Monitor HTTP URLs by parsing ingress rules and httproute in your kubernetes clus
 ```bash
 helm install portal-checker helm \
   --namespace monitoring \
+```
+
+## Build
+
+### Using Docker
+
+```shell
+docker compose build
+```

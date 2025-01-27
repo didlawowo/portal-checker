@@ -4,10 +4,10 @@ tasks:
   build:
     desc: Build Docker image
     cmds:
-    - docker compose build --push
+    - docker compose build
 
   run:
-    desc: Run
+    desc: Run container
     cmds:
     - docker compose up -d
 
@@ -17,7 +17,7 @@ tasks:
     - pipenv shell
 
   run-dev:
-    desc: Run
+    desc: Run flask
     cmds:
     - flask run
 
