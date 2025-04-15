@@ -168,7 +168,7 @@ async def test_single_url(session: aiohttp.ClientSession, url: str) -> Dict:
     """
     try:
         full_url = f"https://{url}" if not url.startswith("http") else url
-        async with session.get(full_url, timeout=TIMEOUT) as response:
+        async with session.get(full_url, timeout=TIMEOUT, ssl=ssl_context ) as response:
             status_code = response.status
             # logger.debug(f"Test de l'URL {url} : {status_code}")
             details = ""
@@ -209,7 +209,7 @@ async def test_urls_async(file_path: str) -> List[Dict]:
     # ⚡ Utilisation d'un connector TCP avec réutilisation des connexions
     connector = aiohttp.TCPConnector(limit=MAX_CONCURRENT_REQUESTS, force_close=False)
 
-    async with aiohttp.ClientSession(connector=connector, ssl=ssl_context) as session:
+    async with aiohttp.ClientSession(connector=connector ) as session:
         # 🔀 Création des tâches avec semaphore pour limiter la concurrence
         sem = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
 

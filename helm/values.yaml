@@ -7,7 +7,7 @@ image:
 commonLabels:
   tags.datadoghq.com/env: home
   tags.datadoghq.com/service: portal-checker
-  tags.datadoghq.com/version: v2.1.0
+  tags.datadoghq.com/version: v2.3.0
   # admission.datadoghq.com/enabled: "true"
 domainName: "portal-checker.dc-tech.wor"
 autoscaling:
