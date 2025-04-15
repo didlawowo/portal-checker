@@ -1,6 +1,13 @@
 version: '3'
 
 tasks:
+
+
+  bootstrap:
+    desc: start dev en
+    cmds:
+    - pipenv install && pipenv shell 
+
   build:
     desc: Build Docker image
     cmds:

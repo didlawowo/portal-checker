@@ -7,7 +7,8 @@ from typing import Union, List, Dict
 import os
 import sys 
 from icecream import ic
-
+import ssl
+import certifi
 
 
 def serialize_record(record):
@@ -83,17 +84,21 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 setup_logger(LOG_FORMAT, LOG_LEVEL)
 app = Flask(__name__)
 
-
+ssl_context = ssl.create_default_context(cafile=certifi.where())
+custom_cert_path = "./certs/zcaler_root.crt"
 # Configuration
-SLACK_NOTIFICATIONS_ENABLED = (
-    os.getenv("ENABLE_SLACK_NOTIFICATIONS", "false").lower() == "true"
-)
+SLACK_NOTIFICATIONS_ENABLED = ( os.getenv("ENABLE_SLACK_NOTIFICATIONS", "false").lower() == "true")
 SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL", "")
 TIMEOUT = int(os.getenv("REQUEST_TIMEOUT", "5"))  # ⚙️ Timeout configurable
-MAX_CONCURRENT_REQUESTS = int(
-    os.getenv("MAX_CONCURRENT_REQUESTS", "10")
-)  # 🔄 Contrôle de la concurrence
+MAX_CONCURRENT_REQUESTS = int(os.getenv("MAX_CONCURRENT_REQUESTS", "10"))  # 🔄 Contrôle de la concurrence
 
+
+
+if os.getenv('VERIFY_SSL'):
+    ssl_context = ssl.create_default_context(cafile=certifi.where())  
+    ssl_context.load_verify_locations(custom_cert_path)
+else:
+    ssl_context = False
 
 async def send_slack_alert_async(
     session: aiohttp.ClientSession,
@@ -204,7 +209,7 @@ async def test_urls_async(file_path: str) -> List[Dict]:
     # ⚡ Utilisation d'un connector TCP avec réutilisation des connexions
     connector = aiohttp.TCPConnector(limit=MAX_CONCURRENT_REQUESTS, force_close=False)
 
-    async with aiohttp.ClientSession(connector=connector) as session:
+    async with aiohttp.ClientSession(connector=connector, ssl=ssl_context) as session:
         # 🔀 Création des tâches avec semaphore pour limiter la concurrence
         sem = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
 
@@ -372,8 +377,6 @@ def get_all_ingress_urls():
 
     origin_url = request.referrer
     return redirect(origin_url) if origin_url else redirect("/")
-
-
 
 
 @app.route("/static/favicon.ico")
