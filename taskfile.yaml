@@ -40,7 +40,7 @@ tasks:
   helm-install:
     desc: Installer le chart Helm
     cmds:
-    - helm install portal-checker ./helm -n kube-infra --create-namespace
+    - helm upgrade --install portal-checker ./helm -n kube-infra --create-namespace
 
   helm-template:
     desc: Générer le template du chart Helm
