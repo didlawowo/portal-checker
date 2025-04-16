@@ -3,7 +3,7 @@ image:
   tag: "1ff21db"
   pullPolicy: "IfNotPresent"
   pullSecrets:
-    - name: registry-credentials
+  - name: registry-credentials
 commonLabels:
   tags.datadoghq.com/env: home
   tags.datadoghq.com/service: portal-checker
@@ -26,9 +26,9 @@ serviceAccount:
 cronJobs: []
 application:
   ports:
-    - name: http
-      containerPort: 5000
-      protocol: TCP
+  - name: http
+    containerPort: 5000
+    protocol: TCP
   containerName: portal-checker
   command: []
   args: []
@@ -48,16 +48,30 @@ secrets:
 configMaps:
   files: []
   dotenv: []
-volumeMounts: []
-# - name: portal
-#   mountPath: /app/url.txt
+volumeMounts:
+- name: cert-volume
+  mountPath: /app/certs
+
+volumes:
+- name: cert-volume
+  secret:
+    secretName: portal-checker-cert
+    items:
+    - key: cert.crt
+      path: cert.crt
 env:
-  - name: LOG_LEVEL
-    value: "INFO"
-volumes: []
-# - name: portal
-#   configMap:
-#     name: portal
+- name: LOG_LEVEL
+  value: "INFO"
+
+excludedUrls:
+- infisical.dc-tech.work/ss-webhook
+
+certificate:
+  enabled: true
+
+  useFile: true
+  # Chemin relatif dans le chart
+  filePath: "certs/zcaler_root.crt"
 
 ingressClassName: traefik
 podAnnotations:

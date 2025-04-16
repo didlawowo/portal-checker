@@ -2,21 +2,30 @@ version: '3'
 
 tasks:
 
-
   bootstrap:
     desc: start dev en
     cmds:
-    - pipenv install && pipenv shell 
+    - pipenv install && pipenv shell
+
+  install-deps:
+    desc: Install dependencies using pipenv
+    cmds:
+    - uv pip install -r requirements.txt
 
   build:
     desc: Build Docker image
     cmds:
     - docker compose build
 
-  run:
+  run-docker:
     desc: Run container
     cmds:
     - docker compose up -d
+
+  helm-install:
+    desc: Install helm chart
+    cmds:
+    - helm install portal-checker ./helm -n kube-infra --create-namespace
 
   shell:
     desc: Run shell

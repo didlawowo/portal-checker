@@ -1,4 +1,4 @@
-FROM python:3.12-alpine3.20
+FROM python:3.12-alpine
 
 # Créer un utilisateur non-root
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup

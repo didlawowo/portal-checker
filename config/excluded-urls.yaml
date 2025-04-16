@@ -1,0 +1,3 @@
+- monitoring.* # Exclure tous les domaines qui commencent par "monitoring."
+- "*.internal/*" # Exclure tous les sous-domaines .internal
+- infisical.dc-tech.work/ss-webhook
