@@ -12,7 +12,7 @@ async def session():
 @pytest.fixture
 def url():
     """Fixture qui fournit une URL de test."""
-    return "example.com"o
+    return "example.com"
 
 @pytest.mark.asyncio
 async def test_test_single_url():
