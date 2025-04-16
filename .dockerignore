@@ -10,3 +10,8 @@ helm/
 .vscode
 Dockerfile
 .vscode
+tests/
+certs/
+assets/
+.coverage
+ 

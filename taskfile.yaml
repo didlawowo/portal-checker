@@ -1,48 +1,68 @@
 version: '3'
 
 tasks:
-
   bootstrap:
-    desc: start dev en
+    desc: Préparer l'environnement de développement
     cmds:
-    - pipenv install && pipenv shell
+    - uv pip install -e ".[dev]"
+    - echo "✅ Environnement prêt !"
 
   install-deps:
-    desc: Install dependencies using pipenv
+    desc: Installer les dépendances via uv
     cmds:
-    - uv pip install -r requirements.txt
+    - uv pip install -e .
+
+  install-dev-deps:
+    desc: Installer les dépendances de développement via uv
+    cmds:
+    - uv pip install -e ".[dev]"
 
   build:
-    desc: Build Docker image
+    desc: Construire l'image Docker
     cmds:
     - docker compose build
 
   run-docker:
-    desc: Run container
+    desc: Démarrer le conteneur
     cmds:
     - docker compose up -d
 
+  test:
+    desc: Exécuter les tests unitaires
+    cmds:
+    - pytest
+
+  test-cov:
+    desc: Exécuter les tests avec rapport de couverture
+    cmds:
+    - pytest --cov=. tests/
+
   helm-install:
-    desc: Install helm chart
+    desc: Installer le chart Helm
     cmds:
     - helm install portal-checker ./helm -n kube-infra --create-namespace
 
-  shell:
-    desc: Run shell
-    cmds:
-    - pipenv shell
-
-  run-dev:
-    desc: Run flask
-    cmds:
-    - flask run
-
   helm-template:
-    desc: template helm chart
+    desc: Générer le template du chart Helm
     cmds:
     - helm template ./helm
 
+  run-dev:
+    desc: Lancer Flask en mode développement
+    cmds:
+    - FLASK_APP=app.py FLASK_ENV=development FLASK_DEBUG=1 flask run
+
+  run-auto-reload:
+    desc: Lancer Flask avec auto-reload
+    cmds:
+    - FLASK_APP=app.py FLASK_ENV=development FLASK_DEBUG=1 flask run --reload
+
+  clean:
+    desc: Nettoyer les fichiers temporaires
+    cmds:
+    - rm -rf __pycache__ .pytest_cache .coverage
+
 default:
-  desc: List available tasks
+  desc: Lister les tâches disponibles
   cmds:
   - task --list

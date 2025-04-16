@@ -10,6 +10,7 @@ certifi==2024.12.14
 charset-normalizer==3.4.1
 click==8.1.8
 colorama==0.4.6
+coverage==7.8.0
 durationpy==0.9
 executing==2.1.0
 Flask==3.1.0
@@ -22,6 +23,7 @@ Hypercorn==0.17.3
 hyperframe==6.0.1
 icecream==2.1.4
 idna==3.10
+iniconfig==2.1.0
 itsdangerous==2.2.0
 Jinja2==3.1.6
 kubernetes==31.0.0
@@ -29,11 +31,16 @@ loguru==0.7.3
 MarkupSafe==3.0.2
 multidict==6.1.0
 oauthlib==3.2.2
+packaging==24.2
+pluggy==1.5.0
 priority==2.0.0
 propcache==0.2.1
 pyasn1==0.6.1
 pyasn1_modules==0.4.1
 Pygments==2.19.1
+pytest==8.3.5
+pytest-asyncio==0.26.0
+pytest-cov==6.1.1
 python-dateutil==2.9.0.post0
 PyYAML==6.0.2
 requests==2.32.3

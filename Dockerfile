@@ -18,8 +18,9 @@ RUN pip install --upgrade pip uv && \
 # Copie des fichiers application
 COPY templates /app/templates
 COPY static /app/static
-COPY app.py urls.txt ./
-COPY certs ./
+COPY app.py  ./
+COPY config/ ./
+
 # Configuration des permissions
 RUN chown -R appuser:appgroup /app && \
     chmod -R 755 /app
