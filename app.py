@@ -228,7 +228,6 @@ async def test_single_url(session: aiohttp.ClientSession, data: dict) -> Dict:
             data["details"] = details  # Assurez-vous d'utiliser "details" et non "result"
             
             logger.debug(f"Test de l'URL {url} : {status_code}, data: {data}")
-         
             
             return data
             
@@ -249,6 +248,7 @@ async def test_single_url(session: aiohttp.ClientSession, data: dict) -> Dict:
             "details": f"❌ Error: {str(e)}"
         })
         return result
+
 
 async def test_urls_async(file_path: str = None) -> List[Dict]:
     """Test plusieurs URLs en parallèle avec limitation de concurrence
@@ -344,7 +344,9 @@ def _get_http_routes():
                             
                         urls_with_paths.append({
                             'hostname': hostname,
-                            'paths': paths
+                            'paths': paths,
+                            'namespace': ns.metadata.name,
+                            'name': route['metadata']['name']
                         })
                         logger.debug(f"Added HTTPRoute: {hostname} with paths: {paths}")
                         
@@ -398,10 +400,10 @@ def _get_all_urls_with_details():
 
         # Traitement des HTTPRoutes
         for route in httproute_list:
-            hostname = route['hostname']  # ⚡ Direct access car on sait que c'est présent
-            paths = route['paths']        # ⚡ Direct access car on sait que c'est présent
-            name = route.get('name', 'unknown')
-            namespace = route.get('namespace', 'unknown')
+            hostname = route['hostname']  
+            paths = route['paths']        
+            name = route['name']
+            namespace = route['namespace']
             status = route.get('status', 'unknown')
             
             if not paths:
