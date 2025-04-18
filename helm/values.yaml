@@ -1,9 +1,9 @@
 image:
   repository: fizzbuzz2/portal-checker
-  tag: "27604c3"
+  tag: "b899364"
   pullPolicy: "IfNotPresent"
   pullSecrets:
-  - name: registry-credentials
+    - name: registry-credentials
 commonLabels:
   tags.datadoghq.com/env: home
   tags.datadoghq.com/service: portal-checker
@@ -26,9 +26,9 @@ serviceAccount:
 cronJobs: []
 application:
   ports:
-  - name: http
-    containerPort: 5000
-    protocol: TCP
+    - name: http
+      containerPort: 5000
+      protocol: TCP
   containerName: portal-checker
   command: []
   args: []
@@ -49,23 +49,22 @@ configMaps:
   files: []
   dotenv: []
 volumeMounts:
-- name: cert-volume
-  mountPath: /app/certs
+  - name: cert-volume
+    mountPath: /app/certs
 volumes:
-- name: cert-volume
-  secret:
-    secretName: portal-checker-cert
-    items:
-    - key: cert.crt
-      path: cert.crt
+  - name: cert-volume
+    secret:
+      secretName: portal-checker-cert
+      items:
+        - key: cert.crt
+          path: cert.crt
 env:
-- name: LOG_LEVEL
-  value: "INFO"
+  - name: LOG_LEVEL
+    value: "INFO"
 excludedUrls:
-- infisical.dc-tech.work/ss-webhook
+  - infisical.dc-tech.work/ss-webhook
 certificate:
   enabled: false
-
   # Chemin relatif dans le chart
   filePath: "certs/zcaler_root.crt"
 ingressClassName: traefik
