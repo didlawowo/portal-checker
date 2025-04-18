@@ -1,28 +1,12 @@
-- alertmanager.dc-tech.work/
-- argo-workflow.dc-tech.work/
-- argocd.dc-tech.work/
-- echoserver.dc-tech.work/
-- goldilocks.dc-tech.work/
-- grafana.dc-tech.work/
-- helm-dashboard.dc-tech.work/
-- infisical.dc-tech.work/
-- infisical.dc-tech.work/ss-webhook
-- jaeger.dc-tech.work/
-- jwt-auth.dc-tech.work/
-- latency.dc-tech.work/latency
-- locust.dc-tech.work/
-- logs.dc-tech.work/select
-- longhorn.dc-tech.work/
-- minio-console.dc-tech.work/
-- open-webui.dc-tech.work/
-- portal-checker.dc-tech.work/
-- promptfoo.dc-tech.work/
-- pypi.dc-tech.work/
-- qdrant.dc-tech.work/
-- sonarqube.dc-tech.work/
-- traefik.dc-tech.work/api
-- traefik.dc-tech.work/dashboard
-- uptime-kuma.dc-tech.work/
-- vmagent.dc-tech.work/
-- whoami.dc-tech.work/
-- workload-scheduler.dc-tech.work/
+- info: 'Path: /, Backend: Service: portal-checker'
+  name: portal-checker
+  namespace: kube-infra
+  status: Pending
+  type: Ingress
+  url: portal-checker.dc-tech.wor/
+- info: 'Path: /, Backend: Service: helm-portal'
+  name: helm-portal
+  namespace: portal
+  status: Pending
+  type: Ingress
+  url: helm-portal.fizzbuzz2.com/

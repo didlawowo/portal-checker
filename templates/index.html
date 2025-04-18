@@ -127,7 +127,7 @@
     <div class="container">
         <div class="header">
             <h1>Portal Urls Checker</h1>
-            <span class="version-badge">v2.3.0</span>
+            <span class="version-badge">v2.4.0</span>
         </div>
 
         <div class="search-bar">
@@ -138,6 +138,9 @@
         <table>
             <thead>
                 <tr>
+                    <th>Namespace</th>
+                    <th>Name</th>
+                    <th>Kind</th>
                     <th onclick="sortTable('url')" style="width: 400px;">URL<span id="urlSort"></span></th>
                     <th onclick="sortTable('status')" style="width: 100px;">Status<span id="statusSort"></span></th>
                     <th>Details</th>
@@ -209,6 +212,9 @@
             currentData.forEach(item => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
+                    <td>${item.namespace}</td>
+                    <td>${item.name}</td>
+                    <td>${item.type}</td>
                     <td><a href="https://${item.url}" target="_blank">https://${item.url}</a></td>
                     <td>
                         <span class="status-badge ${getStatusClass(item.status)}">
@@ -225,10 +231,13 @@
         function handleSearch(event) {
             const searchTerm = event.target.value.toLowerCase();
             currentData = initialData.filter(item =>
-                item.url.toLowerCase().includes(searchTerm) ||
-                item.status.toString().includes(searchTerm) ||
-                (item.details || '').toLowerCase().includes(searchTerm)
-            );
+            item.url.toLowerCase().includes(searchTerm) ||
+            (item.status.toString() || '').includes(searchTerm) ||
+            (item.namespace || '').toLowerCase().includes(searchTerm) ||
+            (item.name || '').toLowerCase().includes(searchTerm) ||
+            (item.type || '').toLowerCase().includes(searchTerm) ||
+            (item.detail || '').toLowerCase().includes(searchTerm)
+        );
             renderTable();
         }
 

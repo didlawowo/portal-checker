@@ -93,27 +93,22 @@ URLS_FILE = os.getenv("URLS_FILE", "config/urls.yaml")
 EXCLUDED_URLS_FILE = os.getenv("EXCLUDED_URLS_FILE", "config/excluded-urls.yaml")
 
 
-
-if os.getenv('VERIFY_SSL'):
-    ssl_context = ssl.create_default_context(cafile=certifi.where())  
-    custom_cert_path = "./certs/cert.crt"
-    if os.path.exists(custom_cert_path):
-        try:
-            ssl_context.load_verify_locations(custom_cert_path)
-            logger.info(f"✅ Certificat personnalisé chargé: {custom_cert_path}")
-        except Exception as e:
-            logger.warning(f"⚠️ Impossible de charger le certificat personnalisé: {str(e)}")
-else:
-    ssl_context = False
-    logger.info("⚠️ Vérification SSL désactivée")
-    
-
-excluded_urls = set()
-
-app = Flask(__name__)
+def sslMode():
+    if os.getenv('VERIFY_SSL'):
+        ssl_context = ssl.create_default_context(cafile=certifi.where())  
+        custom_cert_path = "./certs/cert.crt"
+        if os.path.exists(custom_cert_path):
+            try:
+                ssl_context.load_verify_locations(custom_cert_path)
+                logger.info(f"✅ Certificat personnalisé chargé: {custom_cert_path}")
+            except Exception as e:
+                logger.warning(f"⚠️ Impossible de charger le certificat personnalisé: {str(e)}")
+    else:
+        ssl_context = False
+        logger.info("⚠️ Vérification SSL désactivée")
 
 def load_excluded_urls():
-    global excluded_urls
+    excluded_urls = set()
     if os.path.exists(EXCLUDED_URLS_FILE):
         try:
             with open(EXCLUDED_URLS_FILE, "r", encoding="utf-8") as file:
@@ -121,16 +116,21 @@ def load_excluded_urls():
                 if isinstance(data, list):
                     excluded_urls = set(data)
                     logger.info(f"✅ {len(excluded_urls)} URLs exclues chargées depuis YAML")
+                    return excluded_urls
                 else:
                     logger.error("❌ Format YAML incorrect pour les exclusions (doit être une liste)")
+                    exit(1)
         except Exception as e:
             logger.error(f"❌ Erreur lors du chargement des URLs exclues: {str(e)}")
     else:
         logger.info("ℹ️ Aucun fichier d'exclusion trouvé, toutes les URLs seront testées")
+        return excluded_urls
 
-# Appeler cette fonction au démarrage
-load_excluded_urls()
 
+app = Flask(__name__)
+
+excluded_urls = load_excluded_urls()
+ssl_context = sslMode()
 
 
 
@@ -191,46 +191,64 @@ async def send_slack_alert_async(
         logger.error(f"Erreur lors de l'envoi de l'alerte Slack: {str(e)}")
 
 
-async def test_single_url(session: aiohttp.ClientSession, url: str) -> Dict:
+async def test_single_url(session: aiohttp.ClientSession, data: dict) -> Dict:
     """Test une seule URL de manière asynchrone
-
+    
     Args:
         session: Session aiohttp pour réutiliser les connexions
-        url: URL à tester
+        data: Dictionnaire contenant les données de l'URL à tester
     Returns:
         Dict avec le statut du test
     """
+    url = data.get("url", "")  # Récupérer l'URL de manière sécurisée
+    
     try:
+        logger.debug(f"Test de l'URL {url}")
         full_url = f"https://{url}" if not url.startswith("http") else url
-        async with session.get(full_url, timeout=TIMEOUT, ssl=ssl_context ) as response:
+        
+        async with session.get(full_url, timeout=TIMEOUT, ssl=ssl_context) as response:
             status_code = response.status
-            # logger.debug(f"Test de l'URL {url} : {status_code}")
+            ic(response)
+            
             details = ""
             if status_code != 200 and status_code != 401:
                 details = f"❌ {response.reason}"
                 logger.error(f"Erreur pour l'URL {full_url}")
                 if SLACK_NOTIFICATIONS_ENABLED:
                     await send_slack_alert_async(session, url, status_code, details)
-            if status_code== 404:
+                    
+            if status_code == 404:
                 details = "❓ Not Found"
                 # Envoyer une alerte Slack
                 if SLACK_NOTIFICATIONS_ENABLED:
                     await send_slack_alert_async(session, url, status_code, details)
-            return {"url": url, "status": status_code, "details": details}
-
+                    
+            # Mettre à jour le dictionnaire original avec les résultats
+            data["status"] = status_code
+            data["details"] = details  # Assurez-vous d'utiliser "details" et non "result"
+            
+            logger.debug(f"Test de l'URL {url} : {status_code}, data: {data}")
+         
+            
+            return data
+            
     except asyncio.TimeoutError:
-        return {
-            "url": url,
+        # Créer un nouveau dictionnaire qui préserve les données d'origine
+        result = data.copy()
+        result.update({
             "status": 504,  # 🕒 Gateway Timeout plus approprié que 500
-            "details": "❌ Timeout Error",
-        }
+            "details": "❌ Timeout Error"
+        })
+        return result
+        
     except Exception as e:
-        return {
-            "url": url,
+        # Créer un nouveau dictionnaire qui préserve les données d'origine
+        result = data.copy()
+        result.update({
             "status": 500,
-            "details": f"❌ Error: {str(e)}",
-        }
-
+            "details": f"❌ Error: {str(e)}"
+        })
+        return result
 
 async def test_urls_async(file_path: str = None) -> List[Dict]:
     """Test plusieurs URLs en parallèle avec limitation de concurrence
@@ -248,33 +266,36 @@ async def test_urls_async(file_path: str = None) -> List[Dict]:
             with open(file_path, "r", encoding="utf-8") as file:
                 data = yaml.safe_load(file)
                 if isinstance(data, list):
-                    urls = data
+                    data_urls = data
                 else:
                     logger.error("❌ Format YAML incorrect pour les URLs (doit être une liste)")
-                    urls = []
+                    data_urls = []
         else:
             logger.error(f"❌ Fichier URLs non trouvé: {file_path}")
-            urls = []
+            data_urls = []
     except Exception as e:
         logger.error(f"❌ Erreur lors du chargement des URLs: {str(e)}")
-        urls = []
+        data_urls = []
 
     # ⚡ Utilisation d'un connector TCP avec réutilisation des connexions
     connector = aiohttp.TCPConnector(limit=MAX_CONCURRENT_REQUESTS, force_close=False)
 
     async with aiohttp.ClientSession(connector=connector) as session:
+        
         # 🔀 Création des tâches avec semaphore pour limiter la concurrence
         sem = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
 
-        async def bounded_test(url):
+        async def bounded_test(data):
             async with sem:
-                return await test_single_url(session, url)
-
+                return await test_single_url(session, data)
+        
         # Exécution parallèle des tests
-        tasks = [bounded_test(url) for url in urls]
+        tasks = [bounded_test(data) for data in data_urls]
         results = await asyncio.gather(*tasks, return_exceptions=True)
-
+ 
     return [r for r in results if isinstance(r, dict)]
+    
+    
 
 def _get_http_routes():
     """
@@ -362,12 +383,12 @@ def _is_url_excluded(url):
     return False
 
 # 📝 Liste pour stocker toutes les URLs
-def _get_all_urls_with_paths():
+def _get_all_urls_with_details():
     """
-    Récupère toutes les URLs (hostname + path) depuis les HTTPRoutes et Ingress
-    Returns: list[str] Liste des URLs complètes
+    Récupère toutes les URLs avec leurs détails depuis les HTTPRoutes et Ingress
+    Returns: list[dict] Liste des dictionnaires contenant les détails des URLs
     """
-    complete_urls = set()  # 🎯 Set pour éviter les doublons
+    url_details = []  # 📊 Liste pour stocker les dictionnaires de détails
     filtered_count = 0  # 🔍 Compteur pour les URLs filtrées
     
     try:
@@ -379,11 +400,21 @@ def _get_all_urls_with_paths():
         for route in httproute_list:
             hostname = route['hostname']  # ⚡ Direct access car on sait que c'est présent
             paths = route['paths']        # ⚡ Direct access car on sait que c'est présent
-
+            name = route.get('name', 'unknown')
+            namespace = route.get('namespace', 'unknown')
+            status = route.get('status', 'unknown')
+            
             if not paths:
                 full_url = f"{hostname}/"
                 if not _is_url_excluded(full_url):
-                    complete_urls.add(full_url)
+                    url_details.append({
+                        'name': name,
+                        'namespace': namespace,
+                        'type': 'HTTPRoute',
+                        'url': full_url,
+                        'status': status,
+                        'info': 'Default path'
+                    })
                     logger.debug(f"Added default path for {hostname}")
                 else:
                     filtered_count += 1
@@ -397,13 +428,20 @@ def _get_all_urls_with_paths():
                     
                     full_url = f"{hostname}{path_value}"
                     if not _is_url_excluded(full_url):
-                        complete_urls.add(full_url)
+                        url_details.append({
+                            'name': name,
+                            'namespace': namespace,
+                            'type': 'HTTPRoute',
+                            'url': full_url,
+                            'status': status,
+                            'info': f"Path: {path_value}"
+                        })
                         logger.debug(f"Added HTTPRoute URL: {full_url}")
                     else:
                         filtered_count += 1
                         logger.debug(f"🚫 URL exclue: {full_url}")
 
-        logger.info(f"✅ {len(complete_urls)} URLs HTTPRoute générées")
+        logger.info(f"✅ {len(url_details)} URLs HTTPRoute générées")
 
         # 🔄 Traitement des Ingress classiques
         try:
@@ -413,6 +451,10 @@ def _get_all_urls_with_paths():
             for ingress in ingress_list.items:
                 if not ingress.spec.rules:
                     continue
+                
+                ingress_name = ingress.metadata.name
+                ingress_namespace = ingress.metadata.namespace
+                ingress_status = 'Active' if ingress.status.load_balancer.ingress else 'Pending'
                     
                 for rule in ingress.spec.rules:
                     if not rule.host:
@@ -420,7 +462,15 @@ def _get_all_urls_with_paths():
                         
                     # Si pas de paths définis, on ajoute le hostname avec /
                     if not rule.http or not rule.http.paths:
-                        complete_urls.add(f"{rule.host}/")
+                        full_url = f"{rule.host}/"
+                        url_details.append({
+                            'name': ingress_name,
+                            'namespace': ingress_namespace,
+                            'type': 'Ingress',
+                            'url': full_url,
+                            'status': ingress_status,
+                            'info': 'Default path'
+                        })
                         logger.debug(f"Added default Ingress path for {rule.host}")
                         continue
                     
@@ -431,10 +481,19 @@ def _get_all_urls_with_paths():
                             path_value = f"/{path_value}"
                             
                         full_url = f"{rule.host}{path_value}"
-                        complete_urls.add(full_url)
+                        backend_info = f"Service: {path.backend.service.name}" if hasattr(path.backend, 'service') and path.backend.service else "No service"
+                        
+                        url_details.append({
+                            'name': ingress_name,
+                            'namespace': ingress_namespace,
+                            'type': 'Ingress',
+                            'url': full_url,
+                            'status': ingress_status,
+                            'info': f"Path: {path_value}, Backend: {backend_info}"
+                        })
                         logger.debug(f"Added Ingress URL: {full_url}")
                         
-            logger.info(f"✅ {len(complete_urls)} URLs totales générées")
+            logger.info(f"✅ {len(url_details)} URLs totales générées")
                         
         except client.exceptions.ApiException as e:
             logger.error(f"❌ Erreur lors de la récupération des Ingress: {e}")
@@ -443,11 +502,10 @@ def _get_all_urls_with_paths():
         logger.error(f"❌ Erreur inattendue: {e}")
         logger.exception(e)  # 📝 Log complet de l'erreur avec stack trace
         
-    return sorted(list(complete_urls))  # 📋 Retour trié pour plus de lisibilité
-
+    return url_details  # 📊 Retour de la liste de dictionnaires
 
 @app.route("/refresh", methods=["GET"])
-def get_all_ingress_urls():
+def check_all_urls():
     """Get all ingress URLs and write them to a YAML file."""
     if os.getenv("FLASK_ENV") == "development":
         config.load_kube_config()
@@ -458,11 +516,12 @@ def get_all_ingress_urls():
     os.makedirs("config", exist_ok=True)
     
     # Récupérer toutes les URLs et les sauvegarder au format YAML
-    urls = _get_all_urls_with_paths()
-    with open(URLS_FILE, "w") as f:
-        yaml.safe_dump(urls, f)
+    data_urls = _get_all_urls_with_details()
     
-    logger.info(f"✅ {len(urls)} URLs sauvegardées dans {URLS_FILE}")
+    with open(URLS_FILE, "w") as f:
+        yaml.safe_dump(data_urls, f)
+    
+    logger.info(f"✅ {len(data_urls)} URLs sauvegardées dans {URLS_FILE}")
 
     origin_url = request.referrer
     return redirect(origin_url) if origin_url else redirect("/")
@@ -493,6 +552,8 @@ async def index():
     """Point d'entrée principal avec gestion asynchrone"""
     
     results = await test_urls_async()
+    logger.info(f"✅ {len(results)} URLs testées")
+    
     return render_template("index.html", results=results)
 
 
