@@ -1,12 +1,407 @@
-- info: 'Path: /, Backend: Service: portal-checker'
-  name: portal-checker
+- annotations:
+    external-dns.alpha.kubernetes.io/hostname: echoserver.dc-tech.work
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"gateway.networking.k8s.io/v1","kind":"HTTPRoute","metadata":{"annotations":{"external-dns.alpha.kubernetes.io/hostname":"echoserver.dc-tech.work"},"labels":{"argocd.argoproj.io/instance":"raspberry-apps"},"name":"echoserver","namespace":"echoserver"},"spec":{"hostnames":["echoserver.dc-tech.work"],"parentRefs":[{"group":"gateway.networking.k8s.io","kind":"Gateway","name":"echoserver-gateway"}],"rules":[{"backendRefs":[{"group":"","kind":"Service","name":"echoserver","port":8080,"weight":1}],"filters":[{"requestHeaderModifier":{"add":[{"name":"x-post-topic","value":"GatewayAPI"}]},"type":"RequestHeaderModifier"}],"matches":[{"path":{"type":"PathPrefix","value":"/"}}]}]}}
+
+      '
+  info: 'Path: /'
+  name: echoserver
+  namespace: echoserver
+  status: unknown
+  type: HTTPRoute
+  url: echoserver.dc-tech.work/
+- annotations: &id001 {}
+  info: 'Path: /'
+  name: argocd-server
   namespace: kube-infra
-  status: Pending
+  status: unknown
+  type: HTTPRoute
+  url: argocd.dc-tech.work/
+- annotations: *id001
+  info: 'Path: /'
+  name: argocd-server
+  namespace: kube-infra
+  status: unknown
+  type: HTTPRoute
+  url: argocd.dc-tech.work/
+- annotations: &id002 {}
+  info: 'Path: /dashboard'
+  name: traefik-dashboard
+  namespace: kube-infra
+  status: unknown
+  type: HTTPRoute
+  url: traefik.dc-tech.work/dashboard
+- annotations: *id002
+  info: 'Path: /api'
+  name: traefik-dashboard
+  namespace: kube-infra
+  status: unknown
+  type: HTTPRoute
+  url: traefik.dc-tech.work/api
+- annotations: {}
+  info: 'Path: /'
+  name: jaeger
+  namespace: kube-monitoring
+  status: unknown
+  type: HTTPRoute
+  url: jaeger.dc-tech.work/
+- annotations: {}
+  info: 'Path: /latency'
+  name: latency-check
+  namespace: latency-check
+  status: unknown
+  type: HTTPRoute
+  url: latency.dc-tech.work/latency
+- annotations: {}
+  info: 'Path: /'
+  name: minio
+  namespace: minio
+  status: unknown
+  type: HTTPRoute
+  url: minio-console.dc-tech.work/
+- annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"gateway.networking.k8s.io/v1beta1","kind":"HTTPRoute","metadata":{"annotations":{},"labels":{"argocd.argoproj.io/instance":"raspberry-apps"},"name":"whoami","namespace":"whoami"},"spec":{"hostnames":["whoami.dc-tech.work"],"parentRefs":[{"group":"gateway.networking.k8s.io","kind":"Gateway","name":"traefik-gateway","namespace":"kube-infra"}],"rules":[{"backendRefs":[{"group":"","kind":"Service","name":"whoami","namespace":"whoami","port":80,"weight":1}],"matches":[{"path":{"type":"PathPrefix","value":"/"}}]}]}}
+
+      '
+  info: 'Path: /'
+  name: whoami
+  namespace: whoami
+  status: unknown
+  type: HTTPRoute
+  url: whoami.dc-tech.work/
+- annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare","traefik.ingress.kubernetes.io/router.middlewares":"kube-infra-generic-dashboard-auth@kubernetescrd"},"labels":{"app":"server","app.kubernetes.io/component":"server","app.kubernetes.io/instance":"argo-workflows","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"argo-workflows-server","app.kubernetes.io/part-of":"argo-workflows","argocd.argoproj.io/instance":"in-cluster-argo-workflows","helm.sh/chart":"argo-workflows-0.45.4"},"name":"argo-workflows-server","namespace":"argo-workflows"},"spec":{"ingressClassName":"traefik","rules":[{"host":"argo-workflow.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"argo-workflows-server","port":{"number":2746}}},"path":"/","pathType":"Prefix"}]}}],"tls":[{"hosts":["argo-workflow.dc-tech.work"],"secretName":"argo-workflow-tls"}]}}
+
+      '
+    traefik.ingress.kubernetes.io/router.middlewares: kube-infra-generic-dashboard-auth@kubernetescrd
+  info: 'Path: /, Backend: Service: argo-workflows-server'
+  labels:
+    app: server
+    app.kubernetes.io/component: server
+    app.kubernetes.io/instance: argo-workflows
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: argo-workflows-server
+    app.kubernetes.io/part-of: argo-workflows
+    argocd.argoproj.io/instance: in-cluster-argo-workflows
+    helm.sh/chart: argo-workflows-0.45.4
+  name: argo-workflows-server
+  namespace: argo-workflows
+  status: Active
   type: Ingress
-  url: portal-checker.dc-tech.wor/
-- info: 'Path: /, Backend: Service: helm-portal'
-  name: helm-portal
-  namespace: portal
-  status: Pending
+  url: argo-workflow.dc-tech.work/
+- annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    meta.helm.sh/release-name: jwt-auth
+    meta.helm.sh/release-namespace: jwt-auth
+    traefik.ingress.kubernetes.io/router.middlewares: kube-infra-generic-dashboard-auth@kubernetescrd
+  info: 'Path: /, Backend: Service: jwt-auth'
+  labels:
+    app: jwt-auth
+    app.kubernetes.io/managed-by: Helm
+  name: jwt-auth
+  namespace: jwt-auth
+  status: Active
   type: Ingress
-  url: helm-portal.fizzbuzz2.com/
+  url: jwt-auth.dc-tech.work/
+- annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app.kubernetes.io/component":"dashboard","app.kubernetes.io/instance":"goldilocks","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"goldilocks","argocd.argoproj.io/instance":"goldilocks","helm.sh/chart":"goldilocks-9.0.1"},"name":"goldilocks-dashboard","namespace":"kube-infra"},"spec":{"rules":[{"host":"goldilocks.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"goldilocks-dashboard","port":{"name":"http"}}},"path":"/","pathType":"ImplementationSpecific"}]}}],"tls":[{"hosts":["goldilocks.dc-tech.work"],"secretName":"goldilocks-tls"}]}}
+
+      '
+  info: 'Path: /, Backend: Service: goldilocks-dashboard'
+  labels:
+    app.kubernetes.io/component: dashboard
+    app.kubernetes.io/instance: goldilocks
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: goldilocks
+    argocd.argoproj.io/instance: goldilocks
+    helm.sh/chart: goldilocks-9.0.1
+  name: goldilocks-dashboard
+  namespace: kube-infra
+  status: Active
+  type: Ingress
+  url: goldilocks.dc-tech.work/
+- annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare","traefik.ingress.kubernetes.io/router.middlewares":"kube-infra-generic-dashboard-auth@kubernetescrd"},"labels":{"app.kubernetes.io/instance":"helm-dashboard","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"helm-dashboard","app.kubernetes.io/version":"2.0.3","argocd.argoproj.io/instance":"in-cluster-helm-dashboard","helm.sh/chart":"helm-dashboard-2.0.3"},"name":"helm-dashboard","namespace":"kube-infra"},"spec":{"ingressClassName":"traefik","rules":[{"host":"helm-dashboard.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"helm-dashboard","port":{"number":8080}}},"path":"/","pathType":"Prefix"}]}}],"tls":[{"hosts":["helm-dashboard.dc-tech.work"],"secretName":"helm-dashboard-tls"}]}}
+
+      '
+    traefik.ingress.kubernetes.io/router.middlewares: kube-infra-generic-dashboard-auth@kubernetescrd
+  info: 'Path: /, Backend: Service: helm-dashboard'
+  labels:
+    app.kubernetes.io/instance: helm-dashboard
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: helm-dashboard
+    app.kubernetes.io/version: 2.0.3
+    argocd.argoproj.io/instance: in-cluster-helm-dashboard
+    helm.sh/chart: helm-dashboard-2.0.3
+  name: helm-dashboard
+  namespace: kube-infra
+  status: Active
+  type: Ingress
+  url: helm-dashboard.dc-tech.work/
+- annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare","nginx.ingress.kubernetes.io/proxy-read-timeout":"3600","nginx.ingress.kubernetes.io/proxy-send-timeout":"3600","nginx.ingress.kubernetes.io/server-snippets":"location
+      / {\n  proxy_set_header Upgrade $http_upgrade;\n  proxy_http_version 1.1;\n  proxy_set_header
+      X-Forwarded-Host $http_host;\n  proxy_set_header X-Forwarded-Proto $scheme;\n  proxy_set_header
+      X-Forwarded-For $remote_addr;\n  proxy_set_header Host $host;\n  proxy_set_header
+      Connection \"upgrade\";\n  proxy_set_header X-Real-IP $remote_addr;\n  proxy_set_header
+      X-Forwarded-For $proxy_add_x_forwarded_for;\n  proxy_set_header   Upgrade $http_upgrade;\n  proxy_cache_bypass
+      $http_upgrade;\n}\n"},"labels":{"app.kubernetes.io/instance":"uptime-kuma","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"uptime-kuma","app.kubernetes.io/version":"1.23.13","argocd.argoproj.io/instance":"uptime-kuma","helm.sh/chart":"uptime-kuma-2.21.2"},"name":"uptime-kuma","namespace":"kube-monitoring"},"spec":{"ingressClassName":"traefik","rules":[{"host":"uptime-kuma.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"uptime-kuma","port":{"number":3001}}},"path":"/","pathType":"ImplementationSpecific"}]}}],"tls":[{"hosts":["uptime-kuma.dc-tech.work"],"secretName":"uptime-kuma-tls"}]}}
+
+      '
+    nginx.ingress.kubernetes.io/proxy-read-timeout: '3600'
+    nginx.ingress.kubernetes.io/proxy-send-timeout: '3600'
+    nginx.ingress.kubernetes.io/server-snippets: "location / {\n  proxy_set_header\
+      \ Upgrade $http_upgrade;\n  proxy_http_version 1.1;\n  proxy_set_header X-Forwarded-Host\
+      \ $http_host;\n  proxy_set_header X-Forwarded-Proto $scheme;\n  proxy_set_header\
+      \ X-Forwarded-For $remote_addr;\n  proxy_set_header Host $host;\n  proxy_set_header\
+      \ Connection \"upgrade\";\n  proxy_set_header X-Real-IP $remote_addr;\n  proxy_set_header\
+      \ X-Forwarded-For $proxy_add_x_forwarded_for;\n  proxy_set_header   Upgrade\
+      \ $http_upgrade;\n  proxy_cache_bypass $http_upgrade;\n}\n"
+  info: 'Path: /, Backend: Service: uptime-kuma'
+  labels:
+    app.kubernetes.io/instance: uptime-kuma
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: uptime-kuma
+    app.kubernetes.io/version: 1.23.13
+    argocd.argoproj.io/instance: uptime-kuma
+    helm.sh/chart: uptime-kuma-2.21.2
+  name: uptime-kuma
+  namespace: kube-monitoring
+  status: Active
+  type: Ingress
+  url: uptime-kuma.dc-tech.work/
+- annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app":"server","app.kubernetes.io/instance":"victorialogs","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"victoria-logs-single","app.kubernetes.io/version":"v1.18.0-victorialogs","argocd.argoproj.io/instance":"in-cluster-victorialogs","helm.sh/chart":"victoria-logs-single-0.9.5"},"name":"victorialogs-victoria-logs-single-server","namespace":"kube-monitoring"},"spec":{"ingressClassName":"traefik","rules":[{"host":"logs.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"victorialogs-victoria-logs-single-server","port":{"name":"http"}}},"path":"/select","pathType":"Prefix"}]}}],"tls":[{"hosts":["logs.dc-tech.work"],"secretName":"vmselect-ingress-tls"}]}}
+
+      '
+  info: 'Path: /select, Backend: Service: victorialogs-victoria-logs-single-server'
+  labels:
+    app: server
+    app.kubernetes.io/instance: victorialogs
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: victoria-logs-single
+    app.kubernetes.io/version: v1.18.0-victorialogs
+    argocd.argoproj.io/instance: in-cluster-victorialogs
+    helm.sh/chart: victoria-logs-single-0.9.5
+  name: victorialogs-victoria-logs-single-server
+  namespace: kube-monitoring
+  status: Active
+  type: Ingress
+  url: logs.dc-tech.work/select
+- annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+  info: 'Path: /, Backend: Service: vm-stack-grafana'
+  labels:
+    app.kubernetes.io/instance: vm-stack
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/version: 11.3.1
+    argocd.argoproj.io/instance: victoriametrics
+    helm.sh/chart: grafana-8.6.4
+  name: vm-stack-grafana
+  namespace: kube-monitoring
+  status: Active
+  type: Ingress
+  url: grafana.dc-tech.work/
+- annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+  info: 'Path: /, Backend: Service: vmagent-vm-k8s-stack'
+  labels:
+    app: vmagent
+    app.kubernetes.io/instance: vm-stack
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: victoria-metrics-k8s-stack
+    app.kubernetes.io/version: v1.108.1
+    argocd.argoproj.io/instance: victoriametrics
+    helm.sh/chart: victoria-metrics-k8s-stack-0.33.0
+  name: vmagent-vm-k8s-stack
+  namespace: kube-monitoring
+  status: Active
+  type: Ingress
+  url: vmagent.dc-tech.work/
+- annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+  info: 'Path: /, Backend: Service: vmalertmanager-vm-k8s-stack'
+  labels:
+    app: alertmanager
+    app.kubernetes.io/instance: vm-stack
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: victoria-metrics-k8s-stack
+    app.kubernetes.io/version: v1.108.1
+    argocd.argoproj.io/instance: victoriametrics
+    helm.sh/chart: victoria-metrics-k8s-stack-0.33.0
+  name: vmalertmanager-vm-k8s-stack
+  namespace: kube-monitoring
+  status: Active
+  type: Ingress
+  url: alertmanager.dc-tech.work/
+- annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app":"longhorn-ingress","app.kubernetes.io/instance":"longhorn","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"longhorn","app.kubernetes.io/version":"v1.8.0","argocd.argoproj.io/instance":"in-cluster-longhorn","helm.sh/chart":"longhorn-1.8.0"},"name":"longhorn-ingress","namespace":"longhorn-system"},"spec":{"ingressClassName":"traefik","rules":[{"host":"longhorn.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"longhorn-frontend","port":{"number":80}}},"path":"/","pathType":"ImplementationSpecific"}]}}],"tls":[{"hosts":["longhorn.dc-tech.work"],"secretName":"longhorn-tls"}]}}
+
+      '
+  info: 'Path: /, Backend: Service: longhorn-frontend'
+  labels:
+    app: longhorn-ingress
+    app.kubernetes.io/instance: longhorn
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: longhorn
+    app.kubernetes.io/version: v1.8.0
+    argocd.argoproj.io/instance: in-cluster-longhorn
+    helm.sh/chart: longhorn-1.8.0
+  name: longhorn-ingress
+  namespace: longhorn-system
+  status: Active
+  type: Ingress
+  url: longhorn.dc-tech.work/
+- annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app.kubernetes.io/instance":"locust","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"locust","app.kubernetes.io/version":"2.15.1","argocd.argoproj.io/instance":"locust","helm.sh/chart":"locust-0.31.6","load_test":"my-loadtest"},"name":"locust","namespace":"mlops"},"spec":{"ingressClassName":"traefik","rules":[{"host":"locust.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"locust","port":{"number":8089}}},"path":"/","pathType":"ImplementationSpecific"}]}}],"tls":[{"hosts":["locust.dc-tech.work"],"secretName":"locust-tls"}]}}
+
+      '
+  info: 'Path: /, Backend: Service: locust'
+  labels:
+    app.kubernetes.io/instance: locust
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: locust
+    app.kubernetes.io/version: 2.15.1
+    argocd.argoproj.io/instance: locust
+    helm.sh/chart: locust-0.31.6
+    load_test: my-loadtest
+  name: locust
+  namespace: mlops
+  status: Active
+  type: Ingress
+  url: locust.dc-tech.work/
+- annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app.kubernetes.io/component":"open-webui","app.kubernetes.io/instance":"ollama-webui","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/version":"0.4.7","argocd.argoproj.io/instance":"ollama-webui","helm.sh/chart":"open-webui-4.0.6"},"name":"open-webui","namespace":"mlops"},"spec":{"ingressClassName":"traefik","rules":[{"host":"open-webui.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"open-webui","port":{"name":"http"}}},"path":"/","pathType":"Prefix"}]}}],"tls":[{"hosts":["open-webui.dc-tech.work"],"secretName":"ollama-webui-tls"}]}}
+
+      '
+  info: 'Path: /, Backend: Service: open-webui'
+  labels:
+    app.kubernetes.io/component: open-webui
+    app.kubernetes.io/instance: ollama-webui
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/version: 0.4.7
+    argocd.argoproj.io/instance: ollama-webui
+    helm.sh/chart: open-webui-4.0.6
+  name: open-webui
+  namespace: mlops
+  status: Active
+  type: Ingress
+  url: open-webui.dc-tech.work/
+- annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app":"promptfoo","argocd.argoproj.io/instance":"promptfoo"},"name":"promptfoo","namespace":"mlops"},"spec":{"ingressClassName":"traefik","rules":[{"host":"promptfoo.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"promptfoo","port":{"number":3000}}},"path":"/","pathType":"Prefix"}]}}],"tls":[{"hosts":["promptfoo.dc-tech.work"],"secretName":"promptfoo-certificate-tls"}]}}
+
+      '
+  info: 'Path: /, Backend: Service: promptfoo'
+  labels:
+    app: promptfoo
+    argocd.argoproj.io/instance: promptfoo
+  name: promptfoo
+  namespace: mlops
+  status: Active
+  type: Ingress
+  url: promptfoo.dc-tech.work/
+- annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+  info: 'Path: /, Backend: Service: pypiserver-service'
+  labels:
+    argocd.argoproj.io/instance: testing-apps
+  name: pypiserver-ingress
+  namespace: mlops
+  status: Active
+  type: Ingress
+  url: pypi.dc-tech.work/
+- annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app":"qdrant","app.kubernetes.io/instance":"qdrant","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"qdrant","app.kubernetes.io/version":"v1.13.3","argocd.argoproj.io/instance":"qdrant","helm.sh/chart":"qdrant-1.13.3"},"name":"qdrant","namespace":"mlops"},"spec":{"ingressClassName":"traefik","rules":[{"host":"qdrant.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"qdrant","port":{"number":6333}}},"path":"/","pathType":"Prefix"}]}}],"tls":[{"hosts":["qdrant.dc-tech.work"],"secretName":"qdrant-tls"}]}}
+
+      '
+  info: 'Path: /, Backend: Service: qdrant'
+  labels:
+    app: qdrant
+    app.kubernetes.io/instance: qdrant
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: qdrant
+    app.kubernetes.io/version: v1.13.3
+    argocd.argoproj.io/instance: qdrant
+    helm.sh/chart: qdrant-1.13.3
+  name: qdrant
+  namespace: mlops
+  status: Active
+  type: Ingress
+  url: qdrant.dc-tech.work/
+- annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare","traefik.ingress.kubernetes.io/router.middlewares":"kube-infra-generic-dashboard-auth@kubernetescrd"},"labels":{"app":"portal-checker","argocd.argoproj.io/instance":"in-cluster-portal-checker"},"name":"portal-checker","namespace":"portal-checker"},"spec":{"ingressClassName":"traefik","rules":[{"host":"portal-checker.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"portal-checker","port":{"number":80}}},"path":"/","pathType":"Prefix"}]}}],"tls":[{"hosts":["portal-checker.dc-tech.work"],"secretName":"portal-checker-certificate-tls"}]}}
+
+      '
+    traefik.ingress.kubernetes.io/router.middlewares: kube-infra-generic-dashboard-auth@kubernetescrd
+  info: 'Path: /, Backend: Service: portal-checker'
+  labels:
+    app: portal-checker
+    argocd.argoproj.io/instance: in-cluster-portal-checker
+  name: portal-checker
+  namespace: portal-checker
+  status: Active
+  type: Ingress
+  url: portal-checker.dc-tech.work/
+- annotations: &id003
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"argocd.argoproj.io/instance":"infisical"},"name":"infisical-ingress","namespace":"security"},"spec":{"ingressClassName":"traefik","rules":[{"host":"infisical.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"infisical-infisical-standalone-infisical","port":{"number":8080}}},"path":"/","pathType":"Prefix"},{"backend":{"service":{"name":"infisical-infisical-standalone-infisical","port":{"number":8080}}},"path":"/ss-webhook","pathType":"Exact"}]}}],"tls":[{"hosts":["infisical.dc-tech.work"],"secretName":"infisical-tls"}]}}
+
+      '
+  info: 'Path: /, Backend: Service: infisical-infisical-standalone-infisical'
+  labels: &id004
+    argocd.argoproj.io/instance: infisical
+  name: infisical-ingress
+  namespace: security
+  status: Active
+  type: Ingress
+  url: infisical.dc-tech.work/
+- annotations: *id003
+  info: 'Path: /ss-webhook, Backend: Service: infisical-infisical-standalone-infisical'
+  labels: *id004
+  name: infisical-ingress
+  namespace: security
+  status: Active
+  type: Ingress
+  url: infisical.dc-tech.work/ss-webhook
+- annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app":"sonarqube","argocd.argoproj.io/instance":"sonarqube","chart":"sonarqube-10.8.1","heritage":"Helm","release":"sonarqube"},"name":"sonarqube-sonarqube","namespace":"sonarqube"},"spec":{"ingressClassName":"traefik","rules":[{"host":"sonarqube.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"sonarqube-sonarqube","port":{"number":9000}}},"path":"/","pathType":"ImplementationSpecific"}]}}],"tls":[{"hosts":["sonarqube.dc-tech.work"],"secretName":"sonarqube-certificate-tls"}]}}
+
+      '
+  info: 'Path: /, Backend: Service: sonarqube-sonarqube'
+  labels:
+    app: sonarqube
+    argocd.argoproj.io/instance: sonarqube
+    chart: sonarqube-10.8.1
+    heritage: Helm
+    release: sonarqube
+  name: sonarqube-sonarqube
+  namespace: sonarqube
+  status: Active
+  type: Ingress
+  url: sonarqube.dc-tech.work/
+- annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare","traefik.ingress.kubernetes.io/router.middlewares":"kube-infra-generic-dashboard-auth@kubernetescrd"},"labels":{"app":"workload-scheduler","argocd.argoproj.io/instance":"in-cluster-workload-scheduler"},"name":"workload-scheduler","namespace":"workload-scheduler"},"spec":{"ingressClassName":"traefik","rules":[{"host":"workload-scheduler.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"workload-scheduler","port":{"number":80}}},"path":"/","pathType":"Prefix"}]}}],"tls":[{"hosts":["workload-scheduler.dc-tech.work"],"secretName":"workload-scheduler-certificate-tls"}]}}
+
+      '
+    traefik.ingress.kubernetes.io/router.middlewares: kube-infra-generic-dashboard-auth@kubernetescrd
+  info: 'Path: /, Backend: Service: workload-scheduler'
+  labels:
+    app: workload-scheduler
+    argocd.argoproj.io/instance: in-cluster-workload-scheduler
+  name: workload-scheduler
+  namespace: workload-scheduler
+  status: Active
+  type: Ingress
+  url: workload-scheduler.dc-tech.work/

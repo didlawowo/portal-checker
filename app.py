@@ -315,7 +315,7 @@ def _get_http_routes():
                     group="gateway.networking.k8s.io",
                     version="v1beta1",
                     plural="httproutes",
-                    namespace=ns.metadata.name
+                    namespace=ns.metadata.name,
                 )
                 
                 # ✨ Traitement de chaque HTTPRoute
@@ -346,6 +346,7 @@ def _get_http_routes():
                             'hostname': hostname,
                             'paths': paths,
                             'namespace': ns.metadata.name,
+                            'annotations': route['metadata'].get('annotations', {}),
                             'name': route['metadata']['name']
                         })
                         logger.debug(f"Added HTTPRoute: {hostname} with paths: {paths}")
@@ -404,6 +405,7 @@ def _get_all_urls_with_details():
             paths = route['paths']        
             name = route['name']
             namespace = route['namespace']
+            annotations = route['annotations']
             status = route.get('status', 'unknown')
             
             if not paths:
@@ -412,6 +414,7 @@ def _get_all_urls_with_details():
                     url_details.append({
                         'name': name,
                         'namespace': namespace,
+                        'annotations': annotations,   
                         'type': 'HTTPRoute',
                         'url': full_url,
                         'status': status,
@@ -434,6 +437,7 @@ def _get_all_urls_with_details():
                             'name': name,
                             'namespace': namespace,
                             'type': 'HTTPRoute',
+                            'annotations': annotations,
                             'url': full_url,
                             'status': status,
                             'info': f"Path: {path_value}"
@@ -457,6 +461,8 @@ def _get_all_urls_with_details():
                 ingress_name = ingress.metadata.name
                 ingress_namespace = ingress.metadata.namespace
                 ingress_status = 'Active' if ingress.status.load_balancer.ingress else 'Pending'
+                annotations = ingress.metadata.annotations or {}
+                labels = ingress.metadata.labels or {}
                     
                 for rule in ingress.spec.rules:
                     if not rule.host:
@@ -468,6 +474,8 @@ def _get_all_urls_with_details():
                         url_details.append({
                             'name': ingress_name,
                             'namespace': ingress_namespace,
+                            'annotations': annotations,
+                            'labels': labels,
                             'type': 'Ingress',
                             'url': full_url,
                             'status': ingress_status,
@@ -488,6 +496,8 @@ def _get_all_urls_with_details():
                         url_details.append({
                             'name': ingress_name,
                             'namespace': ingress_namespace,
+                            'annotations': annotations,
+                            'labels': labels,
                             'type': 'Ingress',
                             'url': full_url,
                             'status': ingress_status,

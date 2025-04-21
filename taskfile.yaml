@@ -12,7 +12,7 @@ tasks:
     cmds:
     - uv pip install -e .
 
-  start-venv:
+  shell:
     desc: Démarrer l'environnement virtuel
     cmds:
     - pipenv shell

@@ -8,6 +8,47 @@
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <title>Portal Urls Checker</title>
     <style>
+        /* Ajoutez ces styles à votre balise <style> */
+
+.toggle-btn {
+    background: #4b5563;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-bottom: 5px;
+}
+
+.toggle-btn:hover {
+    background: #374151;
+}
+
+.annotations-content {
+    background: #f9fafb;
+    border-radius: 4px;
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #e5e7eb;
+    max-height: 300px;
+    overflow-y: auto;
+    font-size: 13px;
+}
+
+.annotations-preview {
+    color: #6b7280;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.annotations-content pre {
+    background: #f3f4f6;
+    padding: 8px;
+    border-radius: 4px;
+    overflow-x: auto;
+    margin: 0;
+}
         body {
             font-family: system-ui, -apple-system, sans-serif;
             background-color: #f3f4f6;
@@ -140,7 +181,9 @@
                 <tr>
                     <th>Namespace</th>
                     <th>Name</th>
-                    <th>Kind</th>
+                    <th>Type</th>
+                    <th>Annotations</th>
+                    <!-- <th>Labels</th> -->
                     <th onclick="sortTable('url')" style="width: 400px;">URL<span id="urlSort"></span></th>
                     <th onclick="sortTable('status')" style="width: 100px;">Status<span id="statusSort"></span></th>
                     <th>Details</th>
@@ -199,10 +242,10 @@
         function getStatusEmoji(status) {
             if (status === 200) return '✅';
             if (status === 401) return '⚠️';
-            if (status === 404) return '❓';  
+            if (status === 404) return '❓';
             return '❌';
         }
-        
+
 
         // Fonction pour rendre le tableau
         function renderTable() {
@@ -215,29 +258,90 @@
                     <td>${item.namespace}</td>
                     <td>${item.name}</td>
                     <td>${item.type}</td>
+                    <td>${formatAnnotations(item.annotations)}</td>
                     <td><a href="https://${item.url}" target="_blank">https://${item.url}</a></td>
                     <td>
                         <span class="status-badge ${getStatusClass(item.status)}">
                             ${getStatusEmoji(item.status)} ${item.status}
                         </span>
                     </td>
-                    <td>${item.details || ''}</td>
-                `;
+                    <td>${item.details || ''}</td> `;
                 tbody.appendChild(tr);
             });
         }
+        // Remplacez la fonction formatAnnotations par celle-ci
+        function formatAnnotations(annotations) {
+            if (!annotations) return '';
+
+            try {
+                // Si c'est déjà une chaîne, essayez de l'analyser comme JSON
+                if (typeof annotations === 'string') {
+                    try {
+                        annotations = JSON.parse(annotations);
+                    } catch (e) {
+                        // Si ce n'est pas du JSON valide, retournez tel quel
+                        return annotations;
+                    }
+                }
+
+                // Générer un ID unique pour ce bloc d'annotations
+                const toggleId = 'toggle-' + Math.random().toString(36).substr(2, 9);
+
+                // Créer une liste formatée des annotations avec toggle
+                let result = `
+            <div>
+                <button class="toggle-btn" onclick="toggleAnnotations('${toggleId}')">
+                    Afficher/Masquer
+                </button>
+                <div id="${toggleId}" class="annotations-content" style="display: none;">
+                    <ul style="list-style-type: none; padding-left: 0;">
+        `;
+
+                for (const [key, value] of Object.entries(annotations)) {
+                    let displayValue = value;
+                    if (typeof value === 'object') {
+                        displayValue = JSON.stringify(value, null, 2);
+                    }
+                    result += `<li><strong>${key}</strong>: ${displayValue}</li>`;
+                }
+
+                result += `
+                    </ul>
+                </div>
+                <div class="annotations-preview">
+                    ${Object.keys(annotations).length} annotations
+                </div>
+            </div>
+        `;
+                return result;
+            } catch (error) {
+                // En cas d'erreur, retourner le texte brut ou un message d'erreur
+                return String(annotations);
+            }
+        }
+
+        // Ajoutez cette fonction pour le toggle
+        function toggleAnnotations(id) {
+            const content = document.getElementById(id);
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+            } else {
+                content.style.display = 'none';
+            }
+        }
+
 
         // Fonction de recherche
         function handleSearch(event) {
             const searchTerm = event.target.value.toLowerCase();
             currentData = initialData.filter(item =>
-            item.url.toLowerCase().includes(searchTerm) ||
-            (item.status.toString() || '').includes(searchTerm) ||
-            (item.namespace || '').toLowerCase().includes(searchTerm) ||
-            (item.name || '').toLowerCase().includes(searchTerm) ||
-            (item.type || '').toLowerCase().includes(searchTerm) ||
-            (item.detail || '').toLowerCase().includes(searchTerm)
-        );
+                item.url.toLowerCase().includes(searchTerm) ||
+                (item.status.toString() || '').includes(searchTerm) ||
+                (item.namespace || '').toLowerCase().includes(searchTerm) ||
+                (item.name || '').toLowerCase().includes(searchTerm) ||
+                (item.type || '').toLowerCase().includes(searchTerm) ||
+                (item.annotations || '').toLowerCase().includes(searchTerm)
+            );
             renderTable();
         }
 
