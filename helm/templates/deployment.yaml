@@ -19,12 +19,6 @@ spec:
         {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-        {{- range $dotenv := .Values.secrets.dotenv }}
-        checksum/secret-{{ $dotenv.name }}: {{ (tpl ($.Files.Glob $dotenv.path).AsSecrets $ ) | sha256sum }}
-        {{- end }}
-        {{- range $dotenv := .Values.configMaps.dotenv }}
-        checksum/config-{{ $dotenv.name }}: {{ (tpl ($.Files.Glob $dotenv.path).AsConfig $ ) | sha256sum }}
-        {{- end }}
     spec:
       serviceAccountName: {{ default (include "application.fullname" .) .Values.serviceAccount.name }}
       {{- with .Values.initContainers }}
