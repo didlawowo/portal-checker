@@ -1,6 +1,6 @@
 image:
   repository: fizzbuzz2/portal-checker
-  tag: "0a25427"
+  tag: "179f1bc"
   pullPolicy: "IfNotPresent"
   pullSecrets: []
 commonLabels:
@@ -20,7 +20,6 @@ strategy:
 serviceAccount:
   create: true
   name: portal-checker
- 
 application:
   ports:
     - name: http
@@ -34,7 +33,6 @@ service:
   targetPort: 5000
   type: ClusterIP
   portName: http
- 
 volumeMounts: []
 volumes: []
 env:
