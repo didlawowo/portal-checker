@@ -10,45 +10,46 @@
     <style>
         /* Ajoutez ces styles à votre balise <style> */
 
-.toggle-btn {
-    background: #4b5563;
-    color: white;
-    border: none;
-    padding: 4px 8px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 12px;
-    margin-bottom: 5px;
-}
+        .toggle-btn {
+            background: #4b5563;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
 
-.toggle-btn:hover {
-    background: #374151;
-}
+        .toggle-btn:hover {
+            background: #374151;
+        }
 
-.annotations-content {
-    background: #f9fafb;
-    border-radius: 4px;
-    padding: 8px;
-    margin-top: 5px;
-    border: 1px solid #e5e7eb;
-    max-height: 300px;
-    overflow-y: auto;
-    font-size: 13px;
-}
+        .annotations-content {
+            background: #f9fafb;
+            border-radius: 4px;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #e5e7eb;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 13px;
+        }
 
-.annotations-preview {
-    color: #6b7280;
-    font-size: 12px;
-    margin-top: 4px;
-}
+        .annotations-preview {
+            color: #6b7280;
+            font-size: 12px;
+            margin-top: 4px;
+        }
 
-.annotations-content pre {
-    background: #f3f4f6;
-    padding: 8px;
-    border-radius: 4px;
-    overflow-x: auto;
-    margin: 0;
-}
+        .annotations-content pre {
+            background: #f3f4f6;
+            padding: 8px;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin: 0;
+        }
+
         body {
             font-family: system-ui, -apple-system, sans-serif;
             background-color: #f3f4f6;
@@ -340,7 +341,7 @@
                 (item.namespace || '').toLowerCase().includes(searchTerm) ||
                 (item.name || '').toLowerCase().includes(searchTerm) ||
                 (item.type || '').toLowerCase().includes(searchTerm) ||
-                (item.annotations || '').toLowerCase().includes(searchTerm)
+                (item.annotations ? JSON.stringify(item.annotations).toLowerCase().includes(searchTerm) : false)
             );
             renderTable();
         }
