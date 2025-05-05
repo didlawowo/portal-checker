@@ -1,6 +1,6 @@
 image:
   repository: fizzbuzz2/portal-checker
-  tag: "179f1bc"
+  tag: "48ca895"
   pullPolicy: "IfNotPresent"
   pullSecrets: []
 commonLabels:
