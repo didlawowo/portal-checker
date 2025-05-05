@@ -94,18 +94,20 @@ EXCLUDED_URLS_FILE = os.getenv("EXCLUDED_URLS_FILE", "config/excluded-urls.yaml"
 
 
 def sslMode():
-    if os.getenv('VERIFY_SSL'):
+    if os.getenv('CUSTOM_CERT') :
         ssl_context = ssl.create_default_context(cafile=certifi.where())  
-        custom_cert_path = "./certs/cert.crt"
+        custom_cert_path = os.getenv('CUSTOM_CERT', 'certs/')
+        ic(custom_cert_path)
         if os.path.exists(custom_cert_path):
             try:
-                ssl_context.load_verify_locations(custom_cert_path)
-                logger.info(f"✅ Certificat personnalisé chargé: {custom_cert_path}")
+                ssl_context.load_verify_locations(capath=custom_cert_path)
+                logger.info(f"✅ Certificat personnalisé chargé: {len(ssl_context.get_ca_certs())}")
             except Exception as e:
                 logger.warning(f"⚠️ Impossible de charger le certificat personnalisé: {str(e)}")
     else:
         ssl_context = False
-        logger.info("⚠️ Vérification SSL désactivée")
+        logger.info("⚠️  Vérification SSL désactivée")
+        return False
 
 def load_excluded_urls():
     excluded_urls = set()
@@ -208,7 +210,7 @@ async def test_single_url(session: aiohttp.ClientSession, data: dict) -> Dict:
         
         async with session.get(full_url, timeout=TIMEOUT, ssl=ssl_context) as response:
             status_code = response.status
-            ic(response)
+            # ic(response)
             
             details = ""
             if status_code != 200 and status_code != 401:
