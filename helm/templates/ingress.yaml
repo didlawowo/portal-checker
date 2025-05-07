@@ -5,14 +5,12 @@ metadata:
   namespace: {{ $.Release.Namespace | quote }}
   labels:
     app: {{ $.Release.Name | quote }}
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    traefik.ingress.kubernetes.io/router.middlewares: kube-infra-generic-dashboard-auth@kubernetescrd
+  annotations: {{ $.Values.ingress.annotations | toYaml | nindent 4 }}
 
 spec:
-  ingressClassName: {{ $.Values.ingressClassName }}
+  ingressClassName: {{ $.Values.ingress.ingressClassName }}
   rules:
-  - host: {{ $.Values.domainName }}
+  - host: {{ $.Values.ingress.domainName }}
     http:
       paths:
       - path: /
@@ -24,5 +22,5 @@ spec:
                 number: {{ $.Values.service.port }}
   tls:
   - hosts:
-    - {{ $.Values.domainName }}
+    - {{ $.Values.ingress.domainName }}
     secretName: {{ $.Release.Name }}-certificate-tls

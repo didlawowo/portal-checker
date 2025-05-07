@@ -5,7 +5,11 @@ image:
   pullSecrets: []
 commonLabels:
   env: prod
-domainName: "portal-checker.example.com"
+
+ingress:
+  annotations: {}
+  ingressClassName: traefik
+  domainName: "portal-checker.example.com"
 autoscaling:
   enabled: false
 replicas: 1
@@ -19,9 +23,9 @@ serviceAccount:
   name: portal-checker
 application:
   ports:
-    - name: http
-      containerPort: 5000
-      protocol: TCP
+  - name: http
+    containerPort: 5000
+    protocol: TCP
   containerName: portal-checker
   command: []
   args: []
@@ -33,8 +37,8 @@ service:
 volumeMounts: []
 volumes: []
 env:
-  - name: LOG_LEVEL
-    value: "INFO"
+- name: LOG_LEVEL
+  value: "INFO"
 excludedUrls: []
 certificate:
   enabled: false
