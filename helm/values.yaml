@@ -1,11 +1,10 @@
 image:
   repository: fizzbuzz2/portal-checker
-  tag: "48ca895"
+  tag: "59075b0"
   pullPolicy: "IfNotPresent"
   pullSecrets: []
 commonLabels:
   env: prod
-
 domainName: "portal-checker.example.com"
 autoscaling:
   enabled: false
@@ -20,9 +19,9 @@ serviceAccount:
   name: portal-checker
 application:
   ports:
-  - name: http
-    containerPort: 5000
-    protocol: TCP
+    - name: http
+      containerPort: 5000
+      protocol: TCP
   containerName: portal-checker
   command: []
   args: []
@@ -34,8 +33,8 @@ service:
 volumeMounts: []
 volumes: []
 env:
-- name: LOG_LEVEL
-  value: "INFO"
+  - name: LOG_LEVEL
+    value: "INFO"
 excludedUrls: []
 certificate:
   enabled: false
