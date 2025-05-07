@@ -1,11 +1,10 @@
 image:
   repository: fizzbuzz2/portal-checker
-  tag: "59075b0"
+  tag: "893991e"
   pullPolicy: "IfNotPresent"
   pullSecrets: []
 commonLabels:
   env: prod
-
 ingress:
   annotations: {}
   ingressClassName: traefik
@@ -23,9 +22,9 @@ serviceAccount:
   name: portal-checker
 application:
   ports:
-  - name: http
-    containerPort: 5000
-    protocol: TCP
+    - name: http
+      containerPort: 5000
+      protocol: TCP
   containerName: portal-checker
   command: []
   args: []
@@ -37,8 +36,8 @@ service:
 volumeMounts: []
 volumes: []
 env:
-- name: LOG_LEVEL
-  value: "INFO"
+  - name: LOG_LEVEL
+    value: "INFO"
 excludedUrls: []
 certificate:
   enabled: false
