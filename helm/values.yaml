@@ -4,10 +4,8 @@ image:
   pullPolicy: "IfNotPresent"
   pullSecrets: []
 commonLabels:
-  tags.datadoghq.com/env: home
-  tags.datadoghq.com/service: portal-checker
-  tags.datadoghq.com/version: v2.4.0
-  # admission.datadoghq.com/enabled: "true"
+  env: prod
+
 domainName: "portal-checker.example.com"
 autoscaling:
   enabled: false
@@ -22,9 +20,9 @@ serviceAccount:
   name: portal-checker
 application:
   ports:
-    - name: http
-      containerPort: 5000
-      protocol: TCP
+  - name: http
+    containerPort: 5000
+    protocol: TCP
   containerName: portal-checker
   command: []
   args: []
@@ -36,16 +34,15 @@ service:
 volumeMounts: []
 volumes: []
 env:
-  - name: LOG_LEVEL
-    value: "INFO"
+- name: LOG_LEVEL
+  value: "INFO"
 excludedUrls: []
 certificate:
   enabled: false
   # Chemin relatif dans le chart
   # filePath: "certs/zcaler_root.crt"
-ingressClassName: traefik
-podAnnotations:
-  ad.datadoghq.com/portal-checker.logs: '[{"source":"python", "service":"portal-checker}]'
+ingressClassName: nginx
+podAnnotations: {}
 initContainers: []
 resources:
   limits:
