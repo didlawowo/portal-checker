@@ -24,7 +24,7 @@ dependencies = [
     "colorama==0.4.6",
     "durationpy==0.9",
     "executing==2.1.0",
-    "Flask==3.1.0",
+    "Flask==3.1.1",
     "frozenlist==1.5.0",
     "google-auth==2.37.0",
     "h11==0.14.0",
