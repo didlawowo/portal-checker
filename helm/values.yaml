@@ -1,6 +1,6 @@
 image:
   repository: fizzbuzz2/portal-checker
-  tag: "62e5869"
+  tag: "5e024bb"
   pullPolicy: "IfNotPresent"
   pullSecrets: []
 commonLabels:
@@ -44,7 +44,6 @@ certificate:
   enabled: false
   # Chemin relatif dans le chart
   # filePath: "certs/zcaler_root.crt"
- 
 podAnnotations: {}
 initContainers: []
 resources:
