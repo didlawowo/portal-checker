@@ -44,7 +44,7 @@ certificate:
   enabled: false
   # Chemin relatif dans le chart
   # filePath: "certs/zcaler_root.crt"
-ingressClassName: nginx
+ 
 podAnnotations: {}
 initContainers: []
 resources:
