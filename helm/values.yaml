@@ -6,6 +6,7 @@ image:
 commonLabels:
   env: prod
 ingress:
+  enabled: true
   annotations: {}
   ingressClassName: traefik
   domainName: "portal-checker.example.com"
