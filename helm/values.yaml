@@ -10,6 +10,8 @@ ingress:
   annotations: {}
   ingressClassName: traefik
   domainName: "portal-checker.example.com"
+  tls:
+    enabled: true
 autoscaling:
   enabled: false
 replicas: 1

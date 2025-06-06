@@ -18,10 +18,7 @@ tasks:
     cmds:
     - uv pip install -e .
 
-  shell:
-    desc: Démarrer l'environnement virtuel
-    cmds:
-    - pipenv shell
+ 
 
   install-dev-deps:
     desc: Installer les dépendances de développement via uv

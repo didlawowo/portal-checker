@@ -21,8 +21,10 @@ spec:
               name:  {{ template "application.fullname" . }}
               port:
                 number: {{ $.Values.service.port }}
+  {{- if .Values.ingress.tls.enabled }}
   tls:
   - hosts:
     - {{ $.Values.ingress.domainName }}
     secretName: {{ $.Release.Name }}-certificate-tls
     {{- end }}
+  {{- end }}
