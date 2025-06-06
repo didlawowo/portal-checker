@@ -1,6 +1,6 @@
 image:
   repository: fizzbuzz2/portal-checker
-  tag: "840dcf3"
+  tag: "caa4126"
   pullPolicy: "IfNotPresent"
   pullSecrets: []
 commonLabels:
