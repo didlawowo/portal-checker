@@ -9,7 +9,7 @@ metadata:
 spec:
   selector: {{- include "application.selectorLabels" . | nindent 4 }}
   ports:
-  - name: {{ .Values.service.portName }}
+  - name: {{ .Values.service.portName | default "http" }}
     targetPort: {{ .Values.service.targetPort }}
     port: {{ .Values.service.port }}
     protocol: TCP
