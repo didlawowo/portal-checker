@@ -21,6 +21,9 @@ spec:
         {{- end }}
     spec:
       serviceAccountName: {{ default (include "application.fullname" .) .Values.serviceAccount.name }}
+      {{- with .Values.securityContext }}
+      securityContext: {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- with .Values.initContainers }}
       initContainers: {{- toYaml . | nindent 8 }}
       {{- end }}
