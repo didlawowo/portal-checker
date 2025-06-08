@@ -1,0 +1,120 @@
+# Default values for portal-checker
+
+# Application configuration
+application:
+  containerName: portal-checker
+  ports:
+    - containerPort: 5000
+      name: http
+      protocol: TCP
+
+# Image configuration
+image:
+  repository: portal-checker
+  tag: "2.5.1"
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+# Deployment configuration
+replicas: 1
+
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 5000
+  portName: http
+
+# Service Account
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+# Ingress configuration
+ingress:
+  enabled: false
+  ingressClassName: nginx
+  domainName: portal-checker.example.com
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /
+  tls:
+    enabled: false
+
+# Resources
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# Environment variables
+env:
+  - name: FLASK_ENV
+    value: production
+  - name: PORT
+    value: "5000"
+
+envFrom: []
+
+# Volume mounts and volumes
+volumeMounts:
+  - name: config-volume
+    mountPath: /app/config
+    readOnly: true
+
+volumes:
+  - name: config-volume
+    configMap:
+      name: portal-checker-config
+
+# Probes
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 5000
+    scheme: HTTP
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 5000
+    scheme: HTTP
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 3
+  successThreshold: 1
+  failureThreshold: 3
+
+# Autoscaling (disabled by default)
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+
+# Pod annotations
+podAnnotations: {}
+
+# Node selector
+nodeSelector: {}
+
+# Init containers
+initContainers: []
+
+# Excluded URLs for the application
+excludedUrls: []
