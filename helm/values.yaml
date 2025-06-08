@@ -4,13 +4,13 @@
 application:
   containerName: portal-checker
   ports:
-  - containerPort: 5000
-    name: http
-    protocol: TCP
+    - containerPort: 5000
+      name: http
+      protocol: TCP
 # Image configuration
 image:
   repository: fizzbuzz2/portal-checker
-  tag: "c1eb987"
+  tag: "0f6f173"
   pullPolicy: IfNotPresent
   pullSecrets: []
 # Deployment configuration
@@ -49,20 +49,20 @@ resources:
     memory: 128Mi
 # Environment variables
 env:
-- name: FLASK_ENV
-  value: production
-- name: PORT
-  value: "5000"
+  - name: FLASK_ENV
+    value: production
+  - name: PORT
+    value: "5000"
 envFrom: []
 # Volume mounts and volumes
 volumeMounts:
-- name: config-volume
-  mountPath: /app/config
-  readOnly: true
+  - name: config-volume
+    mountPath: /app/config
+    readOnly: true
 volumes:
-- name: config-volume
-  configMap:
-    name: portal-checker-config
+  - name: config-volume
+    configMap:
+      name: portal-checker-config
 # Probes
 livenessProbe:
   httpGet:
