@@ -4,7 +4,7 @@ metadata:
   name: {{ template "application.fullname" . }}-config
   labels: {{- include "application.labels" . | nindent 4 }}
 data:
-  excluded-urls.txt: |
+  excluded-urls.yaml: |
     {{- if .Values.excludedUrls }}
     {{- range .Values.excludedUrls }}
     {{ . }}
