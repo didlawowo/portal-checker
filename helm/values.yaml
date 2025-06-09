@@ -10,7 +10,7 @@ application:
 # Image configuration
 image:
   repository: fizzbuzz2/portal-checker
-  tag: "4ee6b7a"
+  tag: "a80fd89"
   pullPolicy: IfNotPresent
   pullSecrets: []
 # Deployment configuration
@@ -116,11 +116,11 @@ certificate:
   filePath: ""
 # DNS configuration
 dnsConfig: {}
-  # nameservers:
-  #   - "8.8.8.8"
-  #   - "1.1.1.1"
-  # searches:
-  #   - "example.com"
-  # options:
-  #   - name: ndots
-  #     value: "2"
+# nameservers:
+#   - "8.8.8.8"
+#   - "1.1.1.1"
+# searches:
+#   - "example.com"
+# options:
+#   - name: ndots
+#     value: "2"
