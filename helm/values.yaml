@@ -10,7 +10,7 @@ application:
 # Image configuration
 image:
   repository: fizzbuzz2/portal-checker
-  tag: "a80fd89"
+  tag: "8faecae"
   pullPolicy: IfNotPresent
   pullSecrets: []
 # Deployment configuration
