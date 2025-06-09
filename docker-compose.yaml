@@ -14,3 +14,5 @@ services:
     environment:
       - FLASK_APP=app.py
       - FLASK_ENV=development
+      - EXCLUDED_URLS_FILE=excluded-urls.yaml
+      - URLS_FILE=urls.yaml
