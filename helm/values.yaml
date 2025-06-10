@@ -54,7 +54,7 @@ env:
   - name: PORT
     value: "5000"
   - name: URLS_FILE
-    value: "/app/config/urls.yaml" # 🔧 Cohérence avec config/
+    value: "/app/data/urls.yaml" # 🔧 Use writable data directory
   - name: EXCLUDED_URLS_FILE
     value: "/app/config/excluded-urls.yaml" # ✅ Variable explicite
 envFrom: []
