@@ -30,12 +30,14 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       
-      - name: Get repository name and SHA
+      - name: Get repository name, SHA and app version
         id: vars
         run: |
           REPO_NAME=$(echo "${{ github.repository }}" | cut -d'/' -f2 | tr '[:upper:]' '[:lower:]')
           echo "REPO_NAME=${REPO_NAME}" >> $GITHUB_OUTPUT
           echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          APP_VERSION=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+          echo "APP_VERSION=${APP_VERSION}" >> $GITHUB_OUTPUT
       
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
@@ -44,7 +46,10 @@ jobs:
           provenance: mode=max
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/${{ steps.vars.outputs.REPO_NAME }}:${{ steps.vars.outputs.SHORT_SHA }}
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/${{ steps.vars.outputs.REPO_NAME }}:${{ steps.vars.outputs.APP_VERSION }}
+            ${{ secrets.DOCKER_USERNAME }}/${{ steps.vars.outputs.REPO_NAME }}:${{ steps.vars.outputs.SHORT_SHA }}
+            ${{ secrets.DOCKER_USERNAME }}/${{ steps.vars.outputs.REPO_NAME }}:latest
           context: .
           cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/${{ steps.vars.outputs.REPO_NAME }}:buildcache
           cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/${{ steps.vars.outputs.REPO_NAME }}:buildcache,mode=max
@@ -52,7 +57,7 @@ jobs:
       - name: Update Helm values
         run: |
           yq e -i '.image.repository = "${{ secrets.DOCKER_USERNAME }}/${{ steps.vars.outputs.REPO_NAME }}"' helm/values.yaml
-          yq e -i '.image.tag = "${{ steps.vars.outputs.SHORT_SHA }}"' helm/values.yaml
+          yq e -i '.image.tag = "${{ steps.vars.outputs.APP_VERSION }}"' helm/values.yaml
       
       - name: Configure Git
         run: |
@@ -62,5 +67,5 @@ jobs:
       - name: Commit and push changes
         run: |
           git add helm/values.yaml
-          git commit -m "chore: update image tag to ${{ steps.vars.outputs.SHORT_SHA }}"
+          git commit -m "chore: update image tag to ${{ steps.vars.outputs.APP_VERSION }}"
           git push

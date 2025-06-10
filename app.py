@@ -6,6 +6,7 @@ from typing import Dict, List, Union
 
 import aiohttp
 import certifi
+import tomllib
 import yaml
 from flask import (
     Flask,
@@ -45,6 +46,16 @@ def serialize_record(record):
         subset["exception"] = record["exception"]
 
     return subset
+
+
+def get_app_version() -> str:
+    """Get application version from pyproject.toml"""
+    try:
+        with open("pyproject.toml", "rb") as f:
+            data = tomllib.load(f)
+            return data.get("project", {}).get("version", "unknown")
+    except (FileNotFoundError, tomllib.TOMLDecodeError):
+        return "unknown"
 
 
 def setup_logger(log_format: str = "text", log_level: str = "INFO") -> None:
@@ -99,8 +110,18 @@ MAX_CONCURRENT_REQUESTS = int(
     os.getenv("MAX_CONCURRENT_REQUESTS", "10")
 )  # 🔄 Contrôle de la concurrence
 
-URLS_FILE = os.getenv("URLS_FILE", "config/urls.yaml" if os.getenv("FLASK_ENV") == "development" else "/app/config/urls.yaml")
-EXCLUDED_URLS_FILE = os.getenv("EXCLUDED_URLS_FILE", "config/excluded-urls.yaml" if os.getenv("FLASK_ENV") == "development" else "/app/config/excluded-urls.yaml")
+URLS_FILE = os.getenv(
+    "URLS_FILE",
+    "config/urls.yaml"
+    if os.getenv("FLASK_ENV") == "development"
+    else "/app/config/urls.yaml",
+)
+EXCLUDED_URLS_FILE = os.getenv(
+    "EXCLUDED_URLS_FILE",
+    "config/excluded-urls.yaml"
+    if os.getenv("FLASK_ENV") == "development"
+    else "/app/config/excluded-urls.yaml",
+)
 
 # 🚀 Auto-refresh activé par défaut
 AUTO_REFRESH_ON_START = os.getenv("AUTO_REFRESH_ON_START", "true").lower() == "true"
@@ -259,7 +280,9 @@ async def test_single_url(session: aiohttp.ClientSession, data: dict) -> Dict:
         logger.debug(f"Test de l'URL {url}")
         full_url = f"https://{url}" if not url.startswith("http") else url
 
-        async with session.get(full_url, timeout=aiohttp.ClientTimeout(total=TIMEOUT), ssl=ssl_context) as response:
+        async with session.get(
+            full_url, timeout=aiohttp.ClientTimeout(total=TIMEOUT), ssl=ssl_context
+        ) as response:
             status_code = response.status
             # ic(response)
 
@@ -345,9 +368,13 @@ async def test_urls_async(file_path: str = None) -> List[Dict]:
                 return await test_single_url(session, data)
 
         # Filtrer les URLs exclues avant de lancer les tests
-        filtered_data_urls = [data for data in data_urls if not _is_url_excluded(data.get('url', ''))]
-        logger.info(f"🔍 {len(data_urls)} URLs totales, {len(data_urls) - len(filtered_data_urls)} exclues, {len(filtered_data_urls)} à tester")
-        
+        filtered_data_urls = [
+            data for data in data_urls if not _is_url_excluded(data.get("url", ""))
+        ]
+        logger.info(
+            f"🔍 {len(data_urls)} URLs totales, {len(data_urls) - len(filtered_data_urls)} exclues, {len(filtered_data_urls)} à tester"
+        )
+
         # Exécution parallèle des tests
         tasks = [bounded_test(data) for data in filtered_data_urls]
         results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -469,10 +496,11 @@ def _is_url_excluded(url, annotations=None):
         ):
             logger.debug(f"🚫 URL exclue (wildcard): {url}")
             return True
-            
+
         # Vérification avec patterns complexes (*.internal/*)
         if "*" in normalized_excluded:
             import fnmatch
+
             if fnmatch.fnmatch(normalized_url, normalized_excluded):
                 logger.debug(f"🚫 URL exclue (pattern): {url}")
                 return True
@@ -756,7 +784,7 @@ async def index():
     results = await test_urls_async()
     logger.info(f"✅ {len(results)} URLs testées")
 
-    return render_template("index.html", results=results)
+    return render_template("index.html", results=results, version=get_app_version())
 
 
 # 🚀 Initialisation au démarrage
