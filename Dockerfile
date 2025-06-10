@@ -1,7 +1,7 @@
 FROM python:3.12-alpine
 
 # Créer un utilisateur non-root
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN addgroup -g 1000 appgroup && adduser -u 1000 -G appgroup -D appuser
 
 # # Installation des dépendances système
 # RUN apk update && apk upgrade && \
@@ -21,9 +21,10 @@ COPY static /app/static
 COPY app.py  ./
 COPY config/ ./
 
-# Configuration des permissions
-RUN chown -R appuser:appgroup /app && \
-    chmod -R 755 /app
+RUN  chown -R appuser:appgroup /app && \
+    chmod -R 755 /app && \
+    chmod 777 /app/config  # Donner des permissions d'écriture au répertoire config
+
 
 # Passage à l'utilisateur non-root
 USER appuser
