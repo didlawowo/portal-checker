@@ -36,17 +36,6 @@
   status: unknown
   type: HTTPRoute
   url: jaeger.dc-tech.work/
-- annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"gateway.networking.k8s.io/v1","kind":"HTTPRoute","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"argocd.argoproj.io/instance":"testing-apps"},"name":"latency-check","namespace":"latency-check"},"spec":{"hostnames":["latency.dc-tech.work"],"parentRefs":[{"group":"gateway.networking.k8s.io","kind":"Gateway","name":"latency-check-gateway","namespace":"latency-check"}],"rules":[{"backendRefs":[{"group":"","kind":"Service","name":"latency-check","namespace":"latency-check","port":8080,"weight":1}],"filters":[{"extensionRef":{"group":"traefik.io","kind":"Middleware","name":"latency-check"},"type":"ExtensionRef"},{"type":"URLRewrite","urlRewrite":{"path":{"replacePrefixMatch":"/","type":"ReplacePrefixMatch"}}}],"matches":[{"path":{"type":"PathPrefix","value":"/latency"}}]}]}}
-
-      '
-  info: 'Path: /latency'
-  name: latency-check
-  namespace: latency-check
-  status: unknown
-  type: HTTPRoute
-  url: latency.dc-tech.work/latency
 - annotations: {}
   info: 'Path: /'
   name: minio
@@ -93,8 +82,7 @@
   type: Ingress
   url: argo-workflow.dc-tech.work/
 - annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app.kubernetes.io/component":"dashboard","app.kubernetes.io/instance":"goldilocks","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"goldilocks","argocd.argoproj.io/instance":"goldilocks","helm.sh/chart":"goldilocks-9.0.1"},"name":"goldilocks-dashboard","namespace":"kube-infra"},"spec":{"rules":[{"host":"goldilocks.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"goldilocks-dashboard","port":{"name":"http"}}},"path":"/","pathType":"ImplementationSpecific"}]}}],"tls":[{"hosts":["goldilocks.dc-tech.work"],"secretName":"goldilocks-tls"}]}}
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{},"labels":{"app.kubernetes.io/component":"dashboard","app.kubernetes.io/instance":"goldilocks","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"goldilocks","argocd.argoproj.io/instance":"goldilocks","helm.sh/chart":"goldilocks-9.0.1"},"name":"goldilocks-dashboard","namespace":"kube-infra"},"spec":{"rules":[{"host":"goldilocks.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"goldilocks-dashboard","port":{"name":"http"}}},"path":"/","pathType":"ImplementationSpecific"}]}}],"tls":[{"hosts":["goldilocks.dc-tech.work"],"secretName":"wildcard-dc-tls"}]}}
 
       '
   info: 'Path: /, Backend: Service: goldilocks-dashboard'
@@ -112,10 +100,9 @@
   url: goldilocks.dc-tech.work/
 - annotations:
     cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare","traefik.ingress.kubernetes.io/router.middlewares":"kube-infra-generic-dashboard-auth@kubernetescrd"},"labels":{"app.kubernetes.io/instance":"helm-dashboard","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"helm-dashboard","app.kubernetes.io/version":"2.0.3","argocd.argoproj.io/instance":"in-cluster-helm-dashboard","helm.sh/chart":"helm-dashboard-2.0.3"},"name":"helm-dashboard","namespace":"kube-infra"},"spec":{"ingressClassName":"traefik","rules":[{"host":"helm-dashboard.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"helm-dashboard","port":{"number":8080}}},"path":"/","pathType":"Prefix"}]}}],"tls":[{"hosts":["helm-dashboard.dc-tech.work"],"secretName":"helm-dashboard-tls"}]}}
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app.kubernetes.io/instance":"helm-dashboard","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"helm-dashboard","app.kubernetes.io/version":"2.0.3","argocd.argoproj.io/instance":"in-cluster-helm-dashboard","helm.sh/chart":"helm-dashboard-2.0.3"},"name":"helm-dashboard","namespace":"kube-infra"},"spec":{"ingressClassName":"traefik","rules":[{"host":"helm-dashboard.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"helm-dashboard","port":{"number":8080}}},"path":"/","pathType":"Prefix"}]}}],"tls":[{"hosts":["helm-dashboard.dc-tech.work"],"secretName":"helm-dashboard-tls"}]}}
 
       '
-    traefik.ingress.kubernetes.io/router.middlewares: kube-infra-generic-dashboard-auth@kubernetescrd
   info: 'Path: /, Backend: Service: helm-dashboard'
   labels:
     app.kubernetes.io/instance: helm-dashboard
@@ -129,6 +116,38 @@
   status: Active
   type: Ingress
   url: helm-dashboard.dc-tech.work/
+- annotations:
+    meta.helm.sh/release-name: helm-portal
+    meta.helm.sh/release-namespace: kube-infra
+  info: 'Path: /, Backend: Service: helm-portal'
+  labels:
+    app: helm-portal
+    app.kubernetes.io/managed-by: Helm
+  name: helm-portal
+  namespace: kube-infra
+  status: Active
+  type: Ingress
+  url: helm-portal.dc-tech.work/
+- annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare","traefik.ingress.kubernetes.io/router.middlewares":"kube-infra-generic-dashboard-auth@kubernetescrd"},"labels":{"app.kubernetes.io/instance":"pod-monitor","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"k8s-dashboard","app.kubernetes.io/part-of":"k8s-dashboard","app.kubernetes.io/version":"2.0.0","argocd.argoproj.io/instance":"pod-monitor","helm.sh/chart":"k8s-dashboard-1.1.0"},"name":"pod-monitor","namespace":"kube-infra"},"spec":{"ingressClassName":"traefik","rules":[{"host":"pod-monitor.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"pod-monitor-k8s-dashboard","port":{"number":80}}},"path":"/","pathType":"Prefix"}]}}],"tls":[{"hosts":["pod-monitor.dc-tech.work"],"secretName":"pod-monitor-certificate-tls"}]}}
+
+      '
+    traefik.ingress.kubernetes.io/router.middlewares: kube-infra-generic-dashboard-auth@kubernetescrd
+  info: 'Path: /, Backend: Service: pod-monitor-k8s-dashboard'
+  labels:
+    app.kubernetes.io/instance: pod-monitor
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: k8s-dashboard
+    app.kubernetes.io/part-of: k8s-dashboard
+    app.kubernetes.io/version: 2.0.0
+    argocd.argoproj.io/instance: pod-monitor
+    helm.sh/chart: k8s-dashboard-1.1.0
+  name: pod-monitor
+  namespace: kube-infra
+  status: Active
+  type: Ingress
+  url: pod-monitor.dc-tech.work/
 - annotations:
     cert-manager.io/cluster-issuer: letsencrypt-cloudflare
     kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare","nginx.ingress.kubernetes.io/proxy-read-timeout":"3600","nginx.ingress.kubernetes.io/proxy-send-timeout":"3600","nginx.ingress.kubernetes.io/server-snippets":"location
@@ -162,6 +181,25 @@
   status: Active
   type: Ingress
   url: uptime-kuma.dc-tech.work/
+- annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app":"server","app.kubernetes.io/instance":"victorialogs","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"victoria-logs-single","app.kubernetes.io/version":"v1.23.3-victorialogs","argocd.argoproj.io/instance":"in-cluster-victorialogs","helm.sh/chart":"victoria-logs-single-0.11.2"},"name":"victorialogs-victoria-logs-single-server","namespace":"kube-monitoring"},"spec":{"ingressClassName":"traefik","rules":[{"host":"logs.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"victorialogs-victoria-logs-single-server","port":{"name":"http"}}},"path":"/","pathType":"Prefix"}]}}],"tls":[{"hosts":["logs.dc-tech.work"],"secretName":"victorialogs-ingress-tls"}]}}
+
+      '
+  info: 'Path: /, Backend: Service: victorialogs-victoria-logs-single-server'
+  labels:
+    app: server
+    app.kubernetes.io/instance: victorialogs
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: victoria-logs-single
+    app.kubernetes.io/version: v1.23.3-victorialogs
+    argocd.argoproj.io/instance: in-cluster-victorialogs
+    helm.sh/chart: victoria-logs-single-0.11.2
+  name: victorialogs-victoria-logs-single-server
+  namespace: kube-monitoring
+  status: Active
+  type: Ingress
+  url: logs.dc-tech.work/
 - annotations:
     cert-manager.io/cluster-issuer: letsencrypt-cloudflare
   info: 'Path: /, Backend: Service: vm-stack-grafana'
@@ -210,10 +248,24 @@
   url: alertmanager.dc-tech.work/
 - annotations:
     cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare","traefik.ingress.kubernetes.io/router.middlewares":"kube-infra-generic-dashboard-auth@kubernetescrd"},"labels":{"app":"longhorn-ingress","app.kubernetes.io/instance":"longhorn","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"longhorn","app.kubernetes.io/version":"v1.8.1","argocd.argoproj.io/instance":"longhorn","helm.sh/chart":"longhorn-1.8.1"},"name":"longhorn-ingress","namespace":"longhorn-system"},"spec":{"ingressClassName":"traefik","rules":[{"host":"longhorn.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"longhorn-frontend","port":{"number":80}}},"path":"/","pathType":"ImplementationSpecific"}]}}],"tls":[{"hosts":["longhorn.dc-tech.work"],"secretName":"longhorn-tls"}]}}
+    meta.helm.sh/release-name: cilium
+    meta.helm.sh/release-namespace: kube-system
+  info: 'Path: /, Backend: Service: hubble-ui'
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: hubble-ui
+    app.kubernetes.io/part-of: cilium
+    k8s-app: hubble-ui
+  name: hubble-ui
+  namespace: kube-system
+  status: Active
+  type: Ingress
+  url: hubble.dc-tech.work/
+- annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app":"longhorn-ingress","app.kubernetes.io/instance":"longhorn","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"longhorn","app.kubernetes.io/version":"v1.8.1","argocd.argoproj.io/instance":"longhorn","helm.sh/chart":"longhorn-1.8.1"},"name":"longhorn-ingress","namespace":"longhorn-system"},"spec":{"ingressClassName":"traefik","rules":[{"host":"longhorn.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"longhorn-frontend","port":{"number":80}}},"path":"/","pathType":"ImplementationSpecific"}]}}],"tls":[{"hosts":["longhorn.dc-tech.work"],"secretName":"longhorn-tls"}]}}
 
       '
-    traefik.ingress.kubernetes.io/router.middlewares: kube-infra-generic-dashboard-auth@kubernetescrd
   info: 'Path: /, Backend: Service: longhorn-frontend'
   labels:
     app: longhorn-ingress
@@ -228,6 +280,42 @@
   status: Active
   type: Ingress
   url: longhorn.dc-tech.work/
+- annotations:
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{},"labels":{"app.kubernetes.io/instance":"litellm-proxy","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"litellm","app.kubernetes.io/version":"v1.50.2","argocd.argoproj.io/instance":"litellm-proxy","helm.sh/chart":"litellm-helm-0.4.3"},"name":"litellm-proxy","namespace":"mlops"},"spec":{"ingressClassName":"traefik","rules":[{"host":"litellm.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"litellm-proxy","port":{"number":4000}}},"path":"/","pathType":"ImplementationSpecific"}]}}],"tls":[{"hosts":["litellm.dc-tech.work"],"secretName":"wildcard-dc-tls"}]}}
+
+      '
+  info: 'Path: /, Backend: Service: litellm-proxy'
+  labels:
+    app.kubernetes.io/instance: litellm-proxy
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: litellm
+    app.kubernetes.io/version: v1.50.2
+    argocd.argoproj.io/instance: litellm-proxy
+    helm.sh/chart: litellm-helm-0.4.3
+  name: litellm-proxy
+  namespace: mlops
+  status: Active
+  type: Ingress
+  url: litellm.dc-tech.work/
+- annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app.kubernetes.io/instance":"locust","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"locust","app.kubernetes.io/version":"2.32.2","argocd.argoproj.io/instance":"locust","helm.sh/chart":"locust-0.32.6","load_test":"my-loadtest"},"name":"locust","namespace":"mlops"},"spec":{"ingressClassName":"traefik","rules":[{"host":"locust.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"locust","port":{"number":8089}}},"path":"/","pathType":"ImplementationSpecific"}]}}],"tls":[{"hosts":["locust.dc-tech.work"],"secretName":"locust-tls"}]}}
+
+      '
+  info: 'Path: /, Backend: Service: locust'
+  labels:
+    app.kubernetes.io/instance: locust
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: locust
+    app.kubernetes.io/version: 2.32.2
+    argocd.argoproj.io/instance: locust
+    helm.sh/chart: locust-0.32.6
+    load_test: my-loadtest
+  name: locust
+  namespace: mlops
+  status: Active
+  type: Ingress
+  url: locust.dc-tech.work/
 - annotations:
     cert-manager.io/cluster-issuer: letsencrypt-cloudflare
     kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app.kubernetes.io/component":"open-webui","app.kubernetes.io/instance":"ollama-webui","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/version":"0.6.5","argocd.argoproj.io/instance":"ollama-webui","helm.sh/chart":"open-webui-6.5.0"},"name":"open-webui","namespace":"mlops"},"spec":{"ingressClassName":"traefik","rules":[{"host":"open-webui.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"open-webui","port":{"name":"http"}}},"path":"/","pathType":"Prefix"}]}}],"tls":[{"hosts":["open-webui.dc-tech.work"],"secretName":"ollama-webui-tls"}]}}
@@ -248,42 +336,7 @@
   url: open-webui.dc-tech.work/
 - annotations:
     cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare","traefik.ingress.kubernetes.io/router.middlewares":"kube-infra-generic-dashboard-auth@kubernetescrd"},"labels":{"app":"portal-checker","argocd.argoproj.io/instance":"in-cluster-portal-checker"},"name":"portal-checker","namespace":"portal-checker"},"spec":{"ingressClassName":"traefik","rules":[{"host":"portal-checker.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"portal-checker","port":{"number":80}}},"path":"/","pathType":"Prefix"}]}}],"tls":[{"hosts":["portal-checker.dc-tech.work"],"secretName":"portal-checker-certificate-tls"}]}}
-
-      '
-    traefik.ingress.kubernetes.io/router.middlewares: kube-infra-generic-dashboard-auth@kubernetescrd
-  info: 'Path: /, Backend: Service: portal-checker'
-  labels:
-    app: portal-checker
-    argocd.argoproj.io/instance: in-cluster-portal-checker
-  name: portal-checker
-  namespace: portal-checker
-  status: Active
-  type: Ingress
-  url: portal-checker.dc-tech.work/
-- annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app.kubernetes.io/component":"core","app.kubernetes.io/instance":"falco","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"falcosidekick","app.kubernetes.io/part-of":"falcosidekick","app.kubernetes.io/version":"2.31.1","argocd.argoproj.io/instance":"in-cluster-falco","helm.sh/chart":"falcosidekick-0.9.11"},"name":"falco-falcosidekick","namespace":"security"},"spec":{"ingressClassName":"traefik","rules":[{"host":"falcosidekick.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"falco-falcosidekick","port":{"name":"http"}}},"path":"/","pathType":"ImplementationSpecific"}]}}]}}
-
-      '
-  info: 'Path: /, Backend: Service: falco-falcosidekick'
-  labels:
-    app.kubernetes.io/component: core
-    app.kubernetes.io/instance: falco
-    app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/name: falcosidekick
-    app.kubernetes.io/part-of: falcosidekick
-    app.kubernetes.io/version: 2.31.1
-    argocd.argoproj.io/instance: in-cluster-falco
-    helm.sh/chart: falcosidekick-0.9.11
-  name: falco-falcosidekick
-  namespace: security
-  status: Active
-  type: Ingress
-  url: falcosidekick.dc-tech.work/
-- annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app.kubernetes.io/component":"ui","app.kubernetes.io/instance":"falco","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"falcosidekick","app.kubernetes.io/part-of":"falcosidekick","app.kubernetes.io/version":"2.31.1","argocd.argoproj.io/instance":"in-cluster-falco","helm.sh/chart":"falcosidekick-0.9.11"},"name":"falco-falcosidekick-ui","namespace":"security"},"spec":{"ingressClassName":"traefik","rules":[{"host":"falco.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"falco-falcosidekick-ui","port":{"name":"http"}}},"path":"/","pathType":"ImplementationSpecific"}]}}],"tls":[{"hosts":["falco.dc-tech.work"],"secretName":"falco-tls"}]}}
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app.kubernetes.io/component":"ui","app.kubernetes.io/instance":"falco","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"falcosidekick","app.kubernetes.io/part-of":"falcosidekick","app.kubernetes.io/version":"2.31.1","argocd.argoproj.io/instance":"in-cluster-falco","helm.sh/chart":"falcosidekick-0.9.11"},"name":"falco-falcosidekick-ui","namespace":"security"},"spec":{"ingressClassName":"traefik","rules":[{"host":"falco.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"falco-falcosidekick-ui","port":{"name":"http"}}},"path":"/","pathType":"ImplementationSpecific"}]}}],"tls":[{"hosts":["falco.dc-tech.work"],"secretName":"falco-dc-tls"}]}}
 
       '
   info: 'Path: /, Backend: Service: falco-falcosidekick-ui'
@@ -303,7 +356,7 @@
   url: falco.dc-tech.work/
 - annotations:
     cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app.kubernetes.io/component":"keycloak","app.kubernetes.io/instance":"keycloak","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"keycloak","app.kubernetes.io/version":"26.2.2","argocd.argoproj.io/instance":"keycloak","helm.sh/chart":"keycloak-24.6.3"},"name":"keycloak","namespace":"security"},"spec":{"ingressClassName":"traefik","rules":[{"host":"keycloak.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"keycloak","port":{"name":"http"}}},"path":"/","pathType":"ImplementationSpecific"}]}}],"tls":[{"hosts":["keycloak.dc-tech.work"],"secretName":"keycloak.dc-tech.work-tls"}]}}
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app.kubernetes.io/component":"keycloak","app.kubernetes.io/instance":"keycloak","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"keycloak","app.kubernetes.io/version":"26.2.2","argocd.argoproj.io/instance":"keycloak","helm.sh/chart":"keycloak-24.6.3"},"name":"keycloak","namespace":"security"},"spec":{"ingressClassName":"traefik","rules":[{"host":"keycloak.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"keycloak","port":{"name":"http"}}},"path":"/","pathType":"ImplementationSpecific"}]}}],"tls":[{"hosts":["keycloak.dc-tech.work"],"secretName":"keycloak.dc-tech.work-tls"},{"hosts":["keycloak.dc-tech.work"],"secretName":"keycloak-dc-tls"}]}}
 
       '
   info: 'Path: /, Backend: Service: keycloak'
@@ -322,14 +375,14 @@
   url: keycloak.dc-tech.work/
 - annotations:
     cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app":"sonarqube","argocd.argoproj.io/instance":"sonarqube","chart":"sonarqube-10.8.1","heritage":"Helm","release":"sonarqube"},"name":"sonarqube-sonarqube","namespace":"sonarqube"},"spec":{"ingressClassName":"traefik","rules":[{"host":"sonarqube.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"sonarqube-sonarqube","port":{"number":9000}}},"path":"/","pathType":"ImplementationSpecific"}]}}],"tls":[{"hosts":["sonarqube.dc-tech.work"],"secretName":"sonarqube-certificate-tls"}]}}
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app":"sonarqube","argocd.argoproj.io/instance":"sonarqube","chart":"sonarqube-2025.3.0","heritage":"Helm","release":"sonarqube"},"name":"sonarqube-sonarqube","namespace":"sonarqube"},"spec":{"ingressClassName":"traefik","rules":[{"host":"sonarqube.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"sonarqube-sonarqube","port":{"number":9000}}},"path":"/","pathType":"ImplementationSpecific"}]}}],"tls":[{"hosts":["sonarqube.dc-tech.work"],"secretName":"sonarqube-certificate-tls"}]}}
 
       '
   info: 'Path: /, Backend: Service: sonarqube-sonarqube'
   labels:
     app: sonarqube
     argocd.argoproj.io/instance: sonarqube
-    chart: sonarqube-10.8.1
+    chart: sonarqube-2025.3.0
     heritage: Helm
     release: sonarqube
   name: sonarqube-sonarqube
@@ -339,10 +392,9 @@
   url: sonarqube.dc-tech.work/
 - annotations:
     cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare","traefik.ingress.kubernetes.io/router.middlewares":"kube-infra-generic-dashboard-auth@kubernetescrd"},"labels":{"app.kubernetes.io/instance":"helm-dashboard","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"helm-dashboard","app.kubernetes.io/version":"2.0.3","argocd.argoproj.io/instance":"vcluster-helm-dashboard","helm.sh/chart":"helm-dashboard-2.0.3"},"name":"helm-dashboard","namespace":"kube-infra"},"spec":{"ingressClassName":"traefik","rules":[{"host":"helm-dashboard-vcluster.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"helm-dashboard","port":{"number":8080}}},"path":"/","pathType":"Prefix"}]}}]}}
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app.kubernetes.io/instance":"helm-dashboard","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"helm-dashboard","app.kubernetes.io/version":"2.0.3","argocd.argoproj.io/instance":"vcluster-helm-dashboard","helm.sh/chart":"helm-dashboard-2.0.3"},"name":"helm-dashboard","namespace":"kube-infra"},"spec":{"ingressClassName":"traefik","rules":[{"host":"helm-dashboard-vcluster.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"helm-dashboard","port":{"number":8080}}},"path":"/","pathType":"Prefix"}]}}]}}
 
       '
-    traefik.ingress.kubernetes.io/router.middlewares: kube-infra-generic-dashboard-auth@kubernetescrd
     vcluster.loft.sh/managed-annotations: 'cert-manager.io/cluster-issuer
 
       kubectl.kubernetes.io/last-applied-configuration
@@ -353,7 +405,7 @@
     vcluster.loft.sh/object-kind: networking.k8s.io/v1, Kind=Ingress
     vcluster.loft.sh/object-name: helm-dashboard
     vcluster.loft.sh/object-namespace: kube-infra
-    vcluster.loft.sh/object-uid: 44722319-e026-4f1d-a6ff-91ff03c2b5a4
+    vcluster.loft.sh/object-uid: 070c5d02-91e3-4e45-82ee-59457e71317a
   info: 'Path: /, Backend: Service: helm-dashboard-x-kube-infra-x-vcluster'
   labels:
     app.kubernetes.io/instance: helm-dashboard
@@ -382,7 +434,7 @@
     vcluster.loft.sh/object-kind: networking.k8s.io/v1, Kind=Ingress
     vcluster.loft.sh/object-name: pgadmin-pgadmin4
     vcluster.loft.sh/object-namespace: kube-infra
-    vcluster.loft.sh/object-uid: 00904e21-07d8-4cf3-bd76-c3f8bac8731d
+    vcluster.loft.sh/object-uid: 9df47c62-7792-4890-9bb9-9685acddcc7b
   info: 'Path: /, Backend: Service: pgadmin-pgadmin4-x-kube-infra-x-vcluster'
   labels:
     app.kubernetes.io/managed-by: Helm
@@ -399,21 +451,18 @@
   url: pgadmin.dc-tech.work/
 - annotations:
     cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare","traefik.ingress.kubernetes.io/router.middlewares":"kube-infra-generic-dashboard-auth@kubernetescrd"},"labels":{"app":"portal-checker","argocd.argoproj.io/instance":"vcluster-portal-checker"},"name":"portal-checker","namespace":"portal-checker"},"spec":{"ingressClassName":"traefik","rules":[{"host":"portal-checker-vcluster.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"portal-checker","port":{"number":80}}},"path":"/","pathType":"Prefix"}]}}],"tls":[{"hosts":["portal-checker-vcluster.dc-tech.work"],"secretName":"portal-checker-certificate-tls"}]}}
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app":"portal-checker","argocd.argoproj.io/instance":"vcluster-portal-checker"},"name":"portal-checker","namespace":"portal-checker"},"spec":{"ingressClassName":"traefik","rules":[{"host":"portal-checker-vcluster.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"portal-checker","port":{"number":80}}},"path":"/","pathType":"Prefix"}]}}]}}
 
       '
-    traefik.ingress.kubernetes.io/router.middlewares: kube-infra-generic-dashboard-auth@kubernetescrd
     vcluster.loft.sh/managed-annotations: 'cert-manager.io/cluster-issuer
 
-      kubectl.kubernetes.io/last-applied-configuration
-
-      traefik.ingress.kubernetes.io/router.middlewares'
+      kubectl.kubernetes.io/last-applied-configuration'
     vcluster.loft.sh/object-host-name: portal-checker-x-portal-checker-x-vcluster
     vcluster.loft.sh/object-host-namespace: vcluster
     vcluster.loft.sh/object-kind: networking.k8s.io/v1, Kind=Ingress
     vcluster.loft.sh/object-name: portal-checker
     vcluster.loft.sh/object-namespace: portal-checker
-    vcluster.loft.sh/object-uid: 0da354bf-39c2-4083-ac78-ffb5738f590a
+    vcluster.loft.sh/object-uid: 779debe9-cd71-416a-8117-b44aa5a4e2df
   info: 'Path: /, Backend: Service: portal-checker-x-portal-checker-x-vcluster'
   labels:
     app: portal-checker
@@ -427,13 +476,11 @@
   url: portal-checker-vcluster.dc-tech.work/
 - annotations:
     cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare","traefik.ingress.kubernetes.io/router.middlewares":"kube-infra-generic-dashboard-auth@kubernetescrd"},"labels":{"app":"workload-scheduler","argocd.argoproj.io/instance":"vcluster-workload-scheduler"},"name":"workload-scheduler","namespace":"workload-scheduler"},"spec":{"ingressClassName":"traefik","rules":[{"host":"workload-scheduler-vcluster.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"workload-scheduler","port":{"number":80}}},"path":"/","pathType":"Prefix"}]}}],"tls":[{"hosts":["workload-scheduler-vcluster.dc-tech.work"],"secretName":"workload-scheduler-certificate-tls"}]}}
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare","traefik.ingress.kubernetes.io/router.middlewares":"kube-infra-generic-dashboard-auth@kubernetescrd"},"labels":{"app":"workload-scheduler","argocd.argoproj.io/instance":"vcluster-workload-scheduler"},"name":"workload-scheduler","namespace":"workload-scheduler"},"spec":{"ingressClassName":"traefik","rules":[{"host":"workload-scheduler-vcluster.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"workload-scheduler","port":{"number":8000}}},"path":"/","pathType":"Prefix"}]}}],"tls":[{"hosts":["workload-scheduler-vcluster.dc-tech.work"],"secretName":"workload-scheduler-certificate-tls"}]}}
 
       '
     traefik.ingress.kubernetes.io/router.middlewares: kube-infra-generic-dashboard-auth@kubernetescrd
     vcluster.loft.sh/managed-annotations: 'cert-manager.io/cluster-issuer
-
-      kubectl.kubernetes.io/last-applied-configuration
 
       traefik.ingress.kubernetes.io/router.middlewares'
     vcluster.loft.sh/object-host-name: workload-scheduler-x-workload-scheduler-x-vcluster
@@ -441,7 +488,7 @@
     vcluster.loft.sh/object-kind: networking.k8s.io/v1, Kind=Ingress
     vcluster.loft.sh/object-name: workload-scheduler
     vcluster.loft.sh/object-namespace: workload-scheduler
-    vcluster.loft.sh/object-uid: 1f0dca01-6d81-4947-b304-36efda7af99c
+    vcluster.loft.sh/object-uid: b23ee5fc-29a5-4223-b1d2-7757ab26e03d
   info: 'Path: /, Backend: Service: workload-scheduler-x-workload-scheduler-x-vcluster'
   labels:
     app: workload-scheduler
@@ -455,7 +502,7 @@
   url: workload-scheduler-vcluster.dc-tech.work/
 - annotations:
     cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare","traefik.ingress.kubernetes.io/router.middlewares":"kube-infra-generic-dashboard-auth@kubernetescrd"},"labels":{"app":"workload-scheduler","argocd.argoproj.io/instance":"in-cluster-workload-scheduler"},"name":"workload-scheduler","namespace":"workload-scheduler"},"spec":{"ingressClassName":"traefik","rules":[{"host":"workload-scheduler.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"workload-scheduler","port":{"number":80}}},"path":"/","pathType":"Prefix"}]}}],"tls":[{"hosts":["workload-scheduler.dc-tech.work"],"secretName":"workload-scheduler-certificate-tls"}]}}
+    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare","traefik.ingress.kubernetes.io/router.middlewares":"kube-infra-generic-dashboard-auth@kubernetescrd"},"labels":{"app":"workload-scheduler","argocd.argoproj.io/instance":"in-cluster-workload-scheduler"},"name":"workload-scheduler","namespace":"workload-scheduler"},"spec":{"ingressClassName":"traefik","rules":[{"host":"workload-scheduler.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"workload-scheduler","port":{"number":8000}}},"path":"/","pathType":"Prefix"}]}}],"tls":[{"hosts":["workload-scheduler.dc-tech.work"],"secretName":"workload-scheduler-certificate-tls"}]}}
 
       '
     traefik.ingress.kubernetes.io/router.middlewares: kube-infra-generic-dashboard-auth@kubernetescrd

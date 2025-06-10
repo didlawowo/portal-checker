@@ -4,9 +4,14 @@ metadata:
   name: {{ template "application.fullname" . }}-config
   labels: {{- include "application.labels" . | nindent 4 }}
 data:
+  # 🔧 SOLUTION 1: Format YAML correct pour les exclusions
   excluded-urls.yaml: |
-    {{- if .Values.excludedUrls }}
-    {{- range .Values.excludedUrls }}
-    {{ . }}
-    {{- end }}
-    {{- end }}
+{{- if .Values.excludedUrls }}
+{{- toYaml .Values.excludedUrls | nindent 4 }}
+{{- else }}
+    []
+{{- end }}
+  
+  # 📝 Fichier URLs initial vide (sera généré par refresh)
+  urls.yaml: |
+    []

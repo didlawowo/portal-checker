@@ -1,3 +1,6 @@
 static-analysis.datadog.yml
 .vscode/
 **/certs/*
+__pycache__/
+*.pyc
+ 

@@ -1,3 +1,7 @@
 - monitoring.* # Exclure tous les domaines qui commencent par "monitoring."
 - "*.internal/*" # Exclure tous les sous-domaines .internal
 - infisical.dc-tech.work/ss-webhook
+- falcosidekick.dc-tech.work/
+- vcluster.dc-tech.work/
+- portal-checker.dc-tech.work/
+- grafana.dc-tech.work/metrics

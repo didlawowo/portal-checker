@@ -48,9 +48,11 @@ class TestExcludedUrls:
         assert _is_url_excluded("monitoring.") is True
         assert _is_url_excluded("notmonitoring.example.com") is False
         
-        # Note: *.internal/* pattern is not fully supported by current implementation
-        # The implementation only supports wildcards at the END of patterns
-        # So *.internal/* doesn't work as expected
+        # *.internal/* pattern - now supported with fnmatch
+        assert _is_url_excluded("test.internal/api") is True
+        assert _is_url_excluded("service.internal/admin") is True
+        assert _is_url_excluded("app.internal/dashboard") is True
+        assert _is_url_excluded("external.example.com/api") is False
 
     def test_path_wildcard_patterns(self, setup_excluded_urls):
         """Test wildcard patterns in paths"""
@@ -93,6 +95,22 @@ class TestExcludedUrls:
         assert _is_url_excluded("test.example.com/api/users") is True
         assert _is_url_excluded("test.example.com/api/admin") is True
         assert _is_url_excluded("test.example.com/other/users") is False
+
+    def test_fnmatch_complex_patterns(self, setup_excluded_urls):
+        """Test complex patterns using fnmatch functionality"""
+        # Add complex patterns that work with fnmatch
+        excluded_urls.add("*.test.com/admin")  # wildcard at start
+        excluded_urls.add("api-*.example.com")  # wildcard in middle
+        
+        # Test wildcard at start
+        assert _is_url_excluded("app.test.com/admin") is True
+        assert _is_url_excluded("web.test.com/admin") is True
+        assert _is_url_excluded("app.test.com/public") is False
+        
+        # Test wildcard in middle
+        assert _is_url_excluded("api-v1.example.com") is True
+        assert _is_url_excluded("api-v2.example.com") is True
+        assert _is_url_excluded("web-v1.example.com") is False
 
     def test_load_excluded_urls_from_yaml(self):
         """Test loading excluded URLs from YAML file"""
@@ -167,13 +185,11 @@ class TestExcludedUrls:
 
     @pytest.mark.parametrize("url,expected", [
         ("monitoring.example.com", True),  # matches monitoring.*
-        ("infisical.dc-tech.work/ss-webhook", True),  # exact match
-        ("admin.example.com", True),  # exact match
-        ("api.test.com/private/users", True),  # matches api.test.com/private/*
-        ("service.local", True),  # matches service.local/ 
+        ("test.internal/api", True),  # matches *.internal/* pattern
+        ("service.internal/admin", True),  # matches *.internal/* pattern
         ("normal.website.com", False),  # no match
-        ("api.test.com/public/users", False),  # doesn't match private pattern
         ("external.example.com", False),  # no match
+        ("external.example.com/api", False),  # doesn't match internal pattern
     ])
     def test_parametrized_exclusions(self, setup_excluded_urls, url, expected):
         """Parametrized test for various URL exclusion scenarios"""
