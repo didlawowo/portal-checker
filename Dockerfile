@@ -23,8 +23,7 @@ COPY config/ ./
 
 RUN  chown -R appuser:appgroup /app && \
     chmod -R 755 /app && \
-    chmod 777 /app/config  # Donner des permissions d'écriture au répertoire config
-
+    chmod 777 /app/config  
 
 # Passage à l'utilisateur non-root
 USER appuser
