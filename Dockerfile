@@ -21,7 +21,7 @@ COPY static /app/static
 COPY app.py  ./
  
 
-RUN mdkir /app/config && chown -R appuser:appgroup /app && \
+RUN mkdir /app/config && chown -R appuser:appgroup /app && \
     chmod -R 755 /app && \
     chmod 777 /app/config  
 
