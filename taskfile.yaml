@@ -5,222 +5,222 @@ vars:
   APP_NAME: portal-checker
   NAMESPACE: portal-checker
   DOCKER_REGISTRY: fizzbuzz2
-  IMAGE_TAG: 
+  IMAGE_TAG:
     sh: git rev-parse --short HEAD
   HELM_CHART_PATH: ./helm
   CONFIG_DIR: ./config
 
 # 🚀 Tâches principales
 tasks:
-  
+
   # 📦 Construction et déploiement
   build:
     desc: "🔨 Construire l'image Docker"
     cmds:
-      - docker build -t {{.DOCKER_REGISTRY}}/{{.APP_NAME}}:{{.IMAGE_TAG}} .
-      - docker build -t {{.DOCKER_REGISTRY}}/{{.APP_NAME}}:latest .
+    - docker build -t {{.DOCKER_REGISTRY}}/{{.APP_NAME}}:{{.IMAGE_TAG}} .
+    - docker build -t {{.DOCKER_REGISTRY}}/{{.APP_NAME}}:latest .
     sources:
-      - Dockerfile
-      - app.py
-      - requirements.txt
-      - templates/**/*
-      - static/**/*
-  
+    - Dockerfile
+    - app.py
+    - requirements.txt
+    - templates/**/*
+    - static/**/*
+
   push:
     desc: "📤 Pousser l'image vers le registry"
-    deps: [build]
+    deps: [ build ]
     cmds:
-      - docker push {{.DOCKER_REGISTRY}}/{{.APP_NAME}}:{{.IMAGE_TAG}}
-      - docker push {{.DOCKER_REGISTRY}}/{{.APP_NAME}}:latest
-  
+    - docker push {{.DOCKER_REGISTRY}}/{{.APP_NAME}}:{{.IMAGE_TAG}}
+    - docker push {{.DOCKER_REGISTRY}}/{{.APP_NAME}}:latest
+
   # 🎛️ Gestion Helm
   helm-template:
     desc: "📋 Afficher le template Helm généré"
     cmds:
-      - helm template {{.APP_NAME}} {{.HELM_CHART_PATH}} --namespace {{.NAMESPACE}}
-  
+    - helm template {{.APP_NAME}} {{.HELM_CHART_PATH}} --namespace {{.NAMESPACE}}
+
   helm-dry-run:
     desc: "🧪 Test à sec du déploiement Helm"
     cmds:
-      - helm upgrade --install {{.APP_NAME}} {{.HELM_CHART_PATH}} --namespace {{.NAMESPACE}} --create-namespace --dry-run --debug
-  
-  deploy:
+    - helm upgrade --install {{.APP_NAME}} {{.HELM_CHART_PATH}} --namespace {{.NAMESPACE}} --create-namespace --dry-run --debug
+
+  helm-install:
     desc: "🚀 Déployer avec Helm"
     cmds:
-      - helm upgrade --install {{.APP_NAME}} {{.HELM_CHART_PATH}} --namespace {{.NAMESPACE}} --create-namespace --set image.tag={{.IMAGE_TAG}}
-  
+    - helm upgrade --install {{.APP_NAME}} {{.HELM_CHART_PATH}} --namespace {{.NAMESPACE}} --create-namespace --set image.tag={{.IMAGE_TAG}}
+
   # 🔍 Validation et tests
   validate-yaml:
     desc: "✅ Valider les fichiers YAML de configuration"
     cmds:
-      - |
-        echo "🔍 Validation des fichiers YAML..."
-        python -c "
-        import yaml
-        import sys
-        
-        files = ['{{.CONFIG_DIR}}/excluded-urls.yaml', '{{.CONFIG_DIR}}/urls.yaml']
-        for file in files:
-            try:
-                with open(file, 'r') as f:
-                    data = yaml.safe_load(f)
-                    if isinstance(data, list):
-                        print(f'✅ {file}: Format valide ({len(data)} entrées)')
-                    else:
-                        print(f'❌ {file}: Format incorrect (attendu: liste)')
-                        sys.exit(1)
-            except FileNotFoundError:
-                print(f'⚠️  {file}: Fichier non trouvé')
-            except Exception as e:
-                print(f'❌ {file}: Erreur - {e}')
-                sys.exit(1)
-        "
-  
+    - |
+      echo "🔍 Validation des fichiers YAML..."
+      python -c "
+      import yaml
+      import sys
+
+      files = ['{{.CONFIG_DIR}}/excluded-urls.yaml', '{{.CONFIG_DIR}}/urls.yaml']
+      for file in files:
+          try:
+              with open(file, 'r') as f:
+                  data = yaml.safe_load(f)
+                  if isinstance(data, list):
+                      print(f'✅ {file}: Format valide ({len(data)} entrées)')
+                  else:
+                      print(f'❌ {file}: Format incorrect (attendu: liste)')
+                      sys.exit(1)
+          except FileNotFoundError:
+              print(f'⚠️  {file}: Fichier non trouvé')
+          except Exception as e:
+              print(f'❌ {file}: Erreur - {e}')
+              sys.exit(1)
+      "
+
   test-exclusions:
     desc: "🧪 Tester la logique d'exclusion des URLs"
     cmds:
-      - |
-        python -c "
-        import sys
-        sys.path.append('.')
-        from app import _is_url_excluded, load_excluded_urls
-        
-        # Charger les exclusions
-        excluded_urls = load_excluded_urls()
-        print(f'📊 {len(excluded_urls)} URLs d\'exclusion chargées')
-        
-        # Tests
-        test_cases = [
-            ('monitoring.example.com/', True),
-            ('test.internal/api', True), 
-            ('infisical.dc-tech.work/ss-webhook', True),
-            ('normal.dc-tech.work/', False),
-            ('grafana.dc-tech.work/metrics', True)
-        ]
-        
-        for url, should_exclude in test_cases:
-            result = _is_url_excluded(url)
-            status = '✅' if result == should_exclude else '❌'
-            print(f'{status} {url} -> Exclu: {result} (attendu: {should_exclude})')
-        "
-  
+    - |
+      python -c "
+      import sys
+      sys.path.append('.')
+      from app import _is_url_excluded, load_excluded_urls
+
+      # Charger les exclusions
+      excluded_urls = load_excluded_urls()
+      print(f'📊 {len(excluded_urls)} URLs d\'exclusion chargées')
+
+      # Tests
+      test_cases = [
+          ('monitoring.example.com/', True),
+          ('test.internal/api', True), 
+          ('infisical.dc-tech.work/ss-webhook', True),
+          ('normal.dc-tech.work/', False),
+          ('grafana.dc-tech.work/metrics', True)
+      ]
+
+      for url, should_exclude in test_cases:
+          result = _is_url_excluded(url)
+          status = '✅' if result == should_exclude else '❌'
+          print(f'{status} {url} -> Exclu: {result} (attendu: {should_exclude})')
+      "
+
   # 🔧 Développement
-  dev:
+  run-dev:
     desc: "🔧 Démarrer en mode développement"
     cmds:
-      - export FLASK_ENV=development && python app.py --port 5001
+    - export FLASK_ENV=development && python app.py --port 5001
     env:
       FLASK_ENV: development
       LOG_LEVEL: DEBUG
       AUTO_REFRESH_ON_START: "true"
       PORT: "5001"
-  
+
   logs:
     desc: "📜 Afficher les logs de l'application"
     cmds:
-      - kubectl logs -f deployment/{{.APP_NAME}} -n {{.NAMESPACE}}
-  
+    - kubectl logs -f deployment/{{.APP_NAME}} -n {{.NAMESPACE}}
+
   # 🧹 Maintenance
   clean:
     desc: "🧹 Nettoyer les ressources Docker"
     cmds:
-      - docker system prune -f
-      - docker image prune -f
-  
+    - docker system prune -f
+    - docker image prune -f
+
   restart:
     desc: "🔄 Redémarrer l'application"
     cmds:
-      - kubectl rollout restart deployment/{{.APP_NAME}} -n {{.NAMESPACE}}
-      - kubectl rollout status deployment/{{.APP_NAME}} -n {{.NAMESPACE}}
-  
+    - kubectl rollout restart deployment/{{.APP_NAME}} -n {{.NAMESPACE}}
+    - kubectl rollout status deployment/{{.APP_NAME}} -n {{.NAMESPACE}}
+
   # 📊 Monitoring et debug
   status:
     desc: "📊 Afficher le statut de l'application"
     cmds:
-      - echo "🔍 Statut du déploiement..."
-      - kubectl get pods,svc,ing -n {{.NAMESPACE}}
-      - echo ""
-      - echo "🔧 Configuration actuelle..."
-      - kubectl get configmap {{.APP_NAME}}-config -n {{.NAMESPACE}} -o yaml
-  
+    - echo "🔍 Statut du déploiement..."
+    - kubectl get pods,svc,ing -n {{.NAMESPACE}}
+    - echo ""
+    - echo "🔧 Configuration actuelle..."
+    - kubectl get configmap {{.APP_NAME}}-config -n {{.NAMESPACE}} -o yaml
+
   port-forward:
     desc: "🌐 Redirection de port pour accès local"
     cmds:
-      - kubectl port-forward svc/{{.APP_NAME}} 8080:80 -n {{.NAMESPACE}}
-  
+    - kubectl port-forward svc/{{.APP_NAME}} 8080:80 -n {{.NAMESPACE}}
+
   shell:
     desc: "🐚 Shell interactif dans le pod"
     cmds:
-      - kubectl exec -it deployment/{{.APP_NAME}} -n {{.NAMESPACE}} -- /bin/sh
-  
+    - kubectl exec -it deployment/{{.APP_NAME}} -n {{.NAMESPACE}} -- /bin/sh
+
   # 🔄 Refresh et configuration
   refresh-urls:
     desc: "🔄 Forcer le refresh des URLs via l'API"
     cmds:
-      - |
-        echo "🔄 Refresh des URLs..."
-        POD=$(kubectl get pods -n {{.NAMESPACE}} -l app={{.APP_NAME}} -o jsonpath='{.items[0].metadata.name}')
-        kubectl exec $POD -n {{.NAMESPACE}} -- curl -s http://localhost:5000/refresh
-        echo "✅ Refresh terminé"
-  
+    - |
+      echo "🔄 Refresh des URLs..."
+      POD=$(kubectl get pods -n {{.NAMESPACE}} -l app={{.APP_NAME}} -o jsonpath='{.items[0].metadata.name}')
+      kubectl exec $POD -n {{.NAMESPACE}} -- curl -s http://localhost:5000/refresh
+      echo "✅ Refresh terminé"
+
   update-exclusions:
     desc: "📝 Mettre à jour les URLs d'exclusion et redéployer"
     cmds:
-      - task: validate-yaml
-      - task: helm-dry-run
-      - task: deploy
-      - task: restart
-      - echo "✅ URLs d'exclusion mises à jour et application redéployée"
-  
+    - task: validate-yaml
+    - task: helm-dry-run
+    - task: deploy
+    - task: restart
+    - echo "✅ URLs d'exclusion mises à jour et application redéployée"
+
   # 🎯 Workflows complets
   deploy-full:
     desc: "🚀 Workflow complet: build + push + deploy"
     cmds:
-      - task: validate-yaml
-      - task: build
-      - task: push  
-      - task: deploy
-      - task: status
-      - echo "🎉 Déploiement complet terminé!"
-  
+    - task: validate-yaml
+    - task: build
+    - task: push
+    - task: deploy
+    - task: status
+    - echo "🎉 Déploiement complet terminé!"
+
   ci-test:
     desc: "🧪 Tests pour CI/CD"
     cmds:
-      - task: validate-yaml
-      - task: test-exclusions
-      - task: helm-template
-      - echo "✅ Tous les tests CI passés"
+    - task: validate-yaml
+    - task: test-exclusions
+    - task: helm-template
+    - echo "✅ Tous les tests CI passés"
 
 # 📝 Documentation des tâches disponibles
 default:
   desc: "📋 Afficher l'aide"
   cmds:
-    - |
-      echo "🎯 Portal Checker - Tâches disponibles:"
-      echo ""
-      echo "📦 Construction et déploiement:"
-      echo "  task build          - Construire l'image Docker"
-      echo "  task push           - Pousser vers le registry"
-      echo "  task deploy         - Déployer avec Helm"
-      echo "  task deploy-full    - Workflow complet"
-      echo ""
-      echo "🔍 Validation et tests:"
-      echo "  task validate-yaml  - Valider les fichiers YAML"
-      echo "  task test-exclusions - Tester la logique d'exclusion"
-      echo "  task ci-test        - Tests pour CI/CD"
-      echo ""
-      echo "🔧 Développement:"
-      echo "  task dev            - Mode développement"
-      echo "  task logs           - Afficher les logs"
-      echo "  task status         - Statut de l'application"
-      echo "  task port-forward   - Redirection de port"
-      echo ""
-      echo "🔄 Maintenance:"
-      echo "  task refresh-urls   - Forcer refresh des URLs"
-      echo "  task update-exclusions - Mettre à jour les exclusions"
-      echo "  task restart        - Redémarrer l'application"
-      echo "  task clean          - Nettoyer Docker"
-      echo ""
-      echo "🎛️ Helm:"
-      echo "  task helm-template  - Afficher le template"
-      echo "  task helm-dry-run   - Test à sec"
+  - |
+    echo "🎯 Portal Checker - Tâches disponibles:"
+    echo ""
+    echo "📦 Construction et déploiement:"
+    echo "  task build          - Construire l'image Docker"
+    echo "  task push           - Pousser vers le registry"
+    echo "  task deploy         - Déployer avec Helm"
+    echo "  task deploy-full    - Workflow complet"
+    echo ""
+    echo "🔍 Validation et tests:"
+    echo "  task validate-yaml  - Valider les fichiers YAML"
+    echo "  task test-exclusions - Tester la logique d'exclusion"
+    echo "  task ci-test        - Tests pour CI/CD"
+    echo ""
+    echo "🔧 Développement:"
+    echo "  task dev            - Mode développement"
+    echo "  task logs           - Afficher les logs"
+    echo "  task status         - Statut de l'application"
+    echo "  task port-forward   - Redirection de port"
+    echo ""
+    echo "🔄 Maintenance:"
+    echo "  task refresh-urls   - Forcer refresh des URLs"
+    echo "  task update-exclusions - Mettre à jour les exclusions"
+    echo "  task restart        - Redémarrer l'application"
+    echo "  task clean          - Nettoyer Docker"
+    echo ""
+    echo "🎛️ Helm:"
+    echo "  task helm-template  - Afficher le template"
+    echo "  task helm-dry-run   - Test à sec"

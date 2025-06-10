@@ -50,12 +50,22 @@ def serialize_record(record):
 
 def get_app_version() -> str:
     """Get application version from pyproject.toml"""
-    try:
-        with open("pyproject.toml", "rb") as f:
-            data = tomllib.load(f)
-            return data.get("project", {}).get("version", "unknown")
-    except (FileNotFoundError, tomllib.TOMLDecodeError):
-        return "unknown"
+    # Try multiple possible locations
+    possible_paths = [
+        "pyproject.toml",
+        "/app/pyproject.toml",
+        os.path.join(os.path.dirname(__file__), "pyproject.toml")
+    ]
+    
+    for path in possible_paths:
+        try:
+            with open(path, "rb") as f:
+                data = tomllib.load(f)
+                return data.get("project", {}).get("version", "unknown")
+        except (FileNotFoundError, tomllib.TOMLDecodeError):
+            continue
+    
+    return "unknown"
 
 
 def setup_logger(log_format: str = "text", log_level: str = "INFO") -> None:

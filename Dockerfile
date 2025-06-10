@@ -18,7 +18,8 @@ RUN pip install --upgrade pip uv && \
 # Copie des fichiers application
 COPY templates /app/templates
 COPY static /app/static
-COPY app.py  ./
+COPY app.py ./
+COPY pyproject.toml ./
  
 
 RUN mkdir /app/config && chown -R appuser:appgroup /app && \
