@@ -124,7 +124,7 @@ URLS_FILE = os.getenv(
     "URLS_FILE",
     "config/urls.yaml"
     if os.getenv("FLASK_ENV") == "development"
-    else "/app/config/urls.yaml",
+    else "/app/data/urls.yaml",
 )
 EXCLUDED_URLS_FILE = os.getenv(
     "EXCLUDED_URLS_FILE",
