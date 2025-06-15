@@ -1,14 +1,16 @@
-import pytest
-import sys
 import os
+import sys
 import tempfile
+
+import pytest
 import yaml
 
 # Add the project path to PYTHONPATH
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import functions to test
-from app import _is_url_excluded, load_excluded_urls, excluded_urls
+from app import _is_url_excluded, excluded_urls
+
 
 class TestExcludedUrls:
     """Test suite for excluded URL functionality"""
@@ -136,6 +138,7 @@ class TestExcludedUrls:
             
             # Import again to get a fresh load_excluded_urls function
             import importlib
+
             import app
             importlib.reload(app)
             loaded_exclusions = app.load_excluded_urls()
@@ -157,31 +160,6 @@ class TestExcludedUrls:
             elif 'EXCLUDED_URLS_FILE' in os.environ:
                 del os.environ['EXCLUDED_URLS_FILE']
 
-    def test_actual_config_file(self):
-        """Test loading from the actual config file"""
-        # Test with the actual excluded-urls.yaml file
-        config_file = "/Users/chris/Documents/GitHub/public/portal-checker/config/excluded-urls.yaml"
-        if os.path.exists(config_file):
-            # Save original state
-            original_excluded_urls = excluded_urls.copy()
-            original_file = os.environ.get('EXCLUDED_URLS_FILE')
-            
-            try:
-                os.environ['EXCLUDED_URLS_FILE'] = config_file
-                excluded_urls.clear()
-                loaded_exclusions = load_excluded_urls()
-                
-                # Should load the 3 patterns from config
-                assert len(loaded_exclusions) >= 1  # At least one exclusion
-                
-            finally:
-                # Restore state
-                excluded_urls.clear()
-                excluded_urls.update(original_excluded_urls)
-                if original_file:
-                    os.environ['EXCLUDED_URLS_FILE'] = original_file
-                elif 'EXCLUDED_URLS_FILE' in os.environ:
-                    del os.environ['EXCLUDED_URLS_FILE']
 
     @pytest.mark.parametrize("url,expected", [
         ("monitoring.example.com", True),  # matches monitoring.*

@@ -75,6 +75,17 @@ tasks:
               print(f'❌ {file}: Erreur - {e}')
               sys.exit(1)
       "
+  
+  test:
+    desc: "🧪 Exécuter les tests avec pytest"
+    cmds:
+    - uv run --extra dev pytest tests/ -v
+
+  test-coverage:
+    desc: "📊 Exécuter les tests avec couverture de code"
+    cmds:
+    - uv run --extra dev pytest tests/ --cov=. --cov-report=term-missing --cov-report=html -v
+    - echo "📊 Rapport de couverture généré dans htmlcov/"
 
   test-exclusions:
     desc: "🧪 Tester la logique d'exclusion des URLs"
@@ -187,6 +198,7 @@ tasks:
     desc: "🧪 Tests pour CI/CD"
     cmds:
     - task: validate-yaml
+    - task: test-coverage
     - task: test-exclusions
     - task: helm-template
     - echo "✅ Tous les tests CI passés"
@@ -206,6 +218,8 @@ default:
     echo ""
     echo "🔍 Validation et tests:"
     echo "  task validate-yaml  - Valider les fichiers YAML"
+    echo "  task test           - Exécuter les tests"
+    echo "  task test-coverage  - Tests avec couverture de code"
     echo "  task test-exclusions - Tester la logique d'exclusion"
     echo "  task ci-test        - Tests pour CI/CD"
     echo ""

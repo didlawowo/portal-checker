@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "portal-checker"
-version = "2.6.7"
+version = "2.6.8"
 description = "Monitoring tool for Kubernetes ingress and routes"
 readme = "README.md"
-requires-python = ">=3.8"
-license = {text = "MIT"}
+requires-python = ">=3.9"
+license = "MIT"
 dependencies = [
     "aiohappyeyeballs==2.4.4",
     "aiohttp==3.11.11",
@@ -60,6 +60,9 @@ dependencies = [
     "yarl==1.18.3",
 ]
 
+[tool.setuptools]
+py-modules = ["app"]
+
 [project.optional-dependencies]
 dev = [
     "pytest==8.3.5",
@@ -68,9 +71,44 @@ dev = [
     "coverage==7.8.0",
 ]
 
-[tool.pytest]
+[tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = "test_*.py"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "tests/*",
+    ".venv/*",
+    "htmlcov/*",
+    "*/site-packages/*",
+    "helm/*",
+    "config/*",
+    "static/*",
+    "certs/*",
+    "assets/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+show_missing = true
+precision = 2
+
+[tool.coverage.html]
+directory = "htmlcov"
 
 [tool.uv]
 # Configuration spécifique à uv

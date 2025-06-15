@@ -1,12 +1,14 @@
-import pytest
-import sys
 import os
+import sys
+
+import pytest
 
 # Ajoutez le chemin du projet au PYTHONPATH
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import de la fonction à tester
 from app import _is_url_excluded, excluded_urls
+
 
 @pytest.fixture
 def setup_excluded_urls():

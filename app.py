@@ -2,6 +2,7 @@ import asyncio
 import os
 import ssl
 import sys
+import time
 from typing import Dict, List, Union
 
 import aiohttp
@@ -285,6 +286,7 @@ async def test_single_url(session: aiohttp.ClientSession, data: dict) -> Dict:
         Dict avec le statut du test
     """
     url = data.get("url", "")  # Récupérer l'URL de manière sécurisée
+    start_time = time.time()
 
     try:
         logger.debug(f"Test de l'URL {url}")
@@ -293,8 +295,8 @@ async def test_single_url(session: aiohttp.ClientSession, data: dict) -> Dict:
         async with session.get(
             full_url, timeout=aiohttp.ClientTimeout(total=TIMEOUT), ssl=ssl_context
         ) as response:
+            response_time = round((time.time() - start_time) * 1000, 2)  # ms
             status_code = response.status
-            # ic(response)
 
             details = ""
             if status_code != 200 and status_code != 401:
@@ -311,29 +313,33 @@ async def test_single_url(session: aiohttp.ClientSession, data: dict) -> Dict:
 
             # Mettre à jour le dictionnaire original avec les résultats
             data["status"] = status_code
-            data["details"] = (
-                details  # Assurez-vous d'utiliser "details" et non "result"
-            )
+            data["details"] = details
+            data["response_time"] = response_time
 
-            logger.debug(f"Test de l'URL {url} : {status_code}, data: {data}")
+            logger.debug(f"Test de l'URL {url} : {status_code}, {response_time}ms, data: {data}")
 
             return data
 
     except asyncio.TimeoutError:
-        # Créer un nouveau dictionnaire qui préserve les données d'origine
+        response_time = round((time.time() - start_time) * 1000, 2)
         result = data.copy()
         result.update(
             {
                 "status": 504,  # 🕒 Gateway Timeout plus approprié que 500
                 "details": "❌ Timeout Error",
+                "response_time": response_time,
             }
         )
         return result
 
     except Exception as e:
-        # Créer un nouveau dictionnaire qui préserve les données d'origine
+        response_time = round((time.time() - start_time) * 1000, 2)
         result = data.copy()
-        result.update({"status": 500, "details": f"❌ Error: {str(e)}"})
+        result.update({
+            "status": 500, 
+            "details": f"❌ Error: {str(e)}",
+            "response_time": response_time,
+        })
         return result
 
 

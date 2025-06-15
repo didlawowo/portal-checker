@@ -206,9 +206,9 @@
   labels:
     app.kubernetes.io/instance: vm-stack
     app.kubernetes.io/name: grafana
-    app.kubernetes.io/version: 11.6.0
+    app.kubernetes.io/version: 12.0.0-security-01
     argocd.argoproj.io/instance: victoriametrics
-    helm.sh/chart: grafana-8.11.4
+    helm.sh/chart: grafana-9.2.1
   name: vm-stack-grafana
   namespace: kube-monitoring
   status: Active
@@ -222,9 +222,9 @@
     app.kubernetes.io/instance: vm-stack
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: victoria-metrics-k8s-stack
-    app.kubernetes.io/version: v1.115.0
+    app.kubernetes.io/version: v1.119.0
     argocd.argoproj.io/instance: victoriametrics
-    helm.sh/chart: victoria-metrics-k8s-stack-0.44.0
+    helm.sh/chart: victoria-metrics-k8s-stack-0.51.0
   name: vmagent-vm-k8s-stack
   namespace: kube-monitoring
   status: Active
@@ -238,9 +238,9 @@
     app.kubernetes.io/instance: vm-stack
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: victoria-metrics-k8s-stack
-    app.kubernetes.io/version: v1.115.0
+    app.kubernetes.io/version: v1.119.0
     argocd.argoproj.io/instance: victoriametrics
-    helm.sh/chart: victoria-metrics-k8s-stack-0.44.0
+    helm.sh/chart: victoria-metrics-k8s-stack-0.51.0
   name: vmalertmanager-vm-k8s-stack
   namespace: kube-monitoring
   status: Active

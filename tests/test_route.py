@@ -1,18 +1,9 @@
+from unittest.mock import MagicMock
+
 import pytest
-from unittest.mock import  MagicMock
-from app import test_single_url
-import aiohttp
 
-@pytest.fixture
-async def session():
-    """Fixture qui fournit une session aiohttp pour les tests."""
-    async with aiohttp.ClientSession() as session:
-        yield session
+from app import test_single_url as app_test_single_url
 
-@pytest.fixture
-def url():
-    """Fixture qui fournit une URL de test."""
-    return "example.com"
 
 @pytest.mark.asyncio
 async def test_test_single_url():
@@ -22,13 +13,16 @@ async def test_test_single_url():
     mock_response.status = 200
     mock_session.get.return_value.__aenter__.return_value = mock_response
     
-    # Tester la fonction
-    result = await test_single_url(mock_session, "example.com")
+    # Tester la fonction avec un dictionnaire comme attendu
+    test_data = {"url": "example.com", "name": "test"}
+    result = await app_test_single_url(mock_session, test_data)
     
     # Vérifier les résultats
     assert result["url"] == "example.com"
     assert result["status"] == 200
     assert result["details"] == ""
+    assert "response_time" in result
+    assert isinstance(result["response_time"], (int, float))
     
 @pytest.mark.asyncio
 async def test_test_single_url_with_error():
@@ -36,5 +30,14 @@ async def test_test_single_url_with_error():
     mock_session = MagicMock()
     mock_response = MagicMock()
     mock_response.status = 500
-    mock_response.text.return_value = "Internal Server Error"
+    mock_response.reason = "Internal Server Error"
     mock_session.get.return_value.__aenter__.return_value = mock_response
+    
+    test_data = {"url": "error.example.com", "name": "error-test"}
+    result = await app_test_single_url(mock_session, test_data)
+    
+    # Vérifier les résultats d'erreur
+    assert result["url"] == "error.example.com"
+    assert result["status"] == 500
+    assert "❌" in result["details"]
+    assert "response_time" in result

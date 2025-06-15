@@ -187,6 +187,7 @@
                     <!-- <th>Labels</th> -->
                     <th onclick="sortTable('url')" style="width: 400px;">URL<span id="urlSort"></span></th>
                     <th onclick="sortTable('status')" style="width: 100px;">Status<span id="statusSort"></span></th>
+                    <th onclick="sortTable('response_time')" style="width: 100px;">Time (ms)<span id="response_timeSort"></span></th>
                     <th>Details</th>
                 </tr>
             </thead>
@@ -266,6 +267,7 @@
                             ${getStatusEmoji(item.status)} ${item.status}
                         </span>
                     </td>
+                    <td>${item.response_time ? item.response_time + ' ms' : '-'}</td>
                     <td>${item.details || ''}</td> `;
                 tbody.appendChild(tr);
             });
