@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 import asyncio
 
-from app import _get_http_routes, _get_all_urls_with_details
+from app import _get_http_routes, _get_all_urls_with_details, _reset_cache
 
 
 class TestKubernetesSimple:
@@ -11,6 +11,9 @@ class TestKubernetesSimple:
     @patch('app._get_http_routes')
     def test_get_all_urls_with_details_with_mock_http_routes(self, mock_get_http_routes):
         """Test _get_all_urls_with_details with mocked HTTPRoutes"""
+        # Reset cache before test
+        _reset_cache()
+        
         # Mock the HTTPRoute data in the expected format
         mock_get_http_routes.return_value = [
             {
@@ -48,6 +51,9 @@ class TestKubernetesSimple:
     @patch('app._get_http_routes')
     def test_get_all_urls_with_details_excludes_annotated(self, mock_get_http_routes):
         """Test that URLs with exclusion annotations are filtered out"""
+        # Reset cache before test
+        _reset_cache()
+        
         # Mock HTTPRoute with exclusion annotation
         mock_get_http_routes.return_value = [
             {
@@ -76,6 +82,9 @@ class TestKubernetesSimple:
     @patch('app._get_http_routes')
     def test_get_all_urls_with_details_multiple_paths(self, mock_get_http_routes):
         """Test HTTPRoute with multiple paths"""
+        # Reset cache before test
+        _reset_cache()
+        
         # Mock HTTPRoute with multiple paths
         mock_get_http_routes.return_value = [
             {
@@ -110,6 +119,9 @@ class TestKubernetesSimple:
     @patch('app._get_http_routes')
     def test_get_all_urls_with_details_ingress_and_httproute(self, mock_get_http_routes):
         """Test combining HTTPRoute and Ingress results"""
+        # Reset cache before test
+        _reset_cache()
+        
         # Mock HTTPRoute
         mock_get_http_routes.return_value = [
             {
@@ -164,6 +176,9 @@ class TestKubernetesSimple:
     @patch('app._get_http_routes')
     def test_get_all_urls_with_details_http_routes_exception(self, mock_get_http_routes):
         """Test handling HTTPRoute exceptions"""
+        # Reset cache before test
+        _reset_cache()
+        
         # Mock HTTPRoute to raise exception
         mock_get_http_routes.side_effect = Exception("HTTPRoute API error")
         
@@ -185,6 +200,9 @@ class TestKubernetesSimple:
     @patch('app._get_http_routes')
     def test_get_all_urls_with_details_url_exclusion(self, mock_get_http_routes, mock_is_url_excluded):
         """Test URL exclusion logic"""
+        # Reset cache before test
+        _reset_cache()
+        
         # Mock HTTPRoute
         mock_get_http_routes.return_value = [
             {

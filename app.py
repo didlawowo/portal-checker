@@ -3,7 +3,8 @@ import os
 import ssl
 import sys
 import time
-from typing import Dict, List, Union
+from datetime import datetime, timedelta
+from typing import Any, Optional, Union
 
 import aiohttp
 import certifi
@@ -120,6 +121,15 @@ TIMEOUT = int(os.getenv("REQUEST_TIMEOUT", "5"))  # ⚙️ Timeout configurable
 MAX_CONCURRENT_REQUESTS = int(
     os.getenv("MAX_CONCURRENT_REQUESTS", "10")
 )  # 🔄 Contrôle de la concurrence
+
+# 🚀 Cache configuration pour optimiser CPU
+CACHE_TTL_SECONDS = int(os.getenv("CACHE_TTL_SECONDS", "300"))  # 5 minutes par défaut
+KUBERNETES_POLL_INTERVAL = int(
+    os.getenv("KUBERNETES_POLL_INTERVAL", "600")
+)  # 10 minutes
+
+# 💾 Cache global pour les ressources Kubernetes
+_kubernetes_cache: dict[str, Any] = {"data": None, "last_updated": None, "expiry": None}
 
 URLS_FILE = os.getenv(
     "URLS_FILE",
@@ -278,7 +288,7 @@ async def send_slack_alert_async(
         logger.error(f"Erreur lors de l'envoi de l'alerte Slack: {str(e)}")
 
 
-async def check_single_url(session: aiohttp.ClientSession, data: dict) -> Dict:
+async def check_single_url(session: aiohttp.ClientSession, data: dict) -> dict:
     """Test une seule URL de manière asynchrone
 
     Args:
@@ -351,7 +361,7 @@ async def check_single_url(session: aiohttp.ClientSession, data: dict) -> Dict:
         return result
 
 
-async def check_urls_async(file_path: str | None = None) -> List[Dict]:
+async def check_urls_async(file_path: str | None = None) -> list[dict]:
     """Test plusieurs URLs en parallèle avec limitation de concurrence
 
     Args:
@@ -432,6 +442,23 @@ def _get_http_routes():
                     if not route.get("spec"):
                         continue
 
+                    # 📋 Extraction des métadonnées complètes
+                    route_metadata = route.get("metadata", {})
+                    route_name = route_metadata.get("name", "unknown")
+                    route_namespace = ns.metadata.name
+
+                    # 🏷️ Annotations et labels avec gestion d'erreur
+                    annotations = route_metadata.get("annotations", {})
+                    labels = route_metadata.get("labels", {})
+
+                    # 📊 Informations de statut et création
+                    creation_timestamp = route_metadata.get("creationTimestamp")
+                    resource_version = route_metadata.get("resourceVersion")
+
+                    logger.debug(
+                        f"Processing HTTPRoute {route_name} in {route_namespace} with {len(annotations)} annotations"
+                    )
+
                     # 🏷️ Extraction des hostnames
                     hostnames = route["spec"].get("hostnames", [])
 
@@ -461,12 +488,18 @@ def _get_http_routes():
                             {
                                 "hostname": hostname,
                                 "paths": paths,
-                                "namespace": ns.metadata.name,
-                                "annotations": route["metadata"].get("annotations", {}),
-                                "name": route["metadata"]["name"],
+                                "namespace": route_namespace,
+                                "annotations": annotations,
+                                "labels": labels,
+                                "name": route_name,
+                                "creation_timestamp": creation_timestamp,
+                                "resource_version": resource_version,
+                                "resource_type": "HTTPRoute",
                             }
                         )
-                        logger.debug(f"Added HTTPRoute: {hostname} with paths: {paths}")
+                        logger.debug(
+                            f"Added HTTPRoute: {hostname} with {len(annotations)} annotations and paths: {paths}"
+                        )
 
             except Exception as e:
                 logger.warning(
@@ -544,21 +577,25 @@ def _deduplicate_urls(url_details):
     seen = set()
     unique_urls = []
     duplicates_count = 0
-    
+
     for url_data in url_details:
         # Créer une clé unique basée sur URL, namespace et nom
-        key = (url_data.get("url", ""), url_data.get("namespace", ""), url_data.get("name", ""))
-        
+        key = (
+            url_data.get("url", ""),
+            url_data.get("namespace", ""),
+            url_data.get("name", ""),
+        )
+
         if key not in seen:
             seen.add(key)
             unique_urls.append(url_data)
         else:
             duplicates_count += 1
             logger.debug(f"🔄 URL dupliquée ignorée: {url_data.get('url', 'unknown')}")
-    
+
     if duplicates_count > 0:
         logger.info(f"🔄 {duplicates_count} URLs dupliquées supprimées")
-    
+
     return unique_urls
 
 
@@ -572,44 +609,176 @@ def _extract_essential_annotations(annotations):
     """
     if not annotations:
         return {}
-    
+
     # Garder seulement les annotations importantes pour le portail checker
     essential_keys = {
-        'portal-checker.io/exclude',
-        'cert-manager.io/cluster-issuer', 
-        'ingress.kubernetes.io/ssl-redirect',
-        'nginx.ingress.kubernetes.io/cors-allow-origin',
-        'kubernetes.io/ingress.class'
+        # Portal checker
+        "portal-checker.io/exclude",
+        # Certificats et TLS
+        "cert-manager.io/cluster-issuer",
+        "cert-manager.io/issuer",
+        # Ingress/Gateway configurations
+        "ingress.kubernetes.io/ssl-redirect",
+        "nginx.ingress.kubernetes.io/cors-allow-origin",
+        "kubernetes.io/ingress.class",
+        # Gateway API annotations
+        "gateway.networking.k8s.io/gateway-name",
+        "external-dns.alpha.kubernetes.io/hostname",
+        "external-dns.alpha.kubernetes.io/target",
+        # Traefik annotations
+        "traefik.ingress.kubernetes.io/router.entrypoints",
+        "traefik.ingress.kubernetes.io/router.tls",
+        # Security & Auth
+        "nginx.ingress.kubernetes.io/auth-type",
+        "nginx.ingress.kubernetes.io/auth-realm",
+        # Rate limiting
+        "nginx.ingress.kubernetes.io/rate-limit",
+        "nginx.ingress.kubernetes.io/rate-limit-qps",
     }
-    
+
     # D'abord, garder toutes les annotations essentielles
     essential_annotations = {}
     other_annotations = {}
-    
+
     for key, value in annotations.items():
         if key in essential_keys:
             essential_annotations[key] = value
         # Garder les annotations courtes (moins de 50 caractères)
         elif len(str(value)) < 50:
             other_annotations[key] = value
-    
+
     # Combiner les annotations, en priorisant les essentielles
     result = essential_annotations.copy()
-    
+
     # Ajouter les autres annotations jusqu'à la limite de 10
     remaining_slots = 10 - len(result)
     if remaining_slots > 0:
         for key, value in list(other_annotations.items())[:remaining_slots]:
             result[key] = value
-        
+
     return result
+
+
+def _analyze_httproute_annotations(annotations, labels=None):
+    """
+    Analyse les annotations HTTPRoute et enrichit les données avec des informations utiles
+    Args:
+        annotations: Dict des annotations de la HTTPRoute
+        labels: Dict des labels de la HTTPRoute (optionnel)
+    Returns:
+        Dict avec les annotations analysées et des méta-informations
+    """
+    if not annotations:
+        return {"annotations": {}, "analysis": {}, "total_annotations": 0}
+
+    analysis = {
+        "has_tls": False,
+        "has_auth": False,
+        "has_rate_limiting": False,
+        "has_cors": False,
+        "gateway_config": None,
+        "cert_issuer": None,
+        "excluded": False,
+    }
+
+    # Analyse des annotations
+    for key, value in annotations.items():
+        # TLS et certificats
+        if "tls" in key.lower() or "cert-manager" in key:
+            analysis["has_tls"] = True
+            if "issuer" in key:
+                analysis["cert_issuer"] = value
+
+        # Authentification
+        elif "auth" in key.lower():
+            analysis["has_auth"] = True
+
+        # Rate limiting
+        elif "rate-limit" in key.lower():
+            analysis["has_rate_limiting"] = True
+
+        # CORS
+        elif "cors" in key.lower():
+            analysis["has_cors"] = True
+
+        # Gateway configuration
+        elif "gateway" in key.lower():
+            analysis["gateway_config"] = value
+
+        # Exclusion portal-checker
+        elif key == "portal-checker.io/exclude" and value.lower() == "true":
+            analysis["excluded"] = True
+
+    # Analyse des labels si disponibles
+    if labels:
+        for key, value in labels.items():
+            if "gateway" in key.lower():
+                analysis["gateway_config"] = f"label:{value}"
+
+    return {
+        "annotations": _extract_essential_annotations(annotations),
+        "analysis": analysis,
+        "total_annotations": len(annotations),
+    }
+
+
+def _is_cache_valid():
+    """Vérifier si le cache Kubernetes est encore valide"""
+    if _kubernetes_cache["expiry"] is None:
+        return False
+    return datetime.now() < _kubernetes_cache["expiry"]
+
+
+def _get_cached_urls():
+    """Récupérer les URLs depuis le cache si valide"""
+    if _is_cache_valid():
+        logger.debug("🚀 Utilisation du cache Kubernetes valide")
+        return _kubernetes_cache["data"]
+
+    # Alerte si le cache est expiré depuis trop longtemps
+    if _kubernetes_cache["expiry"]:
+        expired_since = datetime.now() - _kubernetes_cache["expiry"]
+        if expired_since.total_seconds() > 600:  # Plus de 10 minutes d'expiration
+            logger.warning(
+                f"⚠️ Cache expiré depuis {int(expired_since.total_seconds())}s - problème possible!"
+            )
+
+    return None
+
+
+def _update_cache(data):
+    """Mettre à jour le cache avec les nouvelles données"""
+    now = datetime.now()
+    expiry_time = now + timedelta(seconds=CACHE_TTL_SECONDS)
+
+    _kubernetes_cache["data"] = data
+    _kubernetes_cache["last_updated"] = now
+    _kubernetes_cache["expiry"] = expiry_time
+
+    logger.info(
+        f"💾 Cache Kubernetes mis à jour, expiration: {expiry_time.strftime('%H:%M:%S')}"
+    )
+
+
+def _reset_cache():
+    """Réinitialiser le cache - utilisé principalement pour les tests"""
+    global _kubernetes_cache
+    _kubernetes_cache = {"data": None, "last_updated": None, "expiry": None}
+    logger.debug("🗑️ Cache réinitialisé")
 
 
 def _get_all_urls_with_details():
     """
     Récupère toutes les URLs avec leurs détails depuis les HTTPRoutes et Ingress
+    Utilise un cache pour réduire la charge CPU des appels Kubernetes API
     Returns: list[dict] Liste des dictionnaires contenant les détails des URLs
     """
+    # 🚀 Vérifier le cache en premier
+    cached_data = _get_cached_urls()
+    if cached_data is not None:
+        return cached_data
+
+    logger.info("🔄 Cache expiré, récupération des données Kubernetes...")
     url_details = []  # 📊 Liste pour stocker les dictionnaires de détails
     filtered_count = 0  # 🔍 Compteur pour les URLs filtrées
 
@@ -634,8 +803,9 @@ def _get_all_urls_with_details():
                         {
                             "name": name,
                             "namespace": namespace,
-                            "annotations": _extract_essential_annotations(annotations),
                             "type": "HTTPRoute",
+                            "annotations": _extract_essential_annotations(annotations),
+                            "labels": _extract_essential_annotations(route.get("labels", {})),
                             "url": full_url,
                             "status": status,
                             "info": "Default path",
@@ -660,6 +830,7 @@ def _get_all_urls_with_details():
                                 "namespace": namespace,
                                 "type": "HTTPRoute",
                                 "annotations": _extract_essential_annotations(annotations),
+                                "labels": _extract_essential_annotations(route.get("labels", {})),
                                 "url": full_url,
                                 "status": status,
                                 "info": f"Path: {path_value}",
@@ -701,8 +872,12 @@ def _get_all_urls_with_details():
                                 {
                                     "name": ingress_name,
                                     "namespace": ingress_namespace,
-                                    "annotations": _extract_essential_annotations(annotations),
-                                    "labels": _extract_essential_annotations(labels),  # Also optimize labels
+                                    "annotations": _extract_essential_annotations(
+                                        annotations
+                                    ),
+                                    "labels": _extract_essential_annotations(
+                                        labels
+                                    ),  # Also optimize labels
                                     "type": "Ingress",
                                     "url": full_url,
                                     "status": ingress_status,
@@ -732,8 +907,12 @@ def _get_all_urls_with_details():
                                 {
                                     "name": ingress_name,
                                     "namespace": ingress_namespace,
-                                    "annotations": _extract_essential_annotations(annotations),
-                                    "labels": _extract_essential_annotations(labels),  # Also optimize labels
+                                    "annotations": _extract_essential_annotations(
+                                        annotations
+                                    ),
+                                    "labels": _extract_essential_annotations(
+                                        labels
+                                    ),  # Also optimize labels
                                     "type": "Ingress",
                                     "url": full_url,
                                     "status": ingress_status,
@@ -758,7 +937,10 @@ def _get_all_urls_with_details():
     # 🔄 Déduplication des URLs avant retour
     url_details = _deduplicate_urls(url_details)
     logger.info(f"✅ {len(url_details)} URLs uniques après déduplication")
-    
+
+    # 💾 Mettre à jour le cache avec les nouvelles données
+    _update_cache(url_details)
+
     return url_details  # 📊 Retour de la liste de dictionnaires
 
 
@@ -882,17 +1064,91 @@ def memory_status():
     """Memory usage endpoint for monitoring"""
     try:
         import psutil
+
         process = psutil.Process()
         memory_info = process.memory_info()
-        
-        return jsonify({
-            "memory_rss_mb": round(memory_info.rss / 1024 / 1024, 2),
-            "memory_vms_mb": round(memory_info.vms / 1024 / 1024, 2),
-            "memory_percent": round(process.memory_percent(), 2),
-            "status": "ok"
-        })
+
+        return jsonify(
+            {
+                "memory_rss_mb": round(memory_info.rss / 1024 / 1024, 2),
+                "memory_vms_mb": round(memory_info.vms / 1024 / 1024, 2),
+                "memory_percent": round(process.memory_percent(), 2),
+                "status": "ok",
+            }
+        )
     except ImportError:
         return jsonify({"error": "psutil not available - add it to dependencies"}), 500
+
+
+@app.route("/cache/clear", methods=["POST"])
+def cache_clear():
+    """Force la suppression du cache pour debugging"""
+    global _kubernetes_cache
+    _kubernetes_cache = {"data": None, "last_updated": None, "expiry": None}
+    logger.warning("🗑️ Cache forcé à zéro via /cache/clear")
+    return jsonify({"message": "Cache cleared", "status": "ok"})
+
+
+@app.route("/cache/force-refresh", methods=["POST"])
+def cache_force_refresh():
+    """Force un refresh immédiat du cache"""
+    try:
+        # Invalider le cache
+        _kubernetes_cache["expiry"] = datetime.now() - timedelta(seconds=1)
+
+        # Forcer un nouveau fetch
+        data = _get_all_urls_with_details()
+
+        return jsonify(
+            {"message": "Cache forcé refresh", "urls_count": len(data), "status": "ok"}
+        )
+    except Exception as e:
+        logger.error(f"❌ Erreur lors du force refresh: {e}")
+        return jsonify({"error": str(e)}, status=500)
+
+
+@app.route("/cache")
+def cache_status():
+    """Cache status endpoint for monitoring CPU optimizations"""
+    now = datetime.now()
+    cache_data = _kubernetes_cache
+
+    # Calculs pour diagnostics
+    is_valid = _is_cache_valid()
+    urls_count = len(cache_data["data"]) if cache_data["data"] else 0
+
+    # Détection de problèmes
+    issues = []
+    if not is_valid and cache_data["expiry"]:
+        expired_since = int((now - cache_data["expiry"]).total_seconds())
+        if expired_since > 600:  # Plus de 10 min
+            issues.append(f"Cache expiré depuis {expired_since}s")
+
+    if urls_count == 0:
+        issues.append("Aucune URL dans le cache")
+
+    if not cache_data["last_updated"]:
+        issues.append("Cache jamais initialisé")
+
+    return jsonify(
+        {
+            "cache_valid": is_valid,
+            "last_updated": cache_data["last_updated"].isoformat()
+            if cache_data["last_updated"]
+            else None,
+            "expiry": cache_data["expiry"].isoformat()
+            if cache_data["expiry"]
+            else None,
+            "ttl_seconds": CACHE_TTL_SECONDS,
+            "cached_urls_count": urls_count,
+            "seconds_until_expiry": int((cache_data["expiry"] - now).total_seconds())
+            if cache_data["expiry"] and cache_data["expiry"] > now
+            else 0,
+            "issues": issues,
+            "health": "ok" if not issues else "warning",
+            "status": "ok",
+        }
+    )
 
 
 @app.route("/")

@@ -219,6 +219,54 @@ tasks:
       echo "📊 Mémoire après stress test:"
       kubectl exec $POD -n {{.NAMESPACE}} -- curl -s http://localhost:5000/memory
 
+  cache-status:
+    desc: "💾 Vérifier le statut du cache Kubernetes"
+    cmds:
+    - |
+      echo "💾 Statut du cache Kubernetes..."
+      POD=$(kubectl get pods -n {{.NAMESPACE}} -l app={{.APP_NAME}} -o jsonpath='{.items[0].metadata.name}')
+      CACHE_STATUS=$(kubectl exec $POD -n {{.NAMESPACE}} -- curl -s http://localhost:5000/cache)
+      echo "$CACHE_STATUS"
+      
+      # Vérifier s'il y a des problèmes
+      if echo "$CACHE_STATUS" | grep -q '"health": "warning"'; then
+        echo "⚠️ ATTENTION: Problèmes détectés dans le cache!"
+        echo "$CACHE_STATUS" | grep -o '"issues": \[[^]]*\]'
+      else
+        echo "✅ Cache fonctionne correctement"
+      fi
+
+  cache-force-refresh:
+    desc: "🔄 Forcer un refresh immédiat du cache"
+    cmds:
+    - |
+      echo "🔄 Force refresh du cache..."
+      POD=$(kubectl get pods -n {{.NAMESPACE}} -l app={{.APP_NAME}} -o jsonpath='{.items[0].metadata.name}')
+      kubectl exec $POD -n {{.NAMESPACE}} -- curl -X POST -s http://localhost:5000/cache/force-refresh
+
+  cache-clear:
+    desc: "🗑️ Vider le cache pour debugging"
+    cmds:
+    - |
+      echo "🗑️ Suppression du cache..."
+      POD=$(kubectl get pods -n {{.NAMESPACE}} -l app={{.APP_NAME}} -o jsonpath='{.items[0].metadata.name}')
+      kubectl exec $POD -n {{.NAMESPACE}} -- curl -X POST -s http://localhost:5000/cache/clear
+
+  cpu-optimization-check:
+    desc: "⚡ Vérifier l'efficacité des optimisations CPU"
+    cmds:
+    - |
+      echo "⚡ Vérification des optimisations CPU..."
+      POD=$(kubectl get pods -n {{.NAMESPACE}} -l app={{.APP_NAME}} -o jsonpath='{.items[0].metadata.name}')
+      echo "💾 Cache status:"
+      kubectl exec $POD -n {{.NAMESPACE}} -- curl -s http://localhost:5000/cache
+      echo ""
+      echo "📊 Memory usage:"
+      kubectl exec $POD -n {{.NAMESPACE}} -- curl -s http://localhost:5000/memory
+      echo ""
+      echo "🔍 Pod resource usage:"
+      kubectl top pod $POD -n {{.NAMESPACE}} 2>/dev/null || echo "⚠️ Metrics server non disponible"
+
   update-exclusions:
     desc: "📝 Mettre à jour les URLs d'exclusion et redéployer"
     cmds:
@@ -280,10 +328,14 @@ default:
     echo "  task restart        - Redémarrer l'application"
     echo "  task clean          - Nettoyer Docker"
     echo ""
-    echo "📊 Monitoring mémoire:"
+    echo "📊 Monitoring et optimisations:"
     echo "  task memory-check   - Vérifier l'usage mémoire"
     echo "  task memory-profile - Profiler pendant refresh"
     echo "  task memory-stress-test - Test de stress mémoire"
+    echo "  task cache-status   - Statut du cache Kubernetes"
+    echo "  task cache-force-refresh - Forcer refresh du cache"
+    echo "  task cache-clear    - Vider le cache (debug)"
+    echo "  task cpu-optimization-check - Vérifier optimisations CPU"
     echo ""
     echo "🎛️ Helm:"
     echo "  task helm-template  - Afficher le template"

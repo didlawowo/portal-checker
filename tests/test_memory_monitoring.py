@@ -1,7 +1,8 @@
 import pytest
 from unittest.mock import patch, MagicMock
+from datetime import datetime, timedelta
 
-from app import app, _deduplicate_urls, _extract_essential_annotations
+from app import app, _deduplicate_urls, _extract_essential_annotations, _is_cache_valid, _update_cache, _get_cached_urls, _kubernetes_cache, _reset_cache
 
 
 class TestMemoryMonitoring:
@@ -257,3 +258,95 @@ class TestMemoryMonitoring:
         
         # Le total doit être limité à 10
         assert len(result) <= 10
+
+    def test_cache_endpoint_success(self, client):
+        """Test que l'endpoint /cache retourne les informations du cache"""
+        response = client.get("/cache")
+        assert response.status_code == 200
+        
+        data = response.get_json()
+        assert "cache_valid" in data
+        assert "last_updated" in data
+        assert "expiry" in data
+        assert "ttl_seconds" in data
+        assert "cached_urls_count" in data
+        assert "seconds_until_expiry" in data
+        assert "status" in data
+        assert data["status"] == "ok"
+
+    def test_cache_validity_functions(self):
+        """Test des fonctions de validité du cache"""
+        import app
+        
+        # Réinitialiser le cache avant le test
+        _reset_cache()
+        
+        # Test cache non initialisé
+        assert not _is_cache_valid()
+        
+        # Test cache expiré
+        app._kubernetes_cache['expiry'] = datetime.now() - timedelta(seconds=10)
+        assert not _is_cache_valid()
+        
+        # Test cache valide
+        app._kubernetes_cache['expiry'] = datetime.now() + timedelta(seconds=300)
+        app._kubernetes_cache['data'] = []  # Add some data
+        assert _is_cache_valid()
+
+    def test_cache_update_function(self):
+        """Test de la fonction de mise à jour du cache"""
+        import app
+        
+        # Réinitialiser le cache avant le test
+        _reset_cache()
+        
+        test_data = [{"url": "test.com", "name": "test"}]
+        
+        _update_cache(test_data)
+        
+        assert app._kubernetes_cache['data'] == test_data
+        assert app._kubernetes_cache['last_updated'] is not None
+        assert app._kubernetes_cache['expiry'] is not None
+        assert _is_cache_valid()
+
+    def test_get_cached_urls_valid(self):
+        """Test de récupération des URLs depuis un cache valide"""
+        # Réinitialiser le cache avant le test
+        _reset_cache()
+        
+        test_data = [{"url": "cached.com", "name": "cached"}]
+        _update_cache(test_data)
+        
+        result = _get_cached_urls()
+        assert result == test_data
+
+    def test_get_cached_urls_invalid(self):
+        """Test de récupération des URLs depuis un cache invalide"""
+        import app
+        
+        # Réinitialiser le cache avant le test
+        _reset_cache()
+        
+        app._kubernetes_cache['expiry'] = datetime.now() - timedelta(seconds=10)
+        
+        result = _get_cached_urls()
+        assert result is None
+
+    def test_cache_integration_with_get_all_urls(self):
+        """Test d'intégration du cache avec la fonction principale"""
+        # Réinitialiser le cache avant le test
+        _reset_cache()
+        
+        # Cette fonction nécessiterait de mocker les appels Kubernetes
+        # Pour l'instant, on teste juste que les fonctions de cache fonctionnent
+        test_data = [{"url": "integration.com", "name": "integration"}]
+        
+        # Simuler une mise à jour du cache
+        _update_cache(test_data)
+        
+        # Vérifier que le cache est valide
+        assert _is_cache_valid()
+        
+        # Vérifier que on peut récupérer les données
+        cached = _get_cached_urls()
+        assert cached == test_data
