@@ -10,7 +10,7 @@ application:
 # Image configuration
 image:
   repository: fizzbuzz2/portal-checker
-  tag: "2.7.1"
+  tag: "2.8.1"
   pullPolicy: IfNotPresent
   pullSecrets: []
 # Deployment configuration
@@ -49,22 +49,22 @@ resources:
     memory: 64Mi
 # Environment variables
 env:
-- name: FLASK_ENV
-  value: production
-- name: PORT
-  value: "5000"
-- name: MAX_CONCURRENT_REQUESTS
-  value: "5"
-- name: REQUEST_TIMEOUT
-  value: "3"
-- name: CACHE_TTL_SECONDS
-  value: "300"
-- name: KUBERNETES_POLL_INTERVAL
-  value: "600"
-- name: URLS_FILE
-  value: "/app/data/urls.yaml" # 🔧 Use writable data directory
-- name: EXCLUDED_URLS_FILE
-  value: "/app/config/excluded-urls.yaml" # ✅ Variable explicite
+  - name: FLASK_ENV
+    value: production
+  - name: PORT
+    value: "5000"
+  - name: MAX_CONCURRENT_REQUESTS
+    value: "5"
+  - name: REQUEST_TIMEOUT
+    value: "3"
+  - name: CACHE_TTL_SECONDS
+    value: "300"
+  - name: KUBERNETES_POLL_INTERVAL
+    value: "600"
+  - name: URLS_FILE
+    value: "/app/data/urls.yaml" # 🔧 Use writable data directory
+  - name: EXCLUDED_URLS_FILE
+    value: "/app/config/excluded-urls.yaml" # ✅ Variable explicite
 envFrom: []
 # Volume mounts and volumes
 volumeMounts:
