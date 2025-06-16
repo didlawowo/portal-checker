@@ -24,6 +24,11 @@ task status                # Show pod/service status and current config
 task port-forward          # Local access via kubectl port-forward
 task shell                 # Interactive shell in running pod
 task refresh-urls          # Force URL discovery refresh via API
+
+# Memory monitoring and optimization
+task memory-check          # Check current memory usage via /memory endpoint
+task memory-profile        # Profile memory usage during URL refresh
+task memory-stress-test    # Run stress test with multiple concurrent refreshes
 ```
 
 ### Python Testing
@@ -141,3 +146,25 @@ task validate-yaml
 - Version extracted from `pyproject.toml` using grep/sed
 - Helm values updated with semantic version (not git SHA)
 - SonarQube integration available but configurable
+
+## Memory Optimization Features
+
+### Memory Monitoring
+- **Endpoint**: `/memory` - Returns RSS/VMS memory usage and percentage
+- **Dependencies**: Uses `psutil` library for accurate memory tracking
+- **Monitoring Tasks**: `task memory-check`, `task memory-profile`, `task memory-stress-test`
+
+### Memory Optimizations Implemented
+1. **URL Deduplication**: Removes duplicate URLs based on (url, namespace, name) triplet
+2. **Essential Annotations Filtering**: 
+   - Keeps only important annotations (cert-manager, ingress configs, portal-checker directives)
+   - Filters annotations with values > 50 characters (except essential ones)
+   - Limits to maximum 10 annotations per resource
+   - Prioritizes essential annotations when hitting the limit
+3. **Reduced Data Structure**: Stores minimal metadata instead of full Kubernetes resource definitions
+
+### Memory Usage Guidelines
+- **Container Limits**: 512Mi memory, 500m CPU 
+- **Container Requests**: 128Mi memory, 200m CPU
+- **Expected Memory Usage**: ~50-150MB depending on cluster size
+- **Memory Monitoring**: Use `/memory` endpoint and `task memory-check` for tracking

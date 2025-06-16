@@ -84,8 +84,8 @@ class TestFlaskRoutes:
         # Should attempt to serve image (might be 404 if file doesn't exist)
         assert response.status_code in [200, 404]
 
-    @patch('app.test_urls_async')
-    def test_index_route_with_async_test(self, mock_test_urls, client):
+    @patch('app.check_urls_async')
+    def test_index_route_with_async_test(self, mock_check_urls, client):
         """Test main index route with async URL testing"""
         # Mock async function result
         mock_test_results = [
@@ -98,7 +98,7 @@ class TestFlaskRoutes:
                 "response_time": 150.5
             }
         ]
-        mock_test_urls.return_value = mock_test_results
+        mock_check_urls.return_value = mock_test_results
         
         response = client.get('/')
         assert response.status_code == 200
@@ -107,17 +107,17 @@ class TestFlaskRoutes:
         assert b'Portal' in response.data or b'portal' in response.data
 
     @patch('app.get_app_version')
-    @patch('app.test_urls_async')
-    def test_index_route_initialization(self, mock_test_urls, mock_version, client):
+    @patch('app.check_urls_async')
+    def test_index_route_initialization(self, mock_check_urls, mock_version, client):
         """Test index route calls initialization functions"""
         mock_version.return_value = "2.6.6"
-        mock_test_urls.return_value = []
+        mock_check_urls.return_value = []
         
         response = client.get('/')
         
         # Should call version and test functions
         mock_version.assert_called()
-        mock_test_urls.assert_called_once()
+        mock_check_urls.assert_called_once()
         
         assert response.status_code == 200
 
@@ -156,8 +156,8 @@ class TestFlaskRoutes:
         for item in data:
             assert set(item.keys()) == {"url", "name"}
 
-    @patch('app.test_urls_async')
-    def test_index_route_with_test_failures(self, mock_test_urls, client):
+    @patch('app.check_urls_async')
+    def test_index_route_with_test_failures(self, mock_check_urls, client):
         """Test index route handles test failures"""
         # Mock test results with failures
         mock_test_results = [
@@ -174,7 +174,7 @@ class TestFlaskRoutes:
                 "response_time": 5000
             }
         ]
-        mock_test_urls.return_value = mock_test_results
+        mock_check_urls.return_value = mock_test_results
         
         response = client.get('/')
         assert response.status_code == 200

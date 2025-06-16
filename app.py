@@ -55,9 +55,9 @@ def get_app_version() -> str:
     possible_paths = [
         "pyproject.toml",
         "/app/pyproject.toml",
-        os.path.join(os.path.dirname(__file__), "pyproject.toml")
+        os.path.join(os.path.dirname(__file__), "pyproject.toml"),
     ]
-    
+
     for path in possible_paths:
         try:
             with open(path, "rb") as f:
@@ -65,7 +65,7 @@ def get_app_version() -> str:
                 return data.get("project", {}).get("version", "unknown")
         except (FileNotFoundError, tomllib.TOMLDecodeError):
             continue
-    
+
     return "unknown"
 
 
@@ -268,7 +268,9 @@ async def send_slack_alert_async(
             )
 
         async with session.post(
-            SLACK_WEBHOOK_URL, json=message, timeout=TIMEOUT
+            SLACK_WEBHOOK_URL,
+            json=message,
+            timeout=aiohttp.ClientTimeout(total=TIMEOUT),
         ) as response:
             await response.text()
 
@@ -276,7 +278,7 @@ async def send_slack_alert_async(
         logger.error(f"Erreur lors de l'envoi de l'alerte Slack: {str(e)}")
 
 
-async def test_single_url(session: aiohttp.ClientSession, data: dict) -> Dict:
+async def check_single_url(session: aiohttp.ClientSession, data: dict) -> Dict:
     """Test une seule URL de manière asynchrone
 
     Args:
@@ -295,7 +297,9 @@ async def test_single_url(session: aiohttp.ClientSession, data: dict) -> Dict:
         async with session.get(
             full_url, timeout=aiohttp.ClientTimeout(total=TIMEOUT), ssl=ssl_context
         ) as response:
-            response_time = round((time.time() - start_time) * 1000, 2)  # ms
+            response_time = round(
+                (time.time() - start_time) * 1000
+            )  # ms, arrondi à l'unité
             status_code = response.status
 
             details = ""
@@ -316,12 +320,14 @@ async def test_single_url(session: aiohttp.ClientSession, data: dict) -> Dict:
             data["details"] = details
             data["response_time"] = response_time
 
-            logger.debug(f"Test de l'URL {url} : {status_code}, {response_time}ms, data: {data}")
+            logger.debug(
+                f"Test de l'URL {url} : {status_code}, {response_time}ms, data: {data}"
+            )
 
             return data
 
     except asyncio.TimeoutError:
-        response_time = round((time.time() - start_time) * 1000, 2)
+        response_time = round((time.time() - start_time) * 1000)
         result = data.copy()
         result.update(
             {
@@ -333,17 +339,19 @@ async def test_single_url(session: aiohttp.ClientSession, data: dict) -> Dict:
         return result
 
     except Exception as e:
-        response_time = round((time.time() - start_time) * 1000, 2)
+        response_time = round((time.time() - start_time) * 1000)
         result = data.copy()
-        result.update({
-            "status": 500, 
-            "details": f"❌ Error: {str(e)}",
-            "response_time": response_time,
-        })
+        result.update(
+            {
+                "status": 500,
+                "details": f"❌ Error: {str(e)}",
+                "response_time": response_time,
+            }
+        )
         return result
 
 
-async def test_urls_async(file_path: str = None) -> List[Dict]:
+async def check_urls_async(file_path: str | None = None) -> List[Dict]:
     """Test plusieurs URLs en parallèle avec limitation de concurrence
 
     Args:
@@ -381,7 +389,7 @@ async def test_urls_async(file_path: str = None) -> List[Dict]:
 
         async def bounded_test(data):
             async with sem:
-                return await test_single_url(session, data)
+                return await check_single_url(session, data)
 
         # Filtrer les URLs exclues avant de lancer les tests
         filtered_data_urls = [
@@ -525,6 +533,78 @@ def _is_url_excluded(url, annotations=None):
 
 
 # 📝 Liste pour stocker toutes les URLs
+def _deduplicate_urls(url_details):
+    """
+    Supprime les URLs dupliquées en gardant la première occurrence
+    Args:
+        url_details: Liste des dictionnaires contenant les détails des URLs
+    Returns:
+        Liste dédupliquée des URLs
+    """
+    seen = set()
+    unique_urls = []
+    duplicates_count = 0
+    
+    for url_data in url_details:
+        # Créer une clé unique basée sur URL, namespace et nom
+        key = (url_data.get("url", ""), url_data.get("namespace", ""), url_data.get("name", ""))
+        
+        if key not in seen:
+            seen.add(key)
+            unique_urls.append(url_data)
+        else:
+            duplicates_count += 1
+            logger.debug(f"🔄 URL dupliquée ignorée: {url_data.get('url', 'unknown')}")
+    
+    if duplicates_count > 0:
+        logger.info(f"🔄 {duplicates_count} URLs dupliquées supprimées")
+    
+    return unique_urls
+
+
+def _extract_essential_annotations(annotations):
+    """
+    Extrait seulement les annotations essentielles pour réduire l'usage mémoire
+    Args:
+        annotations: Dictionnaire complet des annotations
+    Returns:
+        Dictionnaire avec seulement les annotations importantes
+    """
+    if not annotations:
+        return {}
+    
+    # Garder seulement les annotations importantes pour le portail checker
+    essential_keys = {
+        'portal-checker.io/exclude',
+        'cert-manager.io/cluster-issuer', 
+        'ingress.kubernetes.io/ssl-redirect',
+        'nginx.ingress.kubernetes.io/cors-allow-origin',
+        'kubernetes.io/ingress.class'
+    }
+    
+    # D'abord, garder toutes les annotations essentielles
+    essential_annotations = {}
+    other_annotations = {}
+    
+    for key, value in annotations.items():
+        if key in essential_keys:
+            essential_annotations[key] = value
+        # Garder les annotations courtes (moins de 50 caractères)
+        elif len(str(value)) < 50:
+            other_annotations[key] = value
+    
+    # Combiner les annotations, en priorisant les essentielles
+    result = essential_annotations.copy()
+    
+    # Ajouter les autres annotations jusqu'à la limite de 10
+    remaining_slots = 10 - len(result)
+    if remaining_slots > 0:
+        for key, value in list(other_annotations.items())[:remaining_slots]:
+            result[key] = value
+        
+    return result
+
+
 def _get_all_urls_with_details():
     """
     Récupère toutes les URLs avec leurs détails depuis les HTTPRoutes et Ingress
@@ -554,7 +634,7 @@ def _get_all_urls_with_details():
                         {
                             "name": name,
                             "namespace": namespace,
-                            "annotations": annotations,
+                            "annotations": _extract_essential_annotations(annotations),
                             "type": "HTTPRoute",
                             "url": full_url,
                             "status": status,
@@ -579,7 +659,7 @@ def _get_all_urls_with_details():
                                 "name": name,
                                 "namespace": namespace,
                                 "type": "HTTPRoute",
-                                "annotations": annotations,
+                                "annotations": _extract_essential_annotations(annotations),
                                 "url": full_url,
                                 "status": status,
                                 "info": f"Path: {path_value}",
@@ -621,8 +701,8 @@ def _get_all_urls_with_details():
                                 {
                                     "name": ingress_name,
                                     "namespace": ingress_namespace,
-                                    "annotations": annotations,
-                                    "labels": labels,
+                                    "annotations": _extract_essential_annotations(annotations),
+                                    "labels": _extract_essential_annotations(labels),  # Also optimize labels
                                     "type": "Ingress",
                                     "url": full_url,
                                     "status": ingress_status,
@@ -652,8 +732,8 @@ def _get_all_urls_with_details():
                                 {
                                     "name": ingress_name,
                                     "namespace": ingress_namespace,
-                                    "annotations": annotations,
-                                    "labels": labels,
+                                    "annotations": _extract_essential_annotations(annotations),
+                                    "labels": _extract_essential_annotations(labels),  # Also optimize labels
                                     "type": "Ingress",
                                     "url": full_url,
                                     "status": ingress_status,
@@ -668,13 +748,17 @@ def _get_all_urls_with_details():
                 f"✅ {len(url_details)} URLs totales générées, {filtered_count} URLs exclues"
             )
 
-        except client.exceptions.ApiException as e:
+        except Exception as e:
             logger.error(f"❌ Erreur lors de la récupération des Ingress: {e}")
 
     except Exception as e:
         logger.error(f"❌ Erreur inattendue: {e}")
         logger.exception(e)  # 📝 Log complet de l'erreur avec stack trace
 
+    # 🔄 Déduplication des URLs avant retour
+    url_details = _deduplicate_urls(url_details)
+    logger.info(f"✅ {len(url_details)} URLs uniques après déduplication")
+    
     return url_details  # 📊 Retour de la liste de dictionnaires
 
 
@@ -793,11 +877,29 @@ def health():
     return {"status": "ok"}, 200
 
 
+@app.route("/memory")
+def memory_status():
+    """Memory usage endpoint for monitoring"""
+    try:
+        import psutil
+        process = psutil.Process()
+        memory_info = process.memory_info()
+        
+        return jsonify({
+            "memory_rss_mb": round(memory_info.rss / 1024 / 1024, 2),
+            "memory_vms_mb": round(memory_info.vms / 1024 / 1024, 2),
+            "memory_percent": round(process.memory_percent(), 2),
+            "status": "ok"
+        })
+    except ImportError:
+        return jsonify({"error": "psutil not available - add it to dependencies"}), 500
+
+
 @app.route("/")
 async def index():
     """Point d'entrée principal avec gestion asynchrone"""
 
-    results = await test_urls_async()
+    results = await check_urls_async()
     logger.info(f"✅ {len(results)} URLs testées")
 
     return render_template("index.html", results=results, version=get_app_version())

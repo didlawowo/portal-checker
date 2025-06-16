@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from app import test_single_url as app_test_single_url
+from app import check_single_url as app_check_single_url
 
 
 @pytest.mark.asyncio
@@ -15,7 +15,7 @@ async def test_test_single_url():
     
     # Tester la fonction avec un dictionnaire comme attendu
     test_data = {"url": "example.com", "name": "test"}
-    result = await app_test_single_url(mock_session, test_data)
+    result = await app_check_single_url(mock_session, test_data)
     
     # Vérifier les résultats
     assert result["url"] == "example.com"
@@ -34,7 +34,7 @@ async def test_test_single_url_with_error():
     mock_session.get.return_value.__aenter__.return_value = mock_response
     
     test_data = {"url": "error.example.com", "name": "error-test"}
-    result = await app_test_single_url(mock_session, test_data)
+    result = await app_check_single_url(mock_session, test_data)
     
     # Vérifier les résultats d'erreur
     assert result["url"] == "error.example.com"

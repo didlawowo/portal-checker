@@ -8,22 +8,7 @@
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <title>Portal Urls Checker</title>
     <style>
-        /* Ajoutez ces styles à votre balise <style> */
-
-        .toggle-btn {
-            background: #4b5563;
-            color: white;
-            border: none;
-            padding: 4px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            margin-bottom: 5px;
-        }
-
-        .toggle-btn:hover {
-            background: #374151;
-        }
+        /* Styles pour les annotations */
 
         .annotations-content {
             background: #f9fafb;
@@ -37,9 +22,21 @@
         }
 
         .annotations-preview {
-            color: #6b7280;
+            background: #4b5563;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
             font-size: 12px;
-            margin-top: 4px;
+            margin-bottom: 5px;
+            display: inline-block;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+
+        .annotations-preview:hover {
+            background: #374151;
         }
 
         .annotations-content pre {
@@ -210,6 +207,8 @@
                 sortConfig.field === 'url' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '';
             document.getElementById('statusSort').textContent =
                 sortConfig.field === 'status' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '';
+            document.getElementById('response_timeSort').textContent =
+                sortConfig.field === 'response_time' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '';
         }
 
         // Fonction pour trier les données
@@ -267,14 +266,14 @@
                             ${getStatusEmoji(item.status)} ${item.status}
                         </span>
                     </td>
-                    <td>${item.response_time ? item.response_time + ' ms' : '-'}</td>
+                    <td>${item.response_time ? Math.round(item.response_time) + ' ms' : '-'}</td>
                     <td>${item.details || ''}</td> `;
                 tbody.appendChild(tr);
             });
         }
-        // Remplacez la fonction formatAnnotations par celle-ci
+        // Fonction pour formater les annotations - ne montre le bouton que s'il y a des annotations
         function formatAnnotations(annotations) {
-            if (!annotations) return '';
+            if (!annotations) return '-';
 
             try {
                 // Si c'est déjà une chaîne, essayez de l'analyser comme JSON
@@ -282,20 +281,26 @@
                     try {
                         annotations = JSON.parse(annotations);
                     } catch (e) {
-                        // Si ce n'est pas du JSON valide, retournez tel quel
-                        return annotations;
+                        // Si ce n'est pas du JSON valide, retournez tel quel si non vide
+                        return annotations.trim() ? annotations : '-';
                     }
+                }
+
+                // Vérifier si l'objet annotations a des propriétés
+                const annotationKeys = Object.keys(annotations || {});
+                if (annotationKeys.length === 0) {
+                    return '-';
                 }
 
                 // Générer un ID unique pour ce bloc d'annotations
                 const toggleId = 'toggle-' + Math.random().toString(36).substr(2, 9);
 
-                // Créer une liste formatée des annotations avec toggle
+                // Créer une liste formatée des annotations avec toggle sur le texte
                 let result = `
             <div>
-                <button class="toggle-btn" onclick="toggleAnnotations('${toggleId}')">
-                    Afficher/Masquer
-                </button>
+                <div class="annotations-preview" onclick="toggleAnnotations('${toggleId}')">
+                    ${annotationKeys.length} annotation${annotationKeys.length > 1 ? 's' : ''}
+                </div>
                 <div id="${toggleId}" class="annotations-content" style="display: none;">
                     <ul style="list-style-type: none; padding-left: 0;">
         `;
@@ -311,15 +316,13 @@
                 result += `
                     </ul>
                 </div>
-                <div class="annotations-preview">
-                    ${Object.keys(annotations).length} annotations
-                </div>
             </div>
         `;
                 return result;
             } catch (error) {
-                // En cas d'erreur, retourner le texte brut ou un message d'erreur
-                return String(annotations);
+                // En cas d'erreur, retourner un tiret si vide ou le texte brut
+                const stringValue = String(annotations);
+                return stringValue.trim() ? stringValue : '-';
             }
         }
 
