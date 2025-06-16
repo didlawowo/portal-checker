@@ -4,9 +4,9 @@
 application:
   containerName: portal-checker
   ports:
-  - containerPort: 5000
-    name: http
-    protocol: TCP
+    - containerPort: 5000
+      name: http
+      protocol: TCP
 # Image configuration
 image:
   repository: fizzbuzz2/portal-checker
@@ -49,28 +49,28 @@ resources:
     memory: 128Mi
 # Environment variables
 env:
-- name: FLASK_ENV
-  value: production
-- name: PORT
-  value: "5000"
-- name: URLS_FILE
-  value: "/app/data/urls.yaml" # 🔧 Use writable data directory
-- name: EXCLUDED_URLS_FILE
-  value: "/app/config/excluded-urls.yaml" # ✅ Variable explicite
+  - name: FLASK_ENV
+    value: production
+  - name: PORT
+    value: "5000"
+  - name: URLS_FILE
+    value: "/app/data/urls.yaml" # 🔧 Use writable data directory
+  - name: EXCLUDED_URLS_FILE
+    value: "/app/config/excluded-urls.yaml" # ✅ Variable explicite
 envFrom: []
 # Volume mounts and volumes
 volumeMounts:
-- name: config-volume
-  mountPath: /app/config
-  readOnly: true
-- name: data-volume
-  mountPath: /app/data
+  - name: config-volume
+    mountPath: /app/config
+    readOnly: true
+  - name: data-volume
+    mountPath: /app/data
 volumes:
-- name: config-volume
-  configMap:
-    name: portal-checker-config
-- name: data-volume
-  emptyDir: {}
+  - name: config-volume
+    configMap:
+      name: portal-checker-config
+  - name: data-volume
+    emptyDir: {}
 # Probes
 livenessProbe:
   httpGet:
@@ -112,18 +112,17 @@ nodeSelector: {}
 initContainers: []
 # 🎯 Excluded URLs for the application - SOLUTION 1: Format liste YAML
 excludedUrls:
-- "monitoring.*"
-- "*.internal/*"
-- "infisical.dc-tech.work/ss-webhook"
-- "grafana.dc-tech.work/metrics"
-- "prometheus.dc-tech.work/*"
+  - "monitoring.*"
+  - "*.internal/*"
+  - "infisical.dc-tech.work/ss-webhook"
+  - "grafana.dc-tech.work/metrics"
+  - "prometheus.dc-tech.work/*"
 # Certificate configuration
 certificate:
   enabled: false
   filePath: ""
 # DNS configuration
 dnsConfig: {}
-
 # nameservers:
 #   - "8.8.8.8"
 #   - "1.1.1.1"
