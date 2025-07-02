@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: portal-checker-test
+  labels:
+    name: portal-checker-test
+    environment: test
+    purpose: portal-checker-testing
