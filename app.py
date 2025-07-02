@@ -127,9 +127,17 @@ CACHE_TTL_SECONDS = int(os.getenv("CACHE_TTL_SECONDS", "300"))  # 5 minutes par 
 KUBERNETES_POLL_INTERVAL = int(
     os.getenv("KUBERNETES_POLL_INTERVAL", "600")
 )  # 10 minutes
+CHECK_INTERVAL = int(os.getenv("CHECK_INTERVAL", "30"))  # 30 secondes par défaut
 
 # 💾 Cache global pour les ressources Kubernetes
 _kubernetes_cache: dict[str, Any] = {"data": None, "last_updated": None, "expiry": None}
+
+# 🔄 Cache global pour les résultats de test des URLs
+_test_results_cache: dict[str, Any] = {"results": [], "last_updated": None}
+
+# 🔄 Variables pour le timer périodique
+_background_task = None
+_stop_background_task = False
 
 URLS_FILE = os.getenv(
     "URLS_FILE",
@@ -361,11 +369,12 @@ async def check_single_url(session: aiohttp.ClientSession, data: dict) -> dict:
         return result
 
 
-async def check_urls_async(file_path: str | None = None) -> list[dict]:
+async def check_urls_async(file_path: str | None = None, update_cache: bool = True) -> list[dict]:
     """Test plusieurs URLs en parallèle avec limitation de concurrence
 
     Args:
         file_path: Chemin du fichier YAML contenant les URLs
+        update_cache: Si True, met à jour le cache des résultats
     Returns:
         Liste des résultats de test
     """
@@ -413,7 +422,15 @@ async def check_urls_async(file_path: str | None = None) -> list[dict]:
         tasks = [bounded_test(data) for data in filtered_data_urls]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
-    return [r for r in results if isinstance(r, dict)]
+    final_results = [r for r in results if isinstance(r, dict)]
+    
+    # Mettre à jour le cache des résultats si demandé
+    if update_cache:
+        _test_results_cache["results"] = final_results
+        _test_results_cache["last_updated"] = datetime.now()
+        logger.debug(f"🔄 Cache des résultats mis à jour avec {len(final_results)} URLs")
+
+    return final_results
 
 
 def _get_http_routes():
@@ -944,6 +961,59 @@ def _get_all_urls_with_details():
     return url_details  # 📊 Retour de la liste de dictionnaires
 
 
+async def _periodic_url_check():
+    """
+    🔄 Tâche de fond qui teste les URLs périodiquement
+    """
+    global _stop_background_task
+    
+    while not _stop_background_task:
+        try:
+            logger.debug(f"🔄 Démarrage du test périodique (intervalle: {CHECK_INTERVAL}s)")
+            await check_urls_async(update_cache=True)
+            logger.info(f"✅ Test périodique terminé, prochaine exécution dans {CHECK_INTERVAL}s")
+        except Exception as e:
+            logger.error(f"❌ Erreur lors du test périodique: {e}")
+        
+        # Attendre l'intervalle configuré
+        await asyncio.sleep(CHECK_INTERVAL)
+
+
+def _start_background_task():
+    """
+    🚀 Démarre la tâche de fond pour les tests périodiques
+    """
+    global _background_task, _stop_background_task
+    
+    if _background_task is not None:
+        logger.warning("⚠️ Tâche de fond déjà en cours")
+        return
+    
+    _stop_background_task = False
+    
+    def run_background():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(_periodic_url_check())
+        finally:
+            loop.close()
+    
+    import threading
+    _background_task = threading.Thread(target=run_background, daemon=True)
+    _background_task.start()
+    logger.info(f"🚀 Tâche de fond démarrée (tests toutes les {CHECK_INTERVAL}s)")
+
+
+def _stop_background_task_func():
+    """
+    🛑 Arrête la tâche de fond
+    """
+    global _stop_background_task
+    _stop_background_task = True
+    logger.info("🛑 Arrêt de la tâche de fond demandé")
+
+
 def _refresh_urls_if_needed():
     """
     🚀 SOLUTION AUTO-REFRESH: Effectue un refresh automatique au démarrage si nécessaire
@@ -1152,17 +1222,42 @@ def cache_status():
 
 
 @app.route("/")
-async def index():
-    """Point d'entrée principal avec gestion asynchrone"""
+def index():
+    """Point d'entrée principal - affiche les résultats mis en cache"""
+    
+    # Récupérer les résultats depuis le cache
+    results = _test_results_cache["results"]
+    last_updated = _test_results_cache["last_updated"]
+    
+    # Si pas de résultats en cache, afficher un message
+    if not results:
+        logger.info("ℹ️ Aucun résultat en cache, en attente du premier test périodique")
+        results = []
+    else:
+        logger.debug(f"📊 Affichage de {len(results)} résultats mis en cache")
 
-    results = await check_urls_async()
-    logger.info(f"✅ {len(results)} URLs testées")
-
-    return render_template("index.html", results=results, version=get_app_version())
+    return render_template(
+        "index.html", 
+        results=results, 
+        version=get_app_version(),
+        last_updated=last_updated.strftime("%Y-%m-%d %H:%M:%S") if last_updated else "En attente..."
+    )
 
 
 # 🚀 Initialisation au démarrage
 _refresh_urls_if_needed()
+
+# 🔄 Démarrage de la tâche de fond pour les tests périodiques
+try:
+    if os.getenv("FLASK_ENV") == "development":
+        config.load_kube_config()
+    else:
+        config.load_incluster_config()
+    
+    _start_background_task()
+except Exception as e:
+    logger.error(f"❌ Erreur lors du démarrage de la tâche de fond: {e}")
+    logger.warning("⚠️ L'application fonctionne sans tests périodiques")
 
 
 if __name__ == "__main__":

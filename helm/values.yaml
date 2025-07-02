@@ -61,6 +61,8 @@ env:
     value: "300"
   - name: KUBERNETES_POLL_INTERVAL
     value: "600"
+  - name: CHECK_INTERVAL
+    value: "30" # 🔄 Fréquence de test des URLs en secondes
   - name: URLS_FILE
     value: "/app/data/urls.yaml" # 🔧 Use writable data directory
   - name: EXCLUDED_URLS_FILE
