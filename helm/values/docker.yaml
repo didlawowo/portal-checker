@@ -3,9 +3,8 @@
 
 image:
   repository: fizzbuzz2/portal-checker
-  tag: "2.8.1-feat-perf-f61c328"
+  tag: "2.9.0-feat-perf-"
   pullPolicy: Always
-
 # Environment for branch testing
 env:
   - name: FLASK_ENV
@@ -28,14 +27,12 @@ env:
     value: "/app/data/urls.yaml"
   - name: EXCLUDED_URLS_FILE
     value: "/app/config/excluded-urls.yaml"
-
 # Branch-specific annotations
 podAnnotations:
   git.branch: "feat/perf"
-  git.commit: "f61c328"
-  build.timestamp: "2025-07-02T10:30:00Z"
+  git.commit: "d507eee"
+  build.timestamp: "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   environment: "development"
-
 # Development-specific resource limits
 resources:
   limits:
