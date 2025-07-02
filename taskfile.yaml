@@ -1,9 +1,11 @@
 version: '3'
 
+silent: true
+
 # 🎯 Variables globales
 vars:
   APP_NAME: portal-checker
-  NAMESPACE: portal-checker
+  NAMESPACE: kube-infra
   DOCKER_REGISTRY: fizzbuzz2
   IMAGE_TAG:
     sh: git rev-parse --short HEAD
@@ -48,6 +50,11 @@ tasks:
     desc: "🚀 Déployer avec Helm"
     cmds:
     - helm upgrade --install {{.APP_NAME}} {{.HELM_CHART_PATH}} --namespace {{.NAMESPACE}} --create-namespace --set image.tag={{.IMAGE_TAG}}
+
+  helm-install-docker:
+    desc: "🐳 Déployer avec Helm + valeurs Docker (branch)"
+    cmds:
+    - helm upgrade --install {{.APP_NAME}}-dev {{.HELM_CHART_PATH}} --namespace {{.NAMESPACE}}-dev --create-namespace --values {{.HELM_CHART_PATH}}/values.yaml --values {{.HELM_CHART_PATH}}/values/docker.yaml
 
   # 🔍 Validation et tests
   validate-yaml:
@@ -170,7 +177,7 @@ tasks:
     cmds:
     - |
       echo "🔄 Refresh des URLs..."
-      POD=$(kubectl get pods -n {{.NAMESPACE}} -l app={{.APP_NAME}} -o jsonpath='{.items[0].metadata.name}')
+      POD=$(kubectl get pods -n {{.NAMESPACE}} -l app.kubernetes.io/name={{.APP_NAME}} --field-selector=status.phase=Running -o jsonpath='{.items[0].metadata.name}')
       kubectl exec $POD -n {{.NAMESPACE}} -- curl -s http://localhost:5000/refresh
       echo "✅ Refresh terminé"
 
@@ -180,10 +187,10 @@ tasks:
     cmds:
     - |
       echo "📊 Usage mémoire pour {{.APP_NAME}}..."
-      kubectl top pods -n {{.NAMESPACE}} -l app={{.APP_NAME}} 2>/dev/null || echo "⚠️ Metrics server non disponible"
+      kubectl top pods -n {{.NAMESPACE}} -l app.kubernetes.io/name={{.APP_NAME}} 2>/dev/null || echo "⚠️ Metrics server non disponible"
       echo ""
       echo "📊 Mémoire application via endpoint /memory:"
-      POD=$(kubectl get pods -n {{.NAMESPACE}} -l app={{.APP_NAME}} -o jsonpath='{.items[0].metadata.name}')
+      POD=$(kubectl get pods -n {{.NAMESPACE}} -l app.kubernetes.io/name={{.APP_NAME}} --field-selector=status.phase=Running -o jsonpath='{.items[0].metadata.name}')
       kubectl exec $POD -n {{.NAMESPACE}} -- curl -s http://localhost:5000/memory
 
   memory-profile:
@@ -191,7 +198,7 @@ tasks:
     cmds:
     - |
       echo "🔍 Démarrage du profiling mémoire..."
-      POD=$(kubectl get pods -n {{.NAMESPACE}} -l app={{.APP_NAME}} -o jsonpath='{.items[0].metadata.name}')
+      POD=$(kubectl get pods -n {{.NAMESPACE}} -l app.kubernetes.io/name={{.APP_NAME}} --field-selector=status.phase=Running -o jsonpath='{.items[0].metadata.name}')
       echo "📊 Mémoire avant refresh:"
       kubectl exec $POD -n {{.NAMESPACE}} -- curl -s http://localhost:5000/memory
       echo ""
@@ -206,7 +213,7 @@ tasks:
     cmds:
     - |
       echo "⚡ Test de stress mémoire..."
-      POD=$(kubectl get pods -n {{.NAMESPACE}} -l app={{.APP_NAME}} -o jsonpath='{.items[0].metadata.name}')
+      POD=$(kubectl get pods -n {{.NAMESPACE}} -l app.kubernetes.io/name={{.APP_NAME}} --field-selector=status.phase=Running -o jsonpath='{.items[0].metadata.name}')
       echo "📊 Mémoire initiale:"
       kubectl exec $POD -n {{.NAMESPACE}} -- curl -s http://localhost:5000/memory
       echo ""
@@ -220,12 +227,11 @@ tasks:
       kubectl exec $POD -n {{.NAMESPACE}} -- curl -s http://localhost:5000/memory
 
   cache-status:
-    desc: "💾 Vérifier le statut du cache Kubernetes"
+    desc: "💾 Vérifier le statut du cache"
     cmds:
     - |
-      echo "💾 Statut du cache Kubernetes..."
-      POD=$(kubectl get pods -n {{.NAMESPACE}} -l app={{.APP_NAME}} -o jsonpath='{.items[0].metadata.name}')
-      CACHE_STATUS=$(kubectl exec $POD -n {{.NAMESPACE}} -- curl -s http://localhost:5000/cache)
+      echo "💾 Statut du cache..."
+      CACHE_STATUS=$(curl -s http://localhost:5001/cache)
       echo "$CACHE_STATUS"
       
       # Vérifier s'il y a des problèmes
@@ -241,23 +247,21 @@ tasks:
     cmds:
     - |
       echo "🔄 Force refresh du cache..."
-      POD=$(kubectl get pods -n {{.NAMESPACE}} -l app={{.APP_NAME}} -o jsonpath='{.items[0].metadata.name}')
-      kubectl exec $POD -n {{.NAMESPACE}} -- curl -X POST -s http://localhost:5000/cache/force-refresh
+      curl -X POST -s http://localhost:5001/cache/force-refresh
 
   cache-clear:
     desc: "🗑️ Vider le cache pour debugging"
     cmds:
     - |
       echo "🗑️ Suppression du cache..."
-      POD=$(kubectl get pods -n {{.NAMESPACE}} -l app={{.APP_NAME}} -o jsonpath='{.items[0].metadata.name}')
-      kubectl exec $POD -n {{.NAMESPACE}} -- curl -X POST -s http://localhost:5000/cache/clear
+      curl -X POST -s http://localhost:5001/cache/clear
 
   cpu-optimization-check:
     desc: "⚡ Vérifier l'efficacité des optimisations CPU"
     cmds:
     - |
       echo "⚡ Vérification des optimisations CPU..."
-      POD=$(kubectl get pods -n {{.NAMESPACE}} -l app={{.APP_NAME}} -o jsonpath='{.items[0].metadata.name}')
+      POD=$(kubectl get pods -n {{.NAMESPACE}} -l app.kubernetes.io/name={{.APP_NAME}} --field-selector=status.phase=Running -o jsonpath='{.items[0].metadata.name}')
       echo "💾 Cache status:"
       kubectl exec $POD -n {{.NAMESPACE}} -- curl -s http://localhost:5000/cache
       echo ""
@@ -297,46 +301,46 @@ tasks:
     - echo "✅ Tous les tests CI passés"
 
 # 📝 Documentation des tâches disponibles
-default:
-  desc: "📋 Afficher l'aide"
-  cmds:
-  - |
-    echo "🎯 Portal Checker - Tâches disponibles:"
-    echo ""
-    echo "📦 Construction et déploiement:"
-    echo "  task build          - Construire l'image Docker"
-    echo "  task push           - Pousser vers le registry"
-    echo "  task deploy         - Déployer avec Helm"
-    echo "  task deploy-full    - Workflow complet"
-    echo ""
-    echo "🔍 Validation et tests:"
-    echo "  task validate-yaml  - Valider les fichiers YAML"
-    echo "  task test           - Exécuter les tests"
-    echo "  task test-coverage  - Tests avec couverture de code"
-    echo "  task test-exclusions - Tester la logique d'exclusion"
-    echo "  task ci-test        - Tests pour CI/CD"
-    echo ""
-    echo "🔧 Développement:"
-    echo "  task dev            - Mode développement"
-    echo "  task logs           - Afficher les logs"
-    echo "  task status         - Statut de l'application"
-    echo "  task port-forward   - Redirection de port"
-    echo ""
-    echo "🔄 Maintenance:"
-    echo "  task refresh-urls   - Forcer refresh des URLs"
-    echo "  task update-exclusions - Mettre à jour les exclusions"
-    echo "  task restart        - Redémarrer l'application"
-    echo "  task clean          - Nettoyer Docker"
-    echo ""
-    echo "📊 Monitoring et optimisations:"
-    echo "  task memory-check   - Vérifier l'usage mémoire"
-    echo "  task memory-profile - Profiler pendant refresh"
-    echo "  task memory-stress-test - Test de stress mémoire"
-    echo "  task cache-status   - Statut du cache Kubernetes"
-    echo "  task cache-force-refresh - Forcer refresh du cache"
-    echo "  task cache-clear    - Vider le cache (debug)"
-    echo "  task cpu-optimization-check - Vérifier optimisations CPU"
-    echo ""
-    echo "🎛️ Helm:"
-    echo "  task helm-template  - Afficher le template"
-    echo "  task helm-dry-run   - Test à sec"
+  default:
+    desc: "📋 Afficher l'aide"
+    cmds:
+    - |
+      echo "🎯 Portal Checker - Tâches disponibles:"
+      echo ""
+      echo "📦 Construction et déploiement:"
+      echo "  task build          - Construire l'image Docker"
+      echo "  task push           - Pousser vers le registry"
+      echo "  task deploy         - Déployer avec Helm"
+      echo "  task deploy-full    - Workflow complet"
+      echo ""
+      echo "🔍 Validation et tests:"
+      echo "  task validate-yaml  - Valider les fichiers YAML"
+      echo "  task test           - Exécuter les tests"
+      echo "  task test-coverage  - Tests avec couverture de code"
+      echo "  task test-exclusions - Tester la logique d'exclusion"
+      echo "  task ci-test        - Tests pour CI/CD"
+      echo ""
+      echo "🔧 Développement:"
+      echo "  task dev            - Mode développement"
+      echo "  task logs           - Afficher les logs"
+      echo "  task status         - Statut de l'application"
+      echo "  task port-forward   - Redirection de port"
+      echo ""
+      echo "🔄 Maintenance:"
+      echo "  task refresh-urls   - Forcer refresh des URLs"
+      echo "  task update-exclusions - Mettre à jour les exclusions"
+      echo "  task restart        - Redémarrer l'application"
+      echo "  task clean          - Nettoyer Docker"
+      echo ""
+      echo "📊 Monitoring et optimisations:"
+      echo "  task memory-check   - Vérifier l'usage mémoire"
+      echo "  task memory-profile - Profiler pendant refresh"
+      echo "  task memory-stress-test - Test de stress mémoire"
+      echo "  task cache-status   - Statut du cache Kubernetes"
+      echo "  task cache-force-refresh - Forcer refresh du cache"
+      echo "  task cache-clear    - Vider le cache (debug)"
+      echo "  task cpu-optimization-check - Vérifier optimisations CPU"
+      echo ""
+      echo "🎛️ Helm:"
+      echo "  task helm-template  - Afficher le template"
+      echo "  task helm-dry-run   - Test à sec"

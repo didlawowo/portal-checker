@@ -1076,20 +1076,18 @@ def check_all_urls():
     # Récupérer toutes les URLs
     data_urls = _get_all_urls_with_details()
 
-    # Skip file writing in development mode to avoid read-only filesystem errors
-    if os.getenv("FLASK_ENV") != "development":
-        # Assurez-vous que le répertoire config existe
-        config_dir = os.path.dirname(URLS_FILE)
-        if config_dir:
-            os.makedirs(config_dir, exist_ok=True)
+    # Assurez-vous que le répertoire config existe
+    config_dir = os.path.dirname(URLS_FILE)
+    if config_dir:
+        os.makedirs(config_dir, exist_ok=True)
 
+    try:
         with open(URLS_FILE, "w", encoding="utf-8") as f:
             yaml.safe_dump(data_urls, f, default_flow_style=False, allow_unicode=True)
-
-    if os.getenv("FLASK_ENV") != "development":
         logger.info(f"✅ {len(data_urls)} URLs sauvegardées dans {URLS_FILE}")
-    else:
-        logger.info(f"✅ {len(data_urls)} URLs générées (dev mode - skip file write)")
+    except (PermissionError, OSError) as e:
+        logger.warning(f"⚠️ Impossible d'écrire dans {URLS_FILE}: {e}")
+        logger.info(f"✅ {len(data_urls)} URLs générées (fichier non sauvegardé)")
 
     origin_url = request.referrer
     return redirect(origin_url) if origin_url else redirect("/")
