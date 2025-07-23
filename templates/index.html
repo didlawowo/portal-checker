@@ -21,22 +21,29 @@
             font-size: 13px;
         }
 
-        .annotations-preview {
-            background: #4b5563;
+        .annotations-btn {
+            background: #3b82f6;
             color: white;
-            border: none;
-            padding: 4px 8px;
-            border-radius: 4px;
+            border: 1px solid #2563eb;
+            padding: 3px 8px;
+            border-radius: 6px;
             cursor: pointer;
             font-size: 12px;
-            margin-bottom: 5px;
-            display: inline-block;
-            text-decoration: none;
-            transition: background-color 0.2s;
+            font-weight: 600;
+            min-width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
         }
 
-        .annotations-preview:hover {
-            background: #374151;
+        .annotations-btn:hover {
+            background: #2563eb;
+            border-color: #1d4ed8;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transform: translateY(-1px);
         }
 
         .annotations-content pre {
@@ -55,12 +62,46 @@
         }
 
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
+            max-width: none;
+            width: 98%;
+            margin: 15px auto;
             background: white;
-            padding: 20px;
+            padding: 15px;
             border-radius: 8px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (min-width: 1400px) {
+            .container {
+                width: 95%;
+                padding: 20px;
+                margin: 20px auto;
+            }
+        }
+
+        @media (min-width: 1600px) {
+            .container {
+                width: 90%;
+                max-width: 1800px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                width: 98%;
+                margin: 10px auto;
+                padding: 15px;
+                border-radius: 4px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                width: 100%;
+                margin: 0;
+                padding: 10px;
+                border-radius: 0;
+            }
         }
 
         .header {
@@ -68,6 +109,21 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                margin-bottom: 15px;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+                margin: 0;
+            }
         }
 
         .version-badge {
@@ -82,6 +138,17 @@
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 768px) {
+            .search-bar {
+                margin-bottom: 15px;
+            }
+            
+            .search-bar input[type="search"] {
+                min-width: 200px;
+            }
         }
 
         input[type="search"] {
@@ -104,17 +171,99 @@
             background: #2563eb;
         }
 
+        .table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            position: relative;
+        }
+
+        @media (max-width: 768px) {
+            .table-container::after {
+                content: "← Faites glisser pour voir plus →";
+                position: absolute;
+                bottom: -25px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #f3f4f6;
+                padding: 4px 12px;
+                border-radius: 12px;
+                font-size: 11px;
+                color: #6b7280;
+                white-space: nowrap;
+                pointer-events: none;
+            }
+            
+            .container {
+                padding-bottom: 40px;
+            }
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
+            min-width: 1000px;
+        }
+
+        @media (max-width: 768px) {
+            table {
+                min-width: 900px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 0;
+                margin: 0;
+            }
+            
+            .container {
+                width: 100%;
+                margin: 0;
+                padding: 8px;
+                border-radius: 0;
+            }
+            
+            table {
+                min-width: 800px;
+                font-size: 12px;
+            }
+            
+            th, td {
+                padding: 6px 3px;
+            }
+            
+            .header h1 {
+                font-size: 1.25rem;
+            }
+            
+            .version-badge {
+                font-size: 12px;
+                padding: 2px 8px;
+            }
         }
 
         th {
             text-align: left;
             padding: 12px;
             background: #f9fafb;
-            cursor: pointer;
             user-select: none;
+            white-space: nowrap;
+        }
+        
+        th[onclick] {
+            cursor: pointer;
+        }
+        
+        th[onclick]:hover {
+            background: #f3f4f6;
+        }
+
+        @media (max-width: 768px) {
+            th {
+                padding: 8px 6px;
+                font-size: 12px;
+            }
         }
 
         th:hover {
@@ -124,6 +273,120 @@
         td {
             padding: 12px;
             border-top: 1px solid #e5e7eb;
+            word-wrap: break-word;
+            vertical-align: top;
+        }
+
+        @media (max-width: 768px) {
+            td {
+                padding: 8px 6px;
+                font-size: 12px;
+            }
+        }
+
+        /* Style spécifique pour la colonne URL */
+        td:nth-child(6) {
+            max-width: 220px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Style spécifique pour la colonne Namespace */
+        td:nth-child(1) {
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Style spécifique pour la colonne Name */
+        td:nth-child(2) {
+            max-width: 130px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Style spécifique pour la colonne Type */
+        td:nth-child(3) {
+            max-width: 60px;
+            text-align: center;
+        }
+
+        /* Style spécifique pour la colonne Ingress Class */
+        td:nth-child(4) {
+            max-width: 60px;
+            text-align: center;
+            padding: 8px 4px;
+        }
+
+        /* Style spécifique pour la colonne Annotations */
+        td:nth-child(5) {
+            max-width: 50px;
+            text-align: center;
+            padding: 8px 4px;
+        }
+
+        /* Style spécifique pour la colonne Details */
+        td:nth-child(9) {
+            max-width: 450px;
+            word-wrap: break-word;
+            white-space: normal;
+            font-size: 12px;
+            line-height: 1.3;
+            padding-right: 15px;
+        }
+
+        @media (max-width: 768px) {
+            /* Ajustements mobile pour les colonnes */
+            td:nth-child(6) { /* URL column */
+                max-width: 150px;
+            }
+            
+            td:nth-child(9) { /* Details column */
+                max-width: 120px;
+            }
+            
+            td:nth-child(1) { /* Namespace column */
+                max-width: 90px;
+            }
+            
+            td:nth-child(2) { /* Name column */
+                max-width: 100px;
+            }
+            
+            td:nth-child(3) { /* Type column */
+                max-width: 60px;
+            }
+            
+            td:nth-child(4) { /* Ingress Class column */
+                max-width: 60px;
+                font-size: 11px;
+            }
+            
+            td:nth-child(4) span { /* Ingress Class badges */
+                padding: 1px 4px;
+                font-size: 10px;
+            }
+            
+            td:nth-child(5) { /* Annotations column */
+                max-width: 60px;
+            }
+            
+            /* Réduire la taille des badges sur mobile */
+            .status-badge {
+                padding: 2px 6px;
+                font-size: 11px;
+            }
+            
+            .annotations-btn {
+                padding: 2px 6px;
+                font-size: 11px;
+                min-width: 22px;
+                height: 22px;
+                font-weight: 600;
+            }
         }
 
         .status-badge {
@@ -174,22 +437,25 @@
             <button onclick="window.location.href='/refresh'">Refresh 🔄</button>
         </div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Namespace</th>
-                    <th>Name</th>
-                    <th>Type</th>
-                    <th>Annotations</th>
-                    <!-- <th>Labels</th> -->
-                    <th onclick="sortTable('url')" style="width: 400px;">URL<span id="urlSort"></span></th>
-                    <th onclick="sortTable('status')" style="width: 100px;">Status<span id="statusSort"></span></th>
-                    <th onclick="sortTable('response_time')" style="width: 100px;">Time (ms)<span id="response_timeSort"></span></th>
-                    <th>Details</th>
-                </tr>
-            </thead>
-            <tbody id="resultsTable"></tbody>
-        </table>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th onclick="sortTable('namespace')" style="width: 120px; min-width: 120px;">Namespace<span id="namespaceSort"></span></th>
+                        <th onclick="sortTable('name')" style="width: 130px; min-width: 130px;">Name<span id="nameSort"></span></th>
+                        <th onclick="sortTable('type')" style="width: 60px; min-width: 60px;">Type<span id="typeSort"></span></th>
+                        <th style="width: 60px; min-width: 60px;" title="Ingress Class / Gateway">Class</th>
+                        <th style="width: 50px; min-width: 50px;">Annotations</th>
+                        <!-- <th>Labels</th> -->
+                        <th onclick="sortTable('url')" style="width: 220px; min-width: 180px;">URL<span id="urlSort"></span></th>
+                        <th onclick="sortTable('status')" style="width: 70px; min-width: 70px;">Status<span id="statusSort"></span></th>
+                        <th onclick="sortTable('response_time')" style="width: 70px; min-width: 70px;">Time (ms)<span id="response_timeSort"></span></th>
+                        <th style="width: 450px;">Details</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsTable"></tbody>
+            </table>
+        </div>
     </div>
 
     <script>
@@ -203,12 +469,21 @@
 
         // Fonction pour mettre à jour les flèches de tri
         function updateSortArrows() {
-            document.getElementById('urlSort').textContent =
-                sortConfig.field === 'url' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '';
-            document.getElementById('statusSort').textContent =
-                sortConfig.field === 'status' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '';
-            document.getElementById('response_timeSort').textContent =
-                sortConfig.field === 'response_time' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '';
+            // Reset all arrows
+            document.getElementById('namespaceSort').textContent = '';
+            document.getElementById('nameSort').textContent = '';
+            document.getElementById('typeSort').textContent = '';
+            document.getElementById('urlSort').textContent = '';
+            document.getElementById('statusSort').textContent = '';
+            document.getElementById('response_timeSort').textContent = '';
+            
+            // Set arrow for current sort field
+            const arrow = sortConfig.direction === 'asc' ? '↑' : '↓';
+            const elementId = sortConfig.field + 'Sort';
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = arrow;
+            }
         }
 
         // Fonction pour trier les données
@@ -221,9 +496,16 @@
             }
 
             currentData.sort((a, b) => {
+                let aVal = a[field] || '';
+                let bVal = b[field] || '';
+                
+                // Convert to string for consistent comparison
+                aVal = String(aVal).toLowerCase();
+                bVal = String(bVal).toLowerCase();
+                
                 let comparison = 0;
-                if (a[field] < b[field]) comparison = -1;
-                if (a[field] > b[field]) comparison = 1;
+                if (aVal < bVal) comparison = -1;
+                if (aVal > bVal) comparison = 1;
                 return sortConfig.direction === 'asc' ? comparison : -comparison;
             });
 
@@ -247,6 +529,16 @@
             return '❌';
         }
 
+        // Fonction pour obtenir l'ingress class ou la gateway
+        function getIngressClassOrGateway(item) {
+            if (item.type === 'Ingress' && item.ingress_class) {
+                return `<span style="background: #e5f3ff; color: #0066cc; padding: 1px 4px; border-radius: 3px; font-size: 11px; white-space: nowrap;">${item.ingress_class}</span>`;
+            } else if (item.type === 'HTTPRoute' && item.gateway) {
+                return `<span style="background: #f0f9ff; color: #0284c7; padding: 1px 4px; border-radius: 3px; font-size: 11px; white-space: nowrap;">${item.gateway}</span>`;
+            }
+            return '-';
+        }
+
 
         // Fonction pour rendre le tableau
         function renderTable() {
@@ -259,8 +551,9 @@
                     <td>${item.namespace}</td>
                     <td>${item.name}</td>
                     <td>${item.type}</td>
+                    <td>${getIngressClassOrGateway(item)}</td>
                     <td>${formatAnnotations(item.annotations)}</td>
-                    <td><a href="https://${item.url}" target="_blank">https://${item.url}</a></td>
+                    <td><a href="https://${item.url}" target="_blank" title="https://${item.url}">https://${item.url}</a></td>
                     <td>
                         <span class="status-badge ${getStatusClass(item.status)}">
                             ${getStatusEmoji(item.status)} ${item.status}
@@ -271,7 +564,7 @@
                 tbody.appendChild(tr);
             });
         }
-        // Fonction pour formater les annotations - ne montre le bouton que s'il y a des annotations
+        // Fonction pour formater les annotations - bouton compact avec nombre
         function formatAnnotations(annotations) {
             if (!annotations) return '-';
 
@@ -295,12 +588,12 @@
                 // Générer un ID unique pour ce bloc d'annotations
                 const toggleId = 'toggle-' + Math.random().toString(36).substr(2, 9);
 
-                // Créer une liste formatée des annotations avec toggle sur le texte
+                // Créer un bouton compact avec le nombre
                 let result = `
             <div>
-                <div class="annotations-preview" onclick="toggleAnnotations('${toggleId}')">
-                    ${annotationKeys.length} annotation${annotationKeys.length > 1 ? 's' : ''}
-                </div>
+                <button class="annotations-btn" onclick="toggleAnnotations('${toggleId}')" title="${annotationKeys.length} annotation${annotationKeys.length > 1 ? 's' : ''}">
+                    ${annotationKeys.length}
+                </button>
                 <div id="${toggleId}" class="annotations-content" style="display: none;">
                     <ul style="list-style-type: none; padding-left: 0;">
         `;
@@ -340,14 +633,23 @@
         // Fonction de recherche
         function handleSearch(event) {
             const searchTerm = event.target.value.toLowerCase();
-            currentData = initialData.filter(item =>
-                item.url.toLowerCase().includes(searchTerm) ||
-                (item.status.toString() || '').includes(searchTerm) ||
-                (item.namespace || '').toLowerCase().includes(searchTerm) ||
-                (item.name || '').toLowerCase().includes(searchTerm) ||
-                (item.type || '').toLowerCase().includes(searchTerm) ||
-                (item.annotations ? JSON.stringify(item.annotations).toLowerCase().includes(searchTerm) : false)
-            );
+            currentData = initialData.filter(item => {
+                const searchableFields = [
+                    item.url || '',
+                    item.status ? item.status.toString() : '',
+                    item.namespace || '',
+                    item.name || '',
+                    item.type || '',
+                    item.ingress_class || '',
+                    item.gateway || '',
+                    item.details || '',
+                    item.annotations ? JSON.stringify(item.annotations) : ''
+                ];
+                
+                return searchableFields.some(field => 
+                    field.toLowerCase().includes(searchTerm)
+                );
+            });
             renderTable();
         }
 

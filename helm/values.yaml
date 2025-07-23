@@ -10,7 +10,7 @@ application:
 # Image configuration
 image:
   repository: fizzbuzz2/portal-checker
-  tag: "2.8.1"
+  tag: "feat-perf-latest"
   pullPolicy: IfNotPresent
   pullSecrets: []
 # Deployment configuration
@@ -42,7 +42,7 @@ ingress:
 # Resources
 resources:
   limits:
-    cpu: 200m
+    cpu: 600m
     memory: 256Mi
   requests:
     cpu: 100m
@@ -54,13 +54,15 @@ env:
   - name: PORT
     value: "5000"
   - name: MAX_CONCURRENT_REQUESTS
-    value: "5"
-  - name: REQUEST_TIMEOUT
     value: "3"
+  - name: REQUEST_TIMEOUT
+    value: "5"
   - name: CACHE_TTL_SECONDS
-    value: "300"
+    value: "900"
   - name: KUBERNETES_POLL_INTERVAL
-    value: "600"
+    value: "1800"
+  - name: CHECK_INTERVAL
+    value: "300" # 🔄 Fréquence de test des URLs en secondes
   - name: URLS_FILE
     value: "/app/data/urls.yaml" # 🔧 Use writable data directory
   - name: EXCLUDED_URLS_FILE
@@ -85,21 +87,21 @@ livenessProbe:
     path: /health
     port: 5000
     scheme: HTTP
-  initialDelaySeconds: 30
-  periodSeconds: 10
-  timeoutSeconds: 5
+  initialDelaySeconds: 20
+  periodSeconds: 30
+  timeoutSeconds: 10
   successThreshold: 1
-  failureThreshold: 3
+  failureThreshold: 5
 readinessProbe:
   httpGet:
     path: /health
     port: 5000
     scheme: HTTP
-  initialDelaySeconds: 5
-  periodSeconds: 5
-  timeoutSeconds: 3
+  initialDelaySeconds: 10
+  periodSeconds: 15
+  timeoutSeconds: 10
   successThreshold: 1
-  failureThreshold: 3
+  failureThreshold: 10
 # Autoscaling (disabled by default)
 autoscaling:
   enabled: false

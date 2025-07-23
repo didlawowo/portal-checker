@@ -1,0 +1,43 @@
+# Docker-specific values for branch deployments
+# This file is automatically updated by GitHub Actions
+
+image:
+  repository: fizzbuzz2/portal-checker
+  tag: "2.9.0-feat-perf-"
+  pullPolicy: Always
+# Environment for branch testing
+env:
+  - name: FLASK_ENV
+    value: "development"
+  - name: LOG_LEVEL
+    value: "DEBUG"
+  - name: PORT
+    value: "5000"
+  - name: MAX_CONCURRENT_REQUESTS
+    value: "5"
+  - name: REQUEST_TIMEOUT
+    value: "3"
+  - name: CACHE_TTL_SECONDS
+    value: "300"
+  - name: KUBERNETES_POLL_INTERVAL
+    value: "600"
+  - name: CHECK_INTERVAL
+    value: "30"
+  - name: URLS_FILE
+    value: "/app/data/urls.yaml"
+  - name: EXCLUDED_URLS_FILE
+    value: "/app/config/excluded-urls.yaml"
+# Branch-specific annotations
+podAnnotations:
+  git.branch: "feat/perf"
+  git.commit: "7d8ec0c"
+  build.timestamp: "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  environment: "development"
+# Development-specific resource limits
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi

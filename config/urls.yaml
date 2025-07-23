@@ -1,517 +1,802 @@
-- annotations: &id001 {}
-  info: 'Path: /'
-  name: argocd-server
-  namespace: kube-infra
-  status: unknown
-  type: HTTPRoute
-  url: argocd.dc-tech.work/
-- annotations: *id001
-  info: 'Path: /'
-  name: argocd-server
-  namespace: kube-infra
-  status: unknown
-  type: HTTPRoute
-  url: argocd.dc-tech.work/
-- annotations: &id002 {}
-  info: 'Path: /dashboard'
-  name: traefik-dashboard
-  namespace: kube-infra
-  status: unknown
-  type: HTTPRoute
-  url: traefik.dc-tech.work/dashboard
-- annotations: *id002
-  info: 'Path: /api'
-  name: traefik-dashboard
-  namespace: kube-infra
-  status: unknown
-  type: HTTPRoute
-  url: traefik.dc-tech.work/api
-- annotations:
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"gateway.networking.k8s.io/v1","kind":"HTTPRoute","metadata":{"annotations":{},"labels":{"argocd.argoproj.io/instance":"testing-apps"},"name":"jaeger","namespace":"kube-monitoring"},"spec":{"hostnames":["jaeger.dc-tech.work"],"parentRefs":[{"group":"gateway.networking.k8s.io","kind":"Gateway","name":"traefik-gateway-global","namespace":"kube-infra"}],"rules":[{"backendRefs":[{"group":"","kind":"Service","name":"jaeger-query","port":16686,"weight":1}],"matches":[{"path":{"type":"PathPrefix","value":"/"}}]}]}}
-
-      '
-  info: 'Path: /'
-  name: jaeger
-  namespace: kube-monitoring
-  status: unknown
-  type: HTTPRoute
-  url: jaeger.dc-tech.work/
 - annotations: {}
-  info: 'Path: /'
-  name: minio
-  namespace: minio
-  status: unknown
-  type: HTTPRoute
-  url: minio-console.dc-tech.work/
-- annotations: {}
-  info: 'Path: /'
-  name: kyverno
-  namespace: security
-  status: unknown
-  type: HTTPRoute
-  url: kyverno.dc-tech.work/
-- annotations:
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"gateway.networking.k8s.io/v1beta1","kind":"HTTPRoute","metadata":{"annotations":{},"labels":{"argocd.argoproj.io/instance":"raspberry-apps"},"name":"whoami","namespace":"whoami"},"spec":{"hostnames":["whoami.dc-tech.work"],"parentRefs":[{"group":"gateway.networking.k8s.io","kind":"Gateway","name":"traefik-gateway-global","namespace":"kube-infra"}],"rules":[{"backendRefs":[{"group":"","kind":"Service","name":"whoami","namespace":"whoami","port":80,"weight":1}],"matches":[{"path":{"type":"PathPrefix","value":"/"}}]}]}}
-
-      '
-  info: 'Path: /'
-  name: whoami
-  namespace: whoami
-  status: unknown
-  type: HTTPRoute
-  url: whoami.dc-tech.work/
-- annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare","traefik.ingress.kubernetes.io/router.middlewares":"kube-infra-generic-dashboard-auth@kubernetescrd"},"labels":{"app":"server","app.kubernetes.io/component":"server","app.kubernetes.io/instance":"argo-workflows","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"argo-workflows-server","app.kubernetes.io/part-of":"argo-workflows","argocd.argoproj.io/instance":"in-cluster-argo-workflows","helm.sh/chart":"argo-workflows-0.45.4"},"name":"argo-workflows-server","namespace":"argo-workflows"},"spec":{"ingressClassName":"traefik","rules":[{"host":"argo-workflow.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"argo-workflows-server","port":{"number":2746}}},"path":"/","pathType":"Prefix"}]}}],"tls":[{"hosts":["argo-workflow.dc-tech.work"],"secretName":"argo-workflow-tls"}]}}
-
-      '
-    traefik.ingress.kubernetes.io/router.middlewares: kube-infra-generic-dashboard-auth@kubernetescrd
-  info: 'Path: /, Backend: Service: argo-workflows-server'
+  info: 'Path: /, Backend: Service: agesetvie-rec-directus'
+  ingress_class: nginx
   labels:
-    app: server
-    app.kubernetes.io/component: server
-    app.kubernetes.io/instance: argo-workflows
+    app.kubernetes.io/instance: agesetvie-rec
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/name: argo-workflows-server
-    app.kubernetes.io/part-of: argo-workflows
-    argocd.argoproj.io/instance: in-cluster-argo-workflows
-    helm.sh/chart: argo-workflows-0.45.4
-  name: argo-workflows-server
-  namespace: argo-workflows
+    app.kubernetes.io/name: ageetvie
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: agesetvie-rec
+    helm.sh/chart: ageetvie-0.1.0
+  name: agesetvie-rec-ageetvie-directus
+  namespace: agesetvie
   status: Active
   type: Ingress
-  url: argo-workflow.dc-tech.work/
+  url: backoffice-recette.agesetvie.cloud/
+- annotations: {}
+  info: 'Path: /, Backend: Service: agesetvie-rec-nextjs'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: agesetvie-rec
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: ageetvie
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: agesetvie-rec
+    helm.sh/chart: ageetvie-0.1.0
+  name: agesetvie-rec-ageetvie-nextjs
+  namespace: agesetvie
+  status: Active
+  type: Ingress
+  url: recette.agesetvie.com/
+- annotations: {}
+  info: 'Path: /, Backend: Service: agesetvie-rec-nextjs'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: agesetvie-rec
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: ageetvie
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: agesetvie-rec
+    helm.sh/chart: ageetvie-0.1.0
+  name: agesetvie-rec-ageetvie-nextjs
+  namespace: agesetvie
+  status: Active
+  type: Ingress
+  url: www.recette.agesetvie.com/
 - annotations:
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{},"labels":{"app.kubernetes.io/component":"dashboard","app.kubernetes.io/instance":"goldilocks","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"goldilocks","argocd.argoproj.io/instance":"goldilocks","helm.sh/chart":"goldilocks-9.0.1"},"name":"goldilocks-dashboard","namespace":"kube-infra"},"spec":{"rules":[{"host":"goldilocks.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"goldilocks-dashboard","port":{"name":"http"}}},"path":"/","pathType":"ImplementationSpecific"}]}}],"tls":[{"hosts":["goldilocks.dc-tech.work"],"secretName":"wildcard-dc-tls"}]}}
-
-      '
+    meta.helm.sh/release-name: argocd
+    meta.helm.sh/release-namespace: argocd
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/force-ssl-redirect: 'true'
+  info: 'Path: /, Backend: Service: argocd-server'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/component: server
+    app.kubernetes.io/instance: argocd
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: argocd-server
+    app.kubernetes.io/part-of: argocd
+    app.kubernetes.io/version: v2.9.3
+    helm.sh/chart: argo-cd-5.52.1
+  name: argocd-server
+  namespace: argocd
+  status: Active
+  type: Ingress
+  url: argocd.korian.cloud/
+- annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+  info: 'Path: /, Backend: Service: arkhineo-rec'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: arkhineo-rec
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: front-arkhineo
+    app.kubernetes.io/version: 1.0.0
+    argocd.argoproj.io/instance: arkhineo-rec
+    helm.sh/chart: front-arkhineo-0.1.0
+  name: arkhineo-rec-front-arkhineo
+  namespace: arkhineo
+  status: Active
+  type: Ingress
+  url: archivage-recette.clariane.cloud/
+- annotations:
+    meta.helm.sh/release-name: conciliation
+    meta.helm.sh/release-namespace: conciliation-frm
+  info: 'Path: /conciliation, Backend: Service: front'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: conciliation
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: conciliation
+    app.kubernetes.io/version: 1.0.39
+    helm.sh/chart: conciliation-1.0.0
+  name: conciliation
+  namespace: conciliation-frm
+  status: Active
+  type: Ingress
+  url: conciliation-frm.korian.cloud/conciliation
+- annotations:
+    meta.helm.sh/release-name: conciliation
+    meta.helm.sh/release-namespace: conciliation-frm
+  info: 'Path: /conciliation/api, Backend: Service: back'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: conciliation
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: conciliation
+    app.kubernetes.io/version: 1.0.39
+    helm.sh/chart: conciliation-1.0.0
+  name: conciliation
+  namespace: conciliation-frm
+  status: Active
+  type: Ingress
+  url: conciliation-frm.korian.cloud/conciliation/api
+- annotations:
+    meta.helm.sh/release-name: conciliation
+    meta.helm.sh/release-namespace: conciliation-frm2
+  info: 'Path: /conciliation, Backend: Service: front'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: conciliation
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: conciliation
+    app.kubernetes.io/version: 1.0.39
+    helm.sh/chart: conciliation-1.0.0
+  name: conciliation
+  namespace: conciliation-frm2
+  status: Active
+  type: Ingress
+  url: conciliation-frm2.korian.cloud/conciliation
+- annotations:
+    meta.helm.sh/release-name: conciliation
+    meta.helm.sh/release-namespace: conciliation-frm2
+  info: 'Path: /conciliation/api, Backend: Service: back'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: conciliation
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: conciliation
+    app.kubernetes.io/version: 1.0.39
+    helm.sh/chart: conciliation-1.0.0
+  name: conciliation
+  namespace: conciliation-frm2
+  status: Active
+  type: Ingress
+  url: conciliation-frm2.korian.cloud/conciliation/api
+- annotations:
+    meta.helm.sh/release-name: conciliation
+    meta.helm.sh/release-namespace: conciliation-qua
+  info: 'Path: /conciliation, Backend: Service: front'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: conciliation
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: conciliation
+    app.kubernetes.io/version: 1.0.39
+    helm.sh/chart: conciliation-1.0.0
+  name: conciliation
+  namespace: conciliation-qua
+  status: Active
+  type: Ingress
+  url: conciliation-qua.korian.cloud/conciliation
+- annotations:
+    meta.helm.sh/release-name: conciliation
+    meta.helm.sh/release-namespace: conciliation-qua
+  info: 'Path: /conciliation/api, Backend: Service: back'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: conciliation
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: conciliation
+    app.kubernetes.io/version: 1.0.39
+    helm.sh/chart: conciliation-1.0.0
+  name: conciliation
+  namespace: conciliation-qua
+  status: Active
+  type: Ingress
+  url: conciliation-qua.korian.cloud/conciliation/api
+- annotations:
+    meta.helm.sh/release-name: conciliation
+    meta.helm.sh/release-namespace: conciliation-upg
+  info: 'Path: /conciliation, Backend: Service: front'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: conciliation
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: conciliation
+    app.kubernetes.io/version: 1.0.39
+    helm.sh/chart: conciliation-1.0.0
+  name: conciliation
+  namespace: conciliation-upg
+  status: Active
+  type: Ingress
+  url: conciliation-upg.korian.cloud/conciliation
+- annotations:
+    meta.helm.sh/release-name: conciliation
+    meta.helm.sh/release-namespace: conciliation-upg
+  info: 'Path: /conciliation/api, Backend: Service: back'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: conciliation
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: conciliation
+    app.kubernetes.io/version: 1.0.39
+    helm.sh/chart: conciliation-1.0.0
+  name: conciliation
+  namespace: conciliation-upg
+  status: Active
+  type: Ingress
+  url: conciliation-upg.korian.cloud/conciliation/api
+- annotations:
+    meta.helm.sh/release-name: conciliation
+    meta.helm.sh/release-namespace: conciliation
+  info: 'Path: /conciliation, Backend: Service: front'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: conciliation
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: conciliation
+    app.kubernetes.io/version: 1.16.0
+    helm.sh/chart: conciliation-0.1.0
+  name: conciliation
+  namespace: conciliation
+  status: Active
+  type: Ingress
+  url: conciliation-rec.korian.cloud/conciliation
+- annotations:
+    meta.helm.sh/release-name: conciliation
+    meta.helm.sh/release-namespace: conciliation
+  info: 'Path: /conciliation/api, Backend: Service: back'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: conciliation
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: conciliation
+    app.kubernetes.io/version: 1.16.0
+    helm.sh/chart: conciliation-0.1.0
+  name: conciliation
+  namespace: conciliation
+  status: Active
+  type: Ingress
+  url: conciliation-rec.korian.cloud/conciliation/api
+- annotations:
+    nginx.ingress.kubernetes.io/affinity: cookie
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/proxy-buffer-size: 8k
+    nginx.ingress.kubernetes.io/session-cookie-expires: '172800'
+    nginx.ingress.kubernetes.io/session-cookie-max-age: '172800'
+    nginx.ingress.kubernetes.io/session-cookie-name: NEXTJS_ROUTE
+    nginx.ingress.kubernetes.io/session-cookie-path: /
+    nginx.ingress.kubernetes.io/ssl-sni-required: 'true'
+    nginx.ingress.kubernetes.io/ssl-sni-strict: 'true'
+  info: 'Path: /, Backend: Service: ekara-viewer-rec'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: ekara-viewer-rec
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: ekara-viewer
+    argocd.argoproj.io/instance: ekara-viewer-rec
+    helm.sh/chart: ekara-viewer-0.1.0
+  name: ekara-viewer-rec
+  namespace: ekara-viewer
+  status: Active
+  type: Ingress
+  url: ekara-viewer-poc.korian.cloud/
+- annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: 300m
+    nginx.org/client-max-body-size: 300m
+  info: 'Path: /, Backend: Service: groupeur-pmsi-frm'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: groupeur-pmsi-frm
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: groupeur-pmsi
+    app.kubernetes.io/version: 1.1.17
+    argocd.argoproj.io/instance: groupeur-pmsi-frm
+    helm.sh/chart: groupeur-pmsi-1.0.0
+  name: groupeur-pmsi-frm
+  namespace: groupeur-pmsi-frm
+  status: Active
+  type: Ingress
+  url: groupeur-pmsi-frm.korian.cloud/
+- annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: 300m
+    nginx.org/client-max-body-size: 300m
+  info: 'Path: /, Backend: Service: groupeur-pmsi-frm2'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: groupeur-pmsi-frm2
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: groupeur-pmsi
+    app.kubernetes.io/version: 1.1.17
+    argocd.argoproj.io/instance: groupeur-pmsi-frm2
+    helm.sh/chart: groupeur-pmsi-1.0.0
+  name: groupeur-pmsi-frm2
+  namespace: groupeur-pmsi-frm2
+  status: Active
+  type: Ingress
+  url: groupeur-pmsi-frm2.korian.cloud/
+- annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: 300m
+    nginx.org/client-max-body-size: 300m
+  info: 'Path: /, Backend: Service: groupeur-pmsi-qua'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: groupeur-pmsi-qua
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: groupeur-pmsi
+    app.kubernetes.io/version: 1.1.17
+    argocd.argoproj.io/instance: groupeur-pmsi-qua
+    helm.sh/chart: groupeur-pmsi-1.0.0
+  name: groupeur-pmsi-qua
+  namespace: groupeur-pmsi-qua
+  status: Active
+  type: Ingress
+  url: groupeur-pmsi-qua.korian.cloud/
+- annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: 300m
+    nginx.org/client-max-body-size: 300m
+  info: 'Path: /, Backend: Service: groupeur-pmsi-upg'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: groupeur-pmsi-upg
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: groupeur-pmsi
+    app.kubernetes.io/version: 1.1.17
+    argocd.argoproj.io/instance: groupeur-pmsi-upg
+    helm.sh/chart: groupeur-pmsi-1.0.0
+  name: groupeur-pmsi-upg
+  namespace: groupeur-pmsi-upg
+  status: Active
+  type: Ingress
+  url: groupeur-pmsi-upg.korian.cloud/
+- annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: 300m
+    nginx.org/client-max-body-size: 300m
+  info: 'Path: /, Backend: Service: groupeur-pmsi-rec'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: groupeur-pmsi-rec
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: groupeur-pmsi
+    app.kubernetes.io/version: 1.1.17
+    argocd.argoproj.io/instance: groupeur-pmsi-rec
+    helm.sh/chart: groupeur-pmsi-1.0.0
+  name: groupeur-pmsi-rec
+  namespace: groupeur-pmsi
+  status: Active
+  type: Ingress
+  url: groupeur-pmsi-rec.korian.cloud/
+- annotations: {}
+  info: 'Path: /, Backend: Service: backup-manager'
+  ingress_class: traefik
+  labels:
+    app: backup-manager
+    argocd.argoproj.io/instance: backup-manager
+  name: backup-manager
+  namespace: infra-backup-manager
+  status: Active
+  type: Ingress
+  url: backup-manager.tooling.webhosting.clariane.cloud/
+- annotations:
+    traefik.ingress.kubernetes.io/router.tls: 'true'
+  info: 'Path: /, Backend: Service: infisical-prod-infisical-standalone-infisical'
+  ingress_class: traefik
+  labels: {}
+  name: infisical-ingress
+  namespace: infra-infisical
+  status: Active
+  type: Ingress
+  url: infisical-prod.tooling.webhosting.clariane.cloud/
+- annotations:
+    traefik.ingress.kubernetes.io/router.tls: 'true'
+  info: 'Path: /ss-webhook, Backend: Service: infisical-prod-infisical-standalone-infisical'
+  ingress_class: traefik
+  labels: {}
+  name: infisical-ingress
+  namespace: infra-infisical
+  status: Active
+  type: Ingress
+  url: infisical-prod.tooling.webhosting.clariane.cloud/ss-webhook
+- annotations: {}
+  info: 'Path: /, Backend: Service: agesetvie-integration-directus'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: agesetvie-integration
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: ageetvie
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: agesetvie-integration
+    helm.sh/chart: ageetvie-0.1.0
+  name: agesetvie-integration-ageetvie-directus
+  namespace: integration-agesetvie
+  status: Pending
+  type: Ingress
+  url: backoffice-recette.agesetvie.cloud/
+- annotations: {}
+  info: 'Path: /, Backend: Service: agesetvie-integration-nextjs'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: agesetvie-integration
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: ageetvie
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: agesetvie-integration
+    helm.sh/chart: ageetvie-0.1.0
+  name: agesetvie-integration-ageetvie-nextjs
+  namespace: integration-agesetvie
+  status: Pending
+  type: Ingress
+  url: recette.agesetvie.com/
+- annotations: {}
+  info: 'Path: /, Backend: Service: agesetvie-integration-nextjs'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: agesetvie-integration
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: ageetvie
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: agesetvie-integration
+    helm.sh/chart: ageetvie-0.1.0
+  name: agesetvie-integration-ageetvie-nextjs
+  namespace: integration-agesetvie
+  status: Pending
+  type: Ingress
+  url: www.recette.agesetvie.com/
+- annotations:
+    meta.helm.sh/release-name: frankenphp-app
+    meta.helm.sh/release-namespace: integration-frankenphp
+  info: 'Path: /, Backend: Service: frankenphp-app'
+  ingress_class: traefik
+  labels:
+    app.kubernetes.io/instance: frankenphp-app
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: frankenphp-app
+    app.kubernetes.io/version: 1.2.0
+    helm.sh/chart: frankenphp-app-1.1.0
+  name: frankenphp-app
+  namespace: integration-frankenphp
+  status: Active
+  type: Ingress
+  url: frankenphp.integration.webhosting.clariane.cloud/
+- annotations: {}
+  info: 'Path: /, Backend: Service: integration-frankenphp-frankenphp-app'
+  ingress_class: traefik
+  labels:
+    app.kubernetes.io/instance: integration-frankenphp
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: frankenphp-app
+    app.kubernetes.io/version: 1.2.0
+    argocd.argoproj.io/instance: integration-frankenphp
+    helm.sh/chart: frankenphp-app-1.1.0
+  name: integration-frankenphp-frankenphp-app
+  namespace: integration-frankenphp
+  status: Active
+  type: Ingress
+  url: frankenphp.integration.webhosting.clariane.cloud/
+- annotations: {}
+  info: 'Path: /, Backend: Service: kopilot-rec'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: kopilot-rec
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: kopilot
+    app.kubernetes.io/version: 1.1.6
+    argocd.argoproj.io/instance: kopilot-rec
+    helm.sh/chart: kopilot-0.1.0
+  name: kopilot-rec
+  namespace: kopilot
+  status: Active
+  type: Ingress
+  url: kopilot-rec.clariane.cloud/
+- annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+  info: 'Path: /, Backend: Service: korall-hub'
+  ingress_class: nginx
+  labels:
+    argocd.argoproj.io/instance: korall-hub-rec
+  name: korall-hub
+  namespace: korall-hub
+  status: Active
+  type: Ingress
+  url: korall-hub-recette.korian.cloud/
+- annotations:
+    meta.helm.sh/release-name: argo
+    meta.helm.sh/release-namespace: kube-infra
+  info: 'Path: /, Backend: Service: argo-argocd-server'
+  ingress_class: traefik
+  labels:
+    app.kubernetes.io/component: server
+    app.kubernetes.io/instance: argo
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: argocd-server
+    app.kubernetes.io/part-of: argocd
+    app.kubernetes.io/version: v3.0.6
+    helm.sh/chart: argo-cd-8.1.2
+  name: argo-argocd-server
+  namespace: kube-infra
+  status: Active
+  type: Ingress
+  url: argocd.tooling.webhosting.clariane.cloud/
+- annotations: {}
   info: 'Path: /, Backend: Service: goldilocks-dashboard'
+  ingress_class: traefik
   labels:
     app.kubernetes.io/component: dashboard
     app.kubernetes.io/instance: goldilocks
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: goldilocks
     argocd.argoproj.io/instance: goldilocks
-    helm.sh/chart: goldilocks-9.0.1
+    helm.sh/chart: goldilocks-9.0.2
   name: goldilocks-dashboard
   namespace: kube-infra
   status: Active
   type: Ingress
-  url: goldilocks.dc-tech.work/
-- annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app.kubernetes.io/instance":"helm-dashboard","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"helm-dashboard","app.kubernetes.io/version":"2.0.3","argocd.argoproj.io/instance":"in-cluster-helm-dashboard","helm.sh/chart":"helm-dashboard-2.0.3"},"name":"helm-dashboard","namespace":"kube-infra"},"spec":{"ingressClassName":"traefik","rules":[{"host":"helm-dashboard.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"helm-dashboard","port":{"number":8080}}},"path":"/","pathType":"Prefix"}]}}],"tls":[{"hosts":["helm-dashboard.dc-tech.work"],"secretName":"helm-dashboard-tls"}]}}
-
-      '
-  info: 'Path: /, Backend: Service: helm-dashboard'
+  url: goldilocks.tooling.webhosting.clariane.cloud/
+- annotations: {}
+  info: 'Path: /, Backend: Service: portal-checker'
+  ingress_class: traefik
   labels:
-    app.kubernetes.io/instance: helm-dashboard
-    app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/name: helm-dashboard
-    app.kubernetes.io/version: 2.0.3
-    argocd.argoproj.io/instance: in-cluster-helm-dashboard
-    helm.sh/chart: helm-dashboard-2.0.3
-  name: helm-dashboard
+    app: portal-checker
+    argocd.argoproj.io/instance: oth-portal-checker
+  name: portal-checker
   namespace: kube-infra
   status: Active
   type: Ingress
-  url: helm-dashboard.dc-tech.work/
-- annotations:
-    meta.helm.sh/release-name: helm-portal
-    meta.helm.sh/release-namespace: kube-infra
-  info: 'Path: /, Backend: Service: helm-portal'
-  labels:
-    app: helm-portal
-    app.kubernetes.io/managed-by: Helm
-  name: helm-portal
-  namespace: kube-infra
-  status: Active
-  type: Ingress
-  url: helm-portal.dc-tech.work/
-- annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare","traefik.ingress.kubernetes.io/router.middlewares":"kube-infra-generic-dashboard-auth@kubernetescrd"},"labels":{"app.kubernetes.io/instance":"pod-monitor","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"k8s-dashboard","app.kubernetes.io/part-of":"k8s-dashboard","app.kubernetes.io/version":"2.0.0","argocd.argoproj.io/instance":"pod-monitor","helm.sh/chart":"k8s-dashboard-1.1.0"},"name":"pod-monitor","namespace":"kube-infra"},"spec":{"ingressClassName":"traefik","rules":[{"host":"pod-monitor.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"pod-monitor-k8s-dashboard","port":{"number":80}}},"path":"/","pathType":"Prefix"}]}}],"tls":[{"hosts":["pod-monitor.dc-tech.work"],"secretName":"pod-monitor-certificate-tls"}]}}
-
-      '
-    traefik.ingress.kubernetes.io/router.middlewares: kube-infra-generic-dashboard-auth@kubernetescrd
-  info: 'Path: /, Backend: Service: pod-monitor-k8s-dashboard'
-  labels:
-    app.kubernetes.io/instance: pod-monitor
-    app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/name: k8s-dashboard
-    app.kubernetes.io/part-of: k8s-dashboard
-    app.kubernetes.io/version: 2.0.0
-    argocd.argoproj.io/instance: pod-monitor
-    helm.sh/chart: k8s-dashboard-1.1.0
-  name: pod-monitor
-  namespace: kube-infra
-  status: Active
-  type: Ingress
-  url: pod-monitor.dc-tech.work/
-- annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare","nginx.ingress.kubernetes.io/proxy-read-timeout":"3600","nginx.ingress.kubernetes.io/proxy-send-timeout":"3600","nginx.ingress.kubernetes.io/server-snippets":"location
-      / {\n  proxy_set_header Upgrade $http_upgrade;\n  proxy_http_version 1.1;\n  proxy_set_header
-      X-Forwarded-Host $http_host;\n  proxy_set_header X-Forwarded-Proto $scheme;\n  proxy_set_header
-      X-Forwarded-For $remote_addr;\n  proxy_set_header Host $host;\n  proxy_set_header
-      Connection \"upgrade\";\n  proxy_set_header X-Real-IP $remote_addr;\n  proxy_set_header
-      X-Forwarded-For $proxy_add_x_forwarded_for;\n  proxy_set_header   Upgrade $http_upgrade;\n  proxy_cache_bypass
-      $http_upgrade;\n}\n"},"labels":{"app.kubernetes.io/instance":"uptime-kuma","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"uptime-kuma","app.kubernetes.io/version":"1.23.13","argocd.argoproj.io/instance":"uptime-kuma","helm.sh/chart":"uptime-kuma-2.21.2"},"name":"uptime-kuma","namespace":"kube-monitoring"},"spec":{"ingressClassName":"traefik","rules":[{"host":"uptime-kuma.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"uptime-kuma","port":{"number":3001}}},"path":"/","pathType":"ImplementationSpecific"}]}}],"tls":[{"hosts":["uptime-kuma.dc-tech.work"],"secretName":"uptime-kuma-tls"}]}}
-
-      '
-    nginx.ingress.kubernetes.io/proxy-read-timeout: '3600'
-    nginx.ingress.kubernetes.io/proxy-send-timeout: '3600'
-    nginx.ingress.kubernetes.io/server-snippets: "location / {\n  proxy_set_header\
-      \ Upgrade $http_upgrade;\n  proxy_http_version 1.1;\n  proxy_set_header X-Forwarded-Host\
-      \ $http_host;\n  proxy_set_header X-Forwarded-Proto $scheme;\n  proxy_set_header\
-      \ X-Forwarded-For $remote_addr;\n  proxy_set_header Host $host;\n  proxy_set_header\
-      \ Connection \"upgrade\";\n  proxy_set_header X-Real-IP $remote_addr;\n  proxy_set_header\
-      \ X-Forwarded-For $proxy_add_x_forwarded_for;\n  proxy_set_header   Upgrade\
-      \ $http_upgrade;\n  proxy_cache_bypass $http_upgrade;\n}\n"
-  info: 'Path: /, Backend: Service: uptime-kuma'
-  labels:
-    app.kubernetes.io/instance: uptime-kuma
-    app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/name: uptime-kuma
-    app.kubernetes.io/version: 1.23.13
-    argocd.argoproj.io/instance: uptime-kuma
-    helm.sh/chart: uptime-kuma-2.21.2
-  name: uptime-kuma
-  namespace: kube-monitoring
-  status: Active
-  type: Ingress
-  url: uptime-kuma.dc-tech.work/
-- annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app":"server","app.kubernetes.io/instance":"victorialogs","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"victoria-logs-single","app.kubernetes.io/version":"v1.23.3-victorialogs","argocd.argoproj.io/instance":"in-cluster-victorialogs","helm.sh/chart":"victoria-logs-single-0.11.2"},"name":"victorialogs-victoria-logs-single-server","namespace":"kube-monitoring"},"spec":{"ingressClassName":"traefik","rules":[{"host":"logs.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"victorialogs-victoria-logs-single-server","port":{"name":"http"}}},"path":"/","pathType":"Prefix"}]}}],"tls":[{"hosts":["logs.dc-tech.work"],"secretName":"victorialogs-ingress-tls"}]}}
-
-      '
+  url: portal-checker.tooling.webhosting.clariane.cloud/
+- annotations: {}
   info: 'Path: /, Backend: Service: victorialogs-victoria-logs-single-server'
+  ingress_class: traefik
   labels:
     app: server
     app.kubernetes.io/instance: victorialogs
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: victoria-logs-single
     app.kubernetes.io/version: v1.23.3-victorialogs
-    argocd.argoproj.io/instance: in-cluster-victorialogs
+    argocd.argoproj.io/instance: victorialogs
     helm.sh/chart: victoria-logs-single-0.11.2
   name: victorialogs-victoria-logs-single-server
   namespace: kube-monitoring
   status: Active
   type: Ingress
-  url: logs.dc-tech.work/
-- annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-  info: 'Path: /, Backend: Service: vm-stack-grafana'
+  url: logs.tooling.webhosting.clariane.cloud/
+- annotations: {}
+  info: 'Path: /, Backend: Service: infisical-infisical-standalone-infisical'
+  ingress_class: traefik
   labels:
-    app.kubernetes.io/instance: vm-stack
-    app.kubernetes.io/name: grafana
-    app.kubernetes.io/version: 12.0.0-security-01
-    argocd.argoproj.io/instance: victoriametrics
-    helm.sh/chart: grafana-9.2.1
-  name: vm-stack-grafana
-  namespace: kube-monitoring
+    argocd.argoproj.io/instance: infisical
+  name: infisical-ingress
+  namespace: kube-security
   status: Active
   type: Ingress
-  url: grafana.dc-tech.work/
-- annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-  info: 'Path: /, Backend: Service: vmagent-vm-k8s-stack'
+  url: infisical.tooling.webhosting.korian.cloud/
+- annotations: {}
+  info: 'Path: /ss-webhook, Backend: Service: infisical-infisical-standalone-infisical'
+  ingress_class: traefik
   labels:
-    app: vmagent
-    app.kubernetes.io/instance: vm-stack
+    argocd.argoproj.io/instance: infisical
+  name: infisical-ingress
+  namespace: kube-security
+  status: Active
+  type: Ingress
+  url: infisical.tooling.webhosting.korian.cloud/ss-webhook
+- annotations: {}
+  info: 'Path: /azure-token-verify, Backend: Service: likor-integ-api'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: likor-integ
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/name: victoria-metrics-k8s-stack
-    app.kubernetes.io/version: v1.119.0
-    argocd.argoproj.io/instance: victoriametrics
-    helm.sh/chart: victoria-metrics-k8s-stack-0.51.0
-  name: vmagent-vm-k8s-stack
-  namespace: kube-monitoring
+    app.kubernetes.io/name: likor
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: likor-integ
+    helm.sh/chart: likor-0.1.0
+  name: likor-integ
+  namespace: likor-integ
   status: Active
   type: Ingress
-  url: vmagent.dc-tech.work/
-- annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-  info: 'Path: /, Backend: Service: vmalertmanager-vm-k8s-stack'
+  url: likor-integration.clariane.cloud/azure-token-verify
+- annotations: {}
+  info: 'Path: /login-db, Backend: Service: likor-integ-api'
+  ingress_class: nginx
   labels:
-    app: alertmanager
-    app.kubernetes.io/instance: vm-stack
+    app.kubernetes.io/instance: likor-integ
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/name: victoria-metrics-k8s-stack
-    app.kubernetes.io/version: v1.119.0
-    argocd.argoproj.io/instance: victoriametrics
-    helm.sh/chart: victoria-metrics-k8s-stack-0.51.0
-  name: vmalertmanager-vm-k8s-stack
-  namespace: kube-monitoring
+    app.kubernetes.io/name: likor
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: likor-integ
+    helm.sh/chart: likor-0.1.0
+  name: likor-integ
+  namespace: likor-integ
   status: Active
   type: Ingress
-  url: alertmanager.dc-tech.work/
-- annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    meta.helm.sh/release-name: cilium
-    meta.helm.sh/release-namespace: kube-system
-  info: 'Path: /, Backend: Service: hubble-ui'
+  url: likor-integration.clariane.cloud/login-db
+- annotations: {}
+  info: 'Path: /login-ldap, Backend: Service: likor-integ-api'
+  ingress_class: nginx
   labels:
+    app.kubernetes.io/instance: likor-integ
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/name: hubble-ui
-    app.kubernetes.io/part-of: cilium
-    k8s-app: hubble-ui
-  name: hubble-ui
-  namespace: kube-system
+    app.kubernetes.io/name: likor
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: likor-integ
+    helm.sh/chart: likor-0.1.0
+  name: likor-integ
+  namespace: likor-integ
   status: Active
   type: Ingress
-  url: hubble.dc-tech.work/
-- annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app":"longhorn-ingress","app.kubernetes.io/instance":"longhorn","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"longhorn","app.kubernetes.io/version":"v1.8.1","argocd.argoproj.io/instance":"longhorn","helm.sh/chart":"longhorn-1.8.1"},"name":"longhorn-ingress","namespace":"longhorn-system"},"spec":{"ingressClassName":"traefik","rules":[{"host":"longhorn.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"longhorn-frontend","port":{"number":80}}},"path":"/","pathType":"ImplementationSpecific"}]}}],"tls":[{"hosts":["longhorn.dc-tech.work"],"secretName":"longhorn-tls"}]}}
-
-      '
-  info: 'Path: /, Backend: Service: longhorn-frontend'
+  url: likor-integration.clariane.cloud/login-ldap
+- annotations: {}
+  info: 'Path: /api, Backend: Service: likor-integ-api'
+  ingress_class: nginx
   labels:
-    app: longhorn-ingress
-    app.kubernetes.io/instance: longhorn
+    app.kubernetes.io/instance: likor-integ
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/name: longhorn
-    app.kubernetes.io/version: v1.8.1
-    argocd.argoproj.io/instance: longhorn
-    helm.sh/chart: longhorn-1.8.1
-  name: longhorn-ingress
-  namespace: longhorn-system
+    app.kubernetes.io/name: likor
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: likor-integ
+    helm.sh/chart: likor-0.1.0
+  name: likor-integ
+  namespace: likor-integ
   status: Active
   type: Ingress
-  url: longhorn.dc-tech.work/
-- annotations:
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{},"labels":{"app.kubernetes.io/instance":"litellm-proxy","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"litellm","app.kubernetes.io/version":"v1.50.2","argocd.argoproj.io/instance":"litellm-proxy","helm.sh/chart":"litellm-helm-0.4.3"},"name":"litellm-proxy","namespace":"mlops"},"spec":{"ingressClassName":"traefik","rules":[{"host":"litellm.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"litellm-proxy","port":{"number":4000}}},"path":"/","pathType":"ImplementationSpecific"}]}}],"tls":[{"hosts":["litellm.dc-tech.work"],"secretName":"wildcard-dc-tls"}]}}
-
-      '
-  info: 'Path: /, Backend: Service: litellm-proxy'
+  url: likor-integration.clariane.cloud/api
+- annotations: {}
+  info: 'Path: /, Backend: Service: likor-integ-front'
+  ingress_class: nginx
   labels:
-    app.kubernetes.io/instance: litellm-proxy
+    app.kubernetes.io/instance: likor-integ
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/name: litellm
-    app.kubernetes.io/version: v1.50.2
-    argocd.argoproj.io/instance: litellm-proxy
-    helm.sh/chart: litellm-helm-0.4.3
-  name: litellm-proxy
-  namespace: mlops
+    app.kubernetes.io/name: likor
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: likor-integ
+    helm.sh/chart: likor-0.1.0
+  name: likor-integ
+  namespace: likor-integ
   status: Active
   type: Ingress
-  url: litellm.dc-tech.work/
-- annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app.kubernetes.io/instance":"locust","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"locust","app.kubernetes.io/version":"2.32.2","argocd.argoproj.io/instance":"locust","helm.sh/chart":"locust-0.32.6","load_test":"my-loadtest"},"name":"locust","namespace":"mlops"},"spec":{"ingressClassName":"traefik","rules":[{"host":"locust.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"locust","port":{"number":8089}}},"path":"/","pathType":"ImplementationSpecific"}]}}],"tls":[{"hosts":["locust.dc-tech.work"],"secretName":"locust-tls"}]}}
-
-      '
-  info: 'Path: /, Backend: Service: locust'
+  url: likor-integration.clariane.cloud/
+- annotations: {}
+  info: 'Path: /azure-token-verify, Backend: Service: likor-rec-api'
+  ingress_class: nginx
   labels:
-    app.kubernetes.io/instance: locust
+    app.kubernetes.io/instance: likor-rec
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/name: locust
-    app.kubernetes.io/version: 2.32.2
-    argocd.argoproj.io/instance: locust
-    helm.sh/chart: locust-0.32.6
-    load_test: my-loadtest
-  name: locust
-  namespace: mlops
+    app.kubernetes.io/name: likor
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: likor-rec
+    helm.sh/chart: likor-0.1.0
+  name: likor-rec
+  namespace: likor
   status: Active
   type: Ingress
-  url: locust.dc-tech.work/
-- annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app.kubernetes.io/component":"open-webui","app.kubernetes.io/instance":"ollama-webui","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/version":"0.6.5","argocd.argoproj.io/instance":"ollama-webui","helm.sh/chart":"open-webui-6.5.0"},"name":"open-webui","namespace":"mlops"},"spec":{"ingressClassName":"traefik","rules":[{"host":"open-webui.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"open-webui","port":{"name":"http"}}},"path":"/","pathType":"Prefix"}]}}],"tls":[{"hosts":["open-webui.dc-tech.work"],"secretName":"ollama-webui-tls"}]}}
-
-      '
-  info: 'Path: /, Backend: Service: open-webui'
+  url: likor-recette.clariane.cloud/azure-token-verify
+- annotations: {}
+  info: 'Path: /login-db, Backend: Service: likor-rec-api'
+  ingress_class: nginx
   labels:
-    app.kubernetes.io/component: open-webui
-    app.kubernetes.io/instance: ollama-webui
+    app.kubernetes.io/instance: likor-rec
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/version: 0.6.5
-    argocd.argoproj.io/instance: ollama-webui
-    helm.sh/chart: open-webui-6.5.0
-  name: open-webui
-  namespace: mlops
+    app.kubernetes.io/name: likor
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: likor-rec
+    helm.sh/chart: likor-0.1.0
+  name: likor-rec
+  namespace: likor
   status: Active
   type: Ingress
-  url: open-webui.dc-tech.work/
-- annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app.kubernetes.io/component":"ui","app.kubernetes.io/instance":"falco","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"falcosidekick","app.kubernetes.io/part-of":"falcosidekick","app.kubernetes.io/version":"2.31.1","argocd.argoproj.io/instance":"in-cluster-falco","helm.sh/chart":"falcosidekick-0.9.11"},"name":"falco-falcosidekick-ui","namespace":"security"},"spec":{"ingressClassName":"traefik","rules":[{"host":"falco.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"falco-falcosidekick-ui","port":{"name":"http"}}},"path":"/","pathType":"ImplementationSpecific"}]}}],"tls":[{"hosts":["falco.dc-tech.work"],"secretName":"falco-dc-tls"}]}}
-
-      '
-  info: 'Path: /, Backend: Service: falco-falcosidekick-ui'
+  url: likor-recette.clariane.cloud/login-db
+- annotations: {}
+  info: 'Path: /login-ldap, Backend: Service: likor-rec-api'
+  ingress_class: nginx
   labels:
-    app.kubernetes.io/component: ui
-    app.kubernetes.io/instance: falco
+    app.kubernetes.io/instance: likor-rec
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/name: falcosidekick
-    app.kubernetes.io/part-of: falcosidekick
-    app.kubernetes.io/version: 2.31.1
-    argocd.argoproj.io/instance: in-cluster-falco
-    helm.sh/chart: falcosidekick-0.9.11
-  name: falco-falcosidekick-ui
-  namespace: security
+    app.kubernetes.io/name: likor
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: likor-rec
+    helm.sh/chart: likor-0.1.0
+  name: likor-rec
+  namespace: likor
   status: Active
   type: Ingress
-  url: falco.dc-tech.work/
-- annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app.kubernetes.io/component":"keycloak","app.kubernetes.io/instance":"keycloak","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"keycloak","app.kubernetes.io/version":"26.2.2","argocd.argoproj.io/instance":"keycloak","helm.sh/chart":"keycloak-24.6.3"},"name":"keycloak","namespace":"security"},"spec":{"ingressClassName":"traefik","rules":[{"host":"keycloak.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"keycloak","port":{"name":"http"}}},"path":"/","pathType":"ImplementationSpecific"}]}}],"tls":[{"hosts":["keycloak.dc-tech.work"],"secretName":"keycloak.dc-tech.work-tls"},{"hosts":["keycloak.dc-tech.work"],"secretName":"keycloak-dc-tls"}]}}
-
-      '
-  info: 'Path: /, Backend: Service: keycloak'
+  url: likor-recette.clariane.cloud/login-ldap
+- annotations: {}
+  info: 'Path: /api, Backend: Service: likor-rec-api'
+  ingress_class: nginx
   labels:
-    app.kubernetes.io/component: keycloak
-    app.kubernetes.io/instance: keycloak
+    app.kubernetes.io/instance: likor-rec
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/name: keycloak
-    app.kubernetes.io/version: 26.2.2
-    argocd.argoproj.io/instance: keycloak
-    helm.sh/chart: keycloak-24.6.3
-  name: keycloak
-  namespace: security
+    app.kubernetes.io/name: likor
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: likor-rec
+    helm.sh/chart: likor-0.1.0
+  name: likor-rec
+  namespace: likor
   status: Active
   type: Ingress
-  url: keycloak.dc-tech.work/
-- annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app":"sonarqube","argocd.argoproj.io/instance":"sonarqube","chart":"sonarqube-2025.3.0","heritage":"Helm","release":"sonarqube"},"name":"sonarqube-sonarqube","namespace":"sonarqube"},"spec":{"ingressClassName":"traefik","rules":[{"host":"sonarqube.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"sonarqube-sonarqube","port":{"number":9000}}},"path":"/","pathType":"ImplementationSpecific"}]}}],"tls":[{"hosts":["sonarqube.dc-tech.work"],"secretName":"sonarqube-certificate-tls"}]}}
-
-      '
-  info: 'Path: /, Backend: Service: sonarqube-sonarqube'
+  url: likor-recette.clariane.cloud/api
+- annotations: {}
+  info: 'Path: /, Backend: Service: likor-rec-front'
+  ingress_class: nginx
   labels:
-    app: sonarqube
-    argocd.argoproj.io/instance: sonarqube
-    chart: sonarqube-2025.3.0
-    heritage: Helm
-    release: sonarqube
-  name: sonarqube-sonarqube
-  namespace: sonarqube
-  status: Active
-  type: Ingress
-  url: sonarqube.dc-tech.work/
-- annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app.kubernetes.io/instance":"helm-dashboard","app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"helm-dashboard","app.kubernetes.io/version":"2.0.3","argocd.argoproj.io/instance":"vcluster-helm-dashboard","helm.sh/chart":"helm-dashboard-2.0.3"},"name":"helm-dashboard","namespace":"kube-infra"},"spec":{"ingressClassName":"traefik","rules":[{"host":"helm-dashboard-vcluster.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"helm-dashboard","port":{"number":8080}}},"path":"/","pathType":"Prefix"}]}}]}}
-
-      '
-    vcluster.loft.sh/managed-annotations: 'cert-manager.io/cluster-issuer
-
-      kubectl.kubernetes.io/last-applied-configuration
-
-      traefik.ingress.kubernetes.io/router.middlewares'
-    vcluster.loft.sh/object-host-name: helm-dashboard-x-kube-infra-x-vcluster
-    vcluster.loft.sh/object-host-namespace: vcluster
-    vcluster.loft.sh/object-kind: networking.k8s.io/v1, Kind=Ingress
-    vcluster.loft.sh/object-name: helm-dashboard
-    vcluster.loft.sh/object-namespace: kube-infra
-    vcluster.loft.sh/object-uid: 070c5d02-91e3-4e45-82ee-59457e71317a
-  info: 'Path: /, Backend: Service: helm-dashboard-x-kube-infra-x-vcluster'
-  labels:
-    app.kubernetes.io/instance: helm-dashboard
+    app.kubernetes.io/instance: likor-rec
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/name: helm-dashboard
-    app.kubernetes.io/version: 2.0.3
-    argocd.argoproj.io/instance: vcluster-helm-dashboard
-    helm.sh/chart: helm-dashboard-2.0.3
-    vcluster.loft.sh/managed-by: vcluster
-    vcluster.loft.sh/namespace: kube-infra
-  name: helm-dashboard-x-kube-infra-x-vcluster
-  namespace: vcluster
+    app.kubernetes.io/name: likor
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: likor-rec
+    helm.sh/chart: likor-0.1.0
+  name: likor-rec
+  namespace: likor
   status: Active
   type: Ingress
-  url: helm-dashboard-vcluster.dc-tech.work/
+  url: likor-recette.clariane.cloud/
 - annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app.kubernetes.io/managed-by":"Helm","app.kubernetes.io/name":"pgadmin4","app.kubernetes.io/version":"8.3","argocd.argoproj.io/instance":"vcluster-pgadmin","helm.sh/chart":"pgadmin4-1.23.3"},"name":"pgadmin-pgadmin4","namespace":"kube-infra"},"spec":{"ingressClassName":"traefik","rules":[{"host":"pgadmin.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"pgadmin-pgadmin4","port":{"number":80}}},"path":"/","pathType":"Prefix"}]}}],"tls":[{"hosts":["pgadmin.dc-tech.work"],"secretName":"pgadmin-tls"}]}}
-
-      '
-    vcluster.loft.sh/managed-annotations: 'cert-manager.io/cluster-issuer
-
-      kubectl.kubernetes.io/last-applied-configuration'
-    vcluster.loft.sh/object-host-name: pgadmin-pgadmin4-x-kube-infra-x-vcluster
-    vcluster.loft.sh/object-host-namespace: vcluster
-    vcluster.loft.sh/object-kind: networking.k8s.io/v1, Kind=Ingress
-    vcluster.loft.sh/object-name: pgadmin-pgadmin4
-    vcluster.loft.sh/object-namespace: kube-infra
-    vcluster.loft.sh/object-uid: 9df47c62-7792-4890-9bb9-9685acddcc7b
-  info: 'Path: /, Backend: Service: pgadmin-pgadmin4-x-kube-infra-x-vcluster'
+    meta.helm.sh/release-name: mediation
+    meta.helm.sh/release-namespace: mediation
+  info: 'Path: /, Backend: Service: mediation-rec'
+  ingress_class: nginx
   labels:
+    app.kubernetes.io/instance: mediation
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/name: pgadmin4
-    app.kubernetes.io/version: '8.3'
-    argocd.argoproj.io/instance: vcluster-pgadmin
-    helm.sh/chart: pgadmin4-1.23.3
-    vcluster.loft.sh/managed-by: vcluster
-    vcluster.loft.sh/namespace: kube-infra
-  name: pgadmin-pgadmin4-x-kube-infra-x-vcluster
-  namespace: vcluster
+    app.kubernetes.io/name: mediation
+    app.kubernetes.io/version: 0.1.0
+    helm.sh/chart: mediation-0.1.0
+  name: mediation-rec
+  namespace: mediation
   status: Active
   type: Ingress
-  url: pgadmin.dc-tech.work/
+  url: mediation-recette.clariane.cloud/
 - annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare"},"labels":{"app":"portal-checker","argocd.argoproj.io/instance":"vcluster-portal-checker"},"name":"portal-checker","namespace":"portal-checker"},"spec":{"ingressClassName":"traefik","rules":[{"host":"portal-checker-vcluster.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"portal-checker","port":{"number":80}}},"path":"/","pathType":"Prefix"}]}}]}}
-
-      '
-    vcluster.loft.sh/managed-annotations: 'cert-manager.io/cluster-issuer
-
-      kubectl.kubernetes.io/last-applied-configuration'
-    vcluster.loft.sh/object-host-name: portal-checker-x-portal-checker-x-vcluster
-    vcluster.loft.sh/object-host-namespace: vcluster
-    vcluster.loft.sh/object-kind: networking.k8s.io/v1, Kind=Ingress
-    vcluster.loft.sh/object-name: portal-checker
-    vcluster.loft.sh/object-namespace: portal-checker
-    vcluster.loft.sh/object-uid: 779debe9-cd71-416a-8117-b44aa5a4e2df
-  info: 'Path: /, Backend: Service: portal-checker-x-portal-checker-x-vcluster'
+    nginx.org/client-max-body-size: 15m
+    nginx.org/redirect-to-https: 'true'
+    nginx.org/ssl-redirect: 'true'
+  info: 'Path: /, Backend: Service: onboarding-hr-int'
+  ingress_class: nginx
   labels:
-    app: portal-checker
-    argocd.argoproj.io/instance: vcluster-portal-checker
-    vcluster.loft.sh/managed-by: vcluster
-    vcluster.loft.sh/namespace: portal-checker
-  name: portal-checker-x-portal-checker-x-vcluster
-  namespace: vcluster
+    app.kubernetes.io/instance: onboarding-hr-int
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: onboarding-hr
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: onboarding-hr-int
+    helm.sh/chart: onboarding-hr-0.1.0
+  name: onboarding-hr-int
+  namespace: onboarding-hr-int
   status: Active
   type: Ingress
-  url: portal-checker-vcluster.dc-tech.work/
+  url: collaborateur-rh-integration.clariane.cloud/
 - annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare","traefik.ingress.kubernetes.io/router.middlewares":"kube-infra-generic-dashboard-auth@kubernetescrd"},"labels":{"app":"workload-scheduler","argocd.argoproj.io/instance":"vcluster-workload-scheduler"},"name":"workload-scheduler","namespace":"workload-scheduler"},"spec":{"ingressClassName":"traefik","rules":[{"host":"workload-scheduler-vcluster.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"workload-scheduler","port":{"number":8000}}},"path":"/","pathType":"Prefix"}]}}],"tls":[{"hosts":["workload-scheduler-vcluster.dc-tech.work"],"secretName":"workload-scheduler-certificate-tls"}]}}
-
-      '
-    traefik.ingress.kubernetes.io/router.middlewares: kube-infra-generic-dashboard-auth@kubernetescrd
-    vcluster.loft.sh/managed-annotations: 'cert-manager.io/cluster-issuer
-
-      traefik.ingress.kubernetes.io/router.middlewares'
-    vcluster.loft.sh/object-host-name: workload-scheduler-x-workload-scheduler-x-vcluster
-    vcluster.loft.sh/object-host-namespace: vcluster
-    vcluster.loft.sh/object-kind: networking.k8s.io/v1, Kind=Ingress
-    vcluster.loft.sh/object-name: workload-scheduler
-    vcluster.loft.sh/object-namespace: workload-scheduler
-    vcluster.loft.sh/object-uid: b23ee5fc-29a5-4223-b1d2-7757ab26e03d
-  info: 'Path: /, Backend: Service: workload-scheduler-x-workload-scheduler-x-vcluster'
+    nginx.org/client-max-body-size: 15m
+    nginx.org/redirect-to-https: 'true'
+    nginx.org/ssl-redirect: 'true'
+  info: 'Path: /, Backend: Service: onboarding-hr-rec'
+  ingress_class: nginx
   labels:
-    app: workload-scheduler
-    argocd.argoproj.io/instance: vcluster-workload-scheduler
-    vcluster.loft.sh/managed-by: vcluster
-    vcluster.loft.sh/namespace: workload-scheduler
-  name: workload-scheduler-x-workload-scheduler-x-vcluster
-  namespace: vcluster
+    app.kubernetes.io/instance: onboarding-hr-rec
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: onboarding-hr
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: onboarding-hr-rec
+    helm.sh/chart: onboarding-hr-0.1.0
+    k8slens-edit-resource-version: v1
+  name: onboarding-hr-rec
+  namespace: onboarding-hr
   status: Active
   type: Ingress
-  url: workload-scheduler-vcluster.dc-tech.work/
+  url: collaborateur-rh-recette.clariane.cloud/
 - annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
-    kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"networking.k8s.io/v1","kind":"Ingress","metadata":{"annotations":{"cert-manager.io/cluster-issuer":"letsencrypt-cloudflare","traefik.ingress.kubernetes.io/router.middlewares":"kube-infra-generic-dashboard-auth@kubernetescrd"},"labels":{"app":"workload-scheduler","argocd.argoproj.io/instance":"in-cluster-workload-scheduler"},"name":"workload-scheduler","namespace":"workload-scheduler"},"spec":{"ingressClassName":"traefik","rules":[{"host":"workload-scheduler.dc-tech.work","http":{"paths":[{"backend":{"service":{"name":"workload-scheduler","port":{"number":8000}}},"path":"/","pathType":"Prefix"}]}}],"tls":[{"hosts":["workload-scheduler.dc-tech.work"],"secretName":"workload-scheduler-certificate-tls"}]}}
-
-      '
-    traefik.ingress.kubernetes.io/router.middlewares: kube-infra-generic-dashboard-auth@kubernetescrd
-  info: 'Path: /, Backend: Service: workload-scheduler'
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/proxy-buffer-size: 8k
+    nginx.ingress.kubernetes.io/ssl-sni-required: 'true'
+    nginx.ingress.kubernetes.io/ssl-sni-strict: 'true'
+  info: 'Path: /api, Backend: Service: store-locator-rec-api'
+  ingress_class: nginx
   labels:
-    app: workload-scheduler
-    argocd.argoproj.io/instance: in-cluster-workload-scheduler
-  name: workload-scheduler
-  namespace: workload-scheduler
+    app.kubernetes.io/instance: store-locator-rec
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: store-locator
+    argocd.argoproj.io/instance: store-locator-rec
+    helm.sh/chart: store-locator-0.1.0
+  name: store-locator-rec
+  namespace: store-locator
   status: Active
   type: Ingress
-  url: workload-scheduler.dc-tech.work/
+  url: facility-locator-recette.clariane.cloud/api
+- annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/proxy-buffer-size: 8k
+    nginx.ingress.kubernetes.io/ssl-sni-required: 'true'
+    nginx.ingress.kubernetes.io/ssl-sni-strict: 'true'
+  info: 'Path: /, Backend: Service: store-locator-rec-front'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: store-locator-rec
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: store-locator
+    argocd.argoproj.io/instance: store-locator-rec
+    helm.sh/chart: store-locator-0.1.0
+  name: store-locator-rec
+  namespace: store-locator
+  status: Active
+  type: Ingress
+  url: facility-locator-recette.clariane.cloud/

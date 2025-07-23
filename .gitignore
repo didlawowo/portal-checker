@@ -3,4 +3,3 @@ static-analysis.datadog.yml
 **/certs/*
 __pycache__/
 *.pyc
- 

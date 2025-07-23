@@ -29,10 +29,15 @@ def serialize_record(record):
     Cette fonction est appelée pour chaque enregistrement de log quand serialize=True.
     Elle transforme les attributs du record en un format JSON compatible.
     """
+    # Nettoyage du message pour supprimer les icônes indésirables
+    message = record["message"]
+    # Supprimer les icônes courantes (ladybug, etc.)
+    message = message.replace("🐞", "").replace("🔧", "").replace("⚠️", "").replace("❌", "").replace("✅", "")
+    
     subset = {
         "timestamp": record["time"].strftime("%Y-%m-%d %H:%M:%S.%f"),
         "level": record["level"].name,
-        "message": record["message"],
+        "message": message.strip(),
         "module": record["module"],
         "function": record["function"],
         "line": record["line"],
@@ -85,7 +90,7 @@ def setup_logger(log_format: str = "text", log_level: str = "INFO") -> None:
         logger.add(
             sys.stdout,
             level=log_level,
-            serialize=True,  # Active la sérialisation JSON
+            serialize=serialize_record,  # Utilise notre fonction personnalisée
             format="{message}",  # Format minimal car géré par serialize_record
             enqueue=True,  # Rend le logging thread-safe
             backtrace=True,  # Inclut les stack traces détaillées
@@ -93,7 +98,15 @@ def setup_logger(log_format: str = "text", log_level: str = "INFO") -> None:
             catch=True,  # Capture les erreurs de logging
         )
     else:
-        # Configuration pour le format texte lisible
+        # Configuration pour le format texte lisible (sans icônes)
+        def clean_message(record):
+            # Nettoyer le message des icônes
+            message = record["message"]
+            message = message.replace("🐞", "").replace("🔧", "").replace("⚠️", "").replace("❌", "").replace("✅", "")
+            message = message.replace("🔄", "").replace("📊", "").replace("🚀", "").replace("💾", "").replace("ℹ️", "")
+            record["message"] = message.strip()
+            return True
+            
         logger.add(
             sys.stdout,
             format="<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | <level>{message}</level>",
@@ -103,12 +116,21 @@ def setup_logger(log_format: str = "text", log_level: str = "INFO") -> None:
             backtrace=True,
             diagnose=True,
             catch=True,
+            filter=clean_message,
         )
 
 
 # Configuration initiale du logger
-LOG_FORMAT = os.getenv("LOG_FORMAT", "json")
+# En développement, utiliser le format texte, sinon JSON
+flask_env = os.getenv("FLASK_ENV", "")
+default_format = "text" if flask_env == "development" else "json"
+LOG_FORMAT = os.getenv("LOG_FORMAT", default_format)
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+
+# Debug de la configuration
+print(f"FLASK_ENV: {flask_env}")
+print(f"LOG_FORMAT: {LOG_FORMAT}")
+
 setup_logger(LOG_FORMAT, LOG_LEVEL)
 
 
@@ -127,9 +149,17 @@ CACHE_TTL_SECONDS = int(os.getenv("CACHE_TTL_SECONDS", "300"))  # 5 minutes par 
 KUBERNETES_POLL_INTERVAL = int(
     os.getenv("KUBERNETES_POLL_INTERVAL", "600")
 )  # 10 minutes
+CHECK_INTERVAL = int(os.getenv("CHECK_INTERVAL", "30"))  # 30 secondes par défaut
 
 # 💾 Cache global pour les ressources Kubernetes
 _kubernetes_cache: dict[str, Any] = {"data": None, "last_updated": None, "expiry": None}
+
+# 🔄 Cache global pour les résultats de test des URLs
+_test_results_cache: dict[str, Any] = {"results": [], "last_updated": None}
+
+# 🔄 Variables pour le timer périodique
+_background_task = None
+_stop_background_task = False
 
 URLS_FILE = os.getenv(
     "URLS_FILE",
@@ -361,11 +391,12 @@ async def check_single_url(session: aiohttp.ClientSession, data: dict) -> dict:
         return result
 
 
-async def check_urls_async(file_path: str | None = None) -> list[dict]:
+async def check_urls_async(file_path: str | None = None, update_cache: bool = True) -> list[dict]:
     """Test plusieurs URLs en parallèle avec limitation de concurrence
 
     Args:
         file_path: Chemin du fichier YAML contenant les URLs
+        update_cache: Si True, met à jour le cache des résultats
     Returns:
         Liste des résultats de test
     """
@@ -413,7 +444,15 @@ async def check_urls_async(file_path: str | None = None) -> list[dict]:
         tasks = [bounded_test(data) for data in filtered_data_urls]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
-    return [r for r in results if isinstance(r, dict)]
+    final_results = [r for r in results if isinstance(r, dict)]
+    
+    # Mettre à jour le cache des résultats si demandé
+    if update_cache:
+        _test_results_cache["results"] = final_results
+        _test_results_cache["last_updated"] = datetime.now()
+        logger.debug(f"🔄 Cache des résultats mis à jour avec {len(final_results)} URLs")
+
+    return final_results
 
 
 def _get_http_routes():
@@ -456,11 +495,24 @@ def _get_http_routes():
                     resource_version = route_metadata.get("resourceVersion")
 
                     logger.debug(
-                        f"Processing HTTPRoute {route_name} in {route_namespace} with {len(annotations)} annotations"
+                        f"Processing HTTPRoute {route_name} in {route_namespace} with {len(annotations)} annotations, gateway_refs: {gateway_refs}"
                     )
 
                     # 🏷️ Extraction des hostnames
                     hostnames = route["spec"].get("hostnames", [])
+
+                    # 🏃 Extraction de la gateway depuis gatewayRefs
+                    gateway_refs = route["spec"].get("gatewayRefs", [])
+                    gateway_name = None
+                    if gateway_refs:
+                        # Prendre la première gateway référencée
+                        gateway_ref = gateway_refs[0]
+                        gateway_name = gateway_ref.get("name", "unknown")
+                        # Ajouter le namespace si disponible
+                        if gateway_ref.get("namespace"):
+                            gateway_name = f"{gateway_ref['namespace']}/{gateway_name}"
+                    
+                    logger.debug(f"HTTPRoute {route_name}: gateway_name = {gateway_name}")
 
                     # 🛣️ Extraction des paths depuis les rules
                     paths = []
@@ -495,6 +547,7 @@ def _get_http_routes():
                                 "creation_timestamp": creation_timestamp,
                                 "resource_version": resource_version,
                                 "resource_type": "HTTPRoute",
+                                "gateway": gateway_name,
                             }
                         )
                         logger.debug(
@@ -809,6 +862,7 @@ def _get_all_urls_with_details():
                             "url": full_url,
                             "status": status,
                             "info": "Default path",
+                            "gateway": gateway_name,
                         }
                     )
                     logger.debug(f"Added default path for {hostname}")
@@ -834,6 +888,7 @@ def _get_all_urls_with_details():
                                 "url": full_url,
                                 "status": status,
                                 "info": f"Path: {path_value}",
+                                "gateway": gateway_name,
                             }
                         )
                         logger.debug(f"Added HTTPRoute URL: {full_url}")
@@ -859,6 +914,22 @@ def _get_all_urls_with_details():
                 )
                 annotations = ingress.metadata.annotations or {}
                 labels = ingress.metadata.labels or {}
+                
+                # 🏃 Extraction de l'ingress class
+                ingress_class = None
+                # Méthode 1: depuis la spec.ingressClassName (moderne)
+                if hasattr(ingress.spec, 'ingress_class_name') and ingress.spec.ingress_class_name:
+                    ingress_class = ingress.spec.ingress_class_name
+                elif hasattr(ingress.spec, 'ingressClassName') and ingress.spec.ingressClassName:
+                    ingress_class = ingress.spec.ingressClassName
+                # Méthode 2: depuis l'annotation (légacy)
+                elif annotations.get('kubernetes.io/ingress.class'):
+                    ingress_class = annotations.get('kubernetes.io/ingress.class')
+                # Méthode 3: depuis nginx.ingress.kubernetes.io/ingress.class
+                elif annotations.get('nginx.ingress.kubernetes.io/ingress.class'):
+                    ingress_class = annotations.get('nginx.ingress.kubernetes.io/ingress.class')
+                
+                logger.debug(f"Ingress {ingress_name}: ingress_class = {ingress_class}")
 
                 for rule in ingress.spec.rules:
                     if not rule.host:
@@ -882,6 +953,7 @@ def _get_all_urls_with_details():
                                     "url": full_url,
                                     "status": ingress_status,
                                     "info": "Default path",
+                                    "ingress_class": ingress_class,
                                 }
                             )
                             logger.debug(f"Added default Ingress path for {rule.host}")
@@ -917,6 +989,7 @@ def _get_all_urls_with_details():
                                     "url": full_url,
                                     "status": ingress_status,
                                     "info": f"Path: {path_value}, Backend: {backend_info}",
+                                    "ingress_class": ingress_class,
                                 }
                             )
                             logger.debug(f"Added Ingress URL: {full_url}")
@@ -942,6 +1015,59 @@ def _get_all_urls_with_details():
     _update_cache(url_details)
 
     return url_details  # 📊 Retour de la liste de dictionnaires
+
+
+async def _periodic_url_check():
+    """
+    🔄 Tâche de fond qui teste les URLs périodiquement
+    """
+    global _stop_background_task
+    
+    while not _stop_background_task:
+        try:
+            logger.debug(f"🔄 Démarrage du test périodique (intervalle: {CHECK_INTERVAL}s)")
+            await check_urls_async(update_cache=True)
+            logger.info(f"✅ Test périodique terminé, prochaine exécution dans {CHECK_INTERVAL}s")
+        except Exception as e:
+            logger.error(f"❌ Erreur lors du test périodique: {e}")
+        
+        # Attendre l'intervalle configuré
+        await asyncio.sleep(CHECK_INTERVAL)
+
+
+def _start_background_task():
+    """
+    🚀 Démarre la tâche de fond pour les tests périodiques
+    """
+    global _background_task, _stop_background_task
+    
+    if _background_task is not None:
+        logger.warning("⚠️ Tâche de fond déjà en cours")
+        return
+    
+    _stop_background_task = False
+    
+    def run_background():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(_periodic_url_check())
+        finally:
+            loop.close()
+    
+    import threading
+    _background_task = threading.Thread(target=run_background, daemon=True)
+    _background_task.start()
+    logger.info(f"🚀 Tâche de fond démarrée (tests toutes les {CHECK_INTERVAL}s)")
+
+
+def _stop_background_task_func():
+    """
+    🛑 Arrête la tâche de fond
+    """
+    global _stop_background_task
+    _stop_background_task = True
+    logger.info("🛑 Arrêt de la tâche de fond demandé")
 
 
 def _refresh_urls_if_needed():
@@ -1006,20 +1132,18 @@ def check_all_urls():
     # Récupérer toutes les URLs
     data_urls = _get_all_urls_with_details()
 
-    # Skip file writing in development mode to avoid read-only filesystem errors
-    if os.getenv("FLASK_ENV") != "development":
-        # Assurez-vous que le répertoire config existe
-        config_dir = os.path.dirname(URLS_FILE)
-        if config_dir:
-            os.makedirs(config_dir, exist_ok=True)
+    # Assurez-vous que le répertoire config existe
+    config_dir = os.path.dirname(URLS_FILE)
+    if config_dir:
+        os.makedirs(config_dir, exist_ok=True)
 
+    try:
         with open(URLS_FILE, "w", encoding="utf-8") as f:
             yaml.safe_dump(data_urls, f, default_flow_style=False, allow_unicode=True)
-
-    if os.getenv("FLASK_ENV") != "development":
         logger.info(f"✅ {len(data_urls)} URLs sauvegardées dans {URLS_FILE}")
-    else:
-        logger.info(f"✅ {len(data_urls)} URLs générées (dev mode - skip file write)")
+    except (PermissionError, OSError) as e:
+        logger.warning(f"⚠️ Impossible d'écrire dans {URLS_FILE}: {e}")
+        logger.info(f"✅ {len(data_urls)} URLs générées (fichier non sauvegardé)")
 
     origin_url = request.referrer
     return redirect(origin_url) if origin_url else redirect("/")
@@ -1152,17 +1276,42 @@ def cache_status():
 
 
 @app.route("/")
-async def index():
-    """Point d'entrée principal avec gestion asynchrone"""
+def index():
+    """Point d'entrée principal - affiche les résultats mis en cache"""
+    
+    # Récupérer les résultats depuis le cache
+    results = _test_results_cache["results"]
+    last_updated = _test_results_cache["last_updated"]
+    
+    # Si pas de résultats en cache, afficher un message
+    if not results:
+        logger.info("ℹ️ Aucun résultat en cache, en attente du premier test périodique")
+        results = []
+    else:
+        logger.debug(f"📊 Affichage de {len(results)} résultats mis en cache")
 
-    results = await check_urls_async()
-    logger.info(f"✅ {len(results)} URLs testées")
-
-    return render_template("index.html", results=results, version=get_app_version())
+    return render_template(
+        "index.html", 
+        results=results, 
+        version=get_app_version(),
+        last_updated=last_updated.strftime("%Y-%m-%d %H:%M:%S") if last_updated else "En attente..."
+    )
 
 
 # 🚀 Initialisation au démarrage
 _refresh_urls_if_needed()
+
+# 🔄 Démarrage de la tâche de fond pour les tests périodiques
+try:
+    if os.getenv("FLASK_ENV") == "development":
+        config.load_kube_config()
+    else:
+        config.load_incluster_config()
+    
+    _start_background_task()
+except Exception as e:
+    logger.error(f"❌ Erreur lors du démarrage de la tâche de fond: {e}")
+    logger.warning("⚠️ L'application fonctionne sans tests périodiques")
 
 
 if __name__ == "__main__":

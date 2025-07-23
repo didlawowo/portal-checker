@@ -1,0 +1,172 @@
+name: Branch Build and Deploy
+
+on:
+  push:
+    branches:
+      - '**'
+      - '!main'  # Exclude main branch (handled by cd.yaml)
+
+jobs:
+  build-and-update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
+      
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      
+      - name: Get repository name, branch, SHA and app version
+        id: vars
+        run: |
+          REPO_NAME=$(echo "${{ github.repository }}" | cut -d'/' -f2 | tr '[:upper:]' '[:lower:]')
+          echo "REPO_NAME=${REPO_NAME}" >> $GITHUB_OUTPUT
+          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          
+          # Get branch name and sanitize it for Docker tag
+          BRANCH_NAME="${{ github.ref_name }}"
+          BRANCH_TAG=$(echo "${BRANCH_NAME}" | sed 's/[^a-zA-Z0-9._-]/-/g' | tr '[:upper:]' '[:lower:]')
+          echo "BRANCH_TAG=${BRANCH_TAG}" >> $GITHUB_OUTPUT
+          echo "BRANCH_NAME=${BRANCH_NAME}" >> $GITHUB_OUTPUT
+          
+          # Get app version from pyproject.toml
+          APP_VERSION=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+          echo "APP_VERSION=${APP_VERSION}" >> $GITHUB_OUTPUT
+          
+          # Create unique tag for branch: version-branch-sha
+          UNIQUE_TAG="${APP_VERSION}-${BRANCH_TAG}-${SHORT_SHA:0:7}"
+          echo "UNIQUE_TAG=${UNIQUE_TAG}" >> $GITHUB_OUTPUT
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          sbom: true
+          provenance: mode=max
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/${{ steps.vars.outputs.REPO_NAME }}:${{ steps.vars.outputs.UNIQUE_TAG }}
+            ${{ secrets.DOCKER_USERNAME }}/${{ steps.vars.outputs.REPO_NAME }}:${{ steps.vars.outputs.BRANCH_TAG }}-latest
+          context: .
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/${{ steps.vars.outputs.REPO_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/${{ steps.vars.outputs.REPO_NAME }}:buildcache,mode=max
+      
+      - name: Check if values/docker.yaml exists
+        id: check_docker_values
+        run: |
+          if [ -f "helm/values/docker.yaml" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Create values/docker.yaml if it doesn't exist
+        if: steps.check_docker_values.outputs.exists == 'false'
+        run: |
+          mkdir -p helm/values
+          cat > helm/values/docker.yaml << EOF
+          # Docker-specific values for branch deployments
+          # This file is automatically updated by GitHub Actions
+          
+          image:
+            repository: ${{ secrets.DOCKER_USERNAME }}/${{ steps.vars.outputs.REPO_NAME }}
+            tag: "${{ steps.vars.outputs.UNIQUE_TAG }}"
+            pullPolicy: Always
+          
+          # Environment for branch testing
+          env:
+            - name: FLASK_ENV
+              value: "development"
+            - name: LOG_LEVEL
+              value: "DEBUG"
+          
+          # Branch-specific annotations
+          podAnnotations:
+            git.branch: "${{ steps.vars.outputs.BRANCH_NAME }}"
+            git.commit: "${{ steps.vars.outputs.SHORT_SHA }}"
+            build.timestamp: "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          EOF
+      
+      - name: Update values/docker.yaml
+        if: steps.check_docker_values.outputs.exists == 'true'
+        run: |
+          # Install yq if not available
+          if ! command -v yq &> /dev/null; then
+            wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+            chmod +x /usr/local/bin/yq
+          fi
+          
+          # Update image settings
+          yq e -i '.image.repository = "${{ secrets.DOCKER_USERNAME }}/${{ steps.vars.outputs.REPO_NAME }}"' helm/values/docker.yaml
+          yq e -i '.image.tag = "${{ steps.vars.outputs.UNIQUE_TAG }}"' helm/values/docker.yaml
+          yq e -i '.image.pullPolicy = "Always"' helm/values/docker.yaml
+          
+          # Update annotations
+          yq e -i '.podAnnotations."git.branch" = "${{ steps.vars.outputs.BRANCH_NAME }}"' helm/values/docker.yaml
+          yq e -i '.podAnnotations."git.commit" = "${{ steps.vars.outputs.SHORT_SHA }}"' helm/values/docker.yaml
+          yq e -i '.podAnnotations."build.timestamp" = "$(date -u +%Y-%m-%dT%H:%M:%SZ)"' helm/values/docker.yaml
+      
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "github-actions@github.com"
+      
+      - name: Commit and push changes
+        run: |
+          git add helm/values/docker.yaml
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore(${{ steps.vars.outputs.BRANCH_NAME }}): update docker values to ${{ steps.vars.outputs.UNIQUE_TAG }}
+            
+            🚀 Generated with [GitHub Actions](https://github.com/${{ github.repository }}/actions)
+            
+            Co-Authored-By: GitHub Actions <noreply@github.com>"
+            git push
+          fi
+      
+      - name: Create deployment summary
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY << EOF
+          ## 🚀 Branch Build Summary
+          
+          ### Image Details
+          - **Repository**: \`${{ secrets.DOCKER_USERNAME }}/${{ steps.vars.outputs.REPO_NAME }}\`
+          - **Tag**: \`${{ steps.vars.outputs.UNIQUE_TAG }}\`
+          - **Branch**: \`${{ steps.vars.outputs.BRANCH_NAME }}\`
+          - **Commit**: \`${{ steps.vars.outputs.SHORT_SHA }}\`
+          
+          ### Deploy Commands
+          \`\`\`bash
+          # Deploy with Helm using docker values
+          helm upgrade --install portal-checker-${{ steps.vars.outputs.BRANCH_TAG }} ./helm \\
+            --namespace portal-checker-dev \\
+            --create-namespace \\
+            --values helm/values.yaml \\
+            --values helm/values/docker.yaml
+          
+          # Or using Task
+          task helm-install
+          \`\`\`
+          
+          ### Docker Pull
+          \`\`\`bash
+          docker pull ${{ secrets.DOCKER_USERNAME }}/${{ steps.vars.outputs.REPO_NAME }}:${{ steps.vars.outputs.UNIQUE_TAG }}
+          \`\`\`
+          EOF

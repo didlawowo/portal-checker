@@ -1,0 +1,227 @@
+name: Automated Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  packages: write
+  pull-requests: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install bump2version
+
+      - name: Determine version bump
+        id: version_bump
+        run: |
+          # Analyser les commits depuis le dernier tag pour déterminer le type de bump
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "Last tag: $LAST_TAG"
+          
+          # Récupérer les commits depuis le dernier tag
+          COMMITS=$(git log ${LAST_TAG}..HEAD --oneline)
+          echo "Commits since last tag:"
+          echo "$COMMITS"
+          
+          # Déterminer le type de bump basé sur les messages de commit
+          if echo "$COMMITS" | grep -q "BREAKING CHANGE\|^feat!:"; then
+            BUMP_TYPE="major"
+          elif echo "$COMMITS" | grep -q "^feat:"; then
+            BUMP_TYPE="minor"
+          elif echo "$COMMITS" | grep -q "^fix:\|^chore:\|^docs:\|^style:\|^refactor:\|^perf:\|^test:"; then
+            BUMP_TYPE="patch"
+          else
+            BUMP_TYPE="patch"  # default
+          fi
+          
+          echo "Bump type determined: $BUMP_TYPE"
+          echo "bump_type=$BUMP_TYPE" >> $GITHUB_OUTPUT
+
+      - name: Bump version in pyproject.toml
+        id: bump_version
+        run: |
+          # Lire la version actuelle
+          CURRENT_VERSION=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+          echo "Current version: $CURRENT_VERSION"
+          
+          # Calculer la nouvelle version
+          IFS='.' read -r -a version_parts <<< "$CURRENT_VERSION"
+          major=${version_parts[0]}
+          minor=${version_parts[1]}
+          patch=${version_parts[2]}
+          
+          case "${{ steps.version_bump.outputs.bump_type }}" in
+            major)
+              major=$((major + 1))
+              minor=0
+              patch=0
+              ;;
+            minor)
+              minor=$((minor + 1))
+              patch=0
+              ;;
+            patch)
+              patch=$((patch + 1))
+              ;;
+          esac
+          
+          NEW_VERSION="$major.$minor.$patch"
+          echo "New version: $NEW_VERSION"
+          
+          # Mettre à jour pyproject.toml
+          sed -i "s/^version = \".*\"/version = \"$NEW_VERSION\"/" pyproject.toml
+          
+          # Mettre à jour helm/values.yaml
+          sed -i "s/tag: \".*\"/tag: \"$NEW_VERSION\"/" helm/values.yaml
+          
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "tag_name=v$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Generate Changelog
+        id: changelog
+        run: |
+          NEW_VERSION="${{ steps.bump_version.outputs.new_version }}"
+          TAG_NAME="${{ steps.bump_version.outputs.tag_name }}"
+          
+          # Obtenir le tag précédent
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          
+          if [ -z "$PREVIOUS_TAG" ]; then
+            RANGE="$(git rev-list --max-parents=0 HEAD)..HEAD"
+          else
+            RANGE="$PREVIOUS_TAG..HEAD"
+          fi
+          
+          echo "# 🚀 Release $TAG_NAME" > CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$PREVIOUS_TAG...$TAG_NAME" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          
+          # Nouvelles fonctionnalités
+          feat_commits=$(git log $RANGE --pretty=format:"- %s (%h)" --grep="^feat:" || true)
+          if [ ! -z "$feat_commits" ]; then
+            echo "## ✨ Nouvelles fonctionnalités" >> CHANGELOG.md
+            echo "$feat_commits" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+          fi
+          
+          # Corrections de bugs
+          fix_commits=$(git log $RANGE --pretty=format:"- %s (%h)" --grep="^fix:" || true)
+          if [ ! -z "$fix_commits" ]; then
+            echo "## 🐛 Corrections de bugs" >> CHANGELOG.md
+            echo "$fix_commits" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+          fi
+          
+          # Autres changements
+          other_commits=$(git log $RANGE --pretty=format:"- %s (%h)" --grep="^(chore|docs|style|refactor|perf|test):" || true)
+          if [ ! -z "$other_commits" ]; then
+            echo "## 📝 Autres changements" >> CHANGELOG.md
+            echo "$other_commits" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+          fi
+          
+          echo "Generated changelog:"
+          cat CHANGELOG.md
+
+      - name: Commit version changes
+        run: |
+          git add pyproject.toml helm/values.yaml
+          git commit -m "chore: bump version to ${{ steps.bump_version.outputs.new_version }} [skip ci]"
+          git push origin main
+
+      - name: Create and push tag
+        run: |
+          TAG_NAME="${{ steps.bump_version.outputs.tag_name }}"
+          git tag -a "$TAG_NAME" -m "Release $TAG_NAME"
+          git push origin "$TAG_NAME"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:${{ steps.bump_version.outputs.new_version }}
+            ghcr.io/${{ github.repository }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.bump_version.outputs.tag_name }}
+          name: "Release ${{ steps.bump_version.outputs.tag_name }}"
+          body_path: CHANGELOG.md
+          token: ${{ secrets.GITHUB_TOKEN }}
+          generate_release_notes: false
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Package and release Helm chart
+        run: |
+          # Mettre à jour la version du chart
+          NEW_VERSION="${{ steps.bump_version.outputs.new_version }}"
+          sed -i "s/^version: .*/version: $NEW_VERSION/" helm/Chart.yaml
+          sed -i "s/^appVersion: .*/appVersion: $NEW_VERSION/" helm/Chart.yaml
+          
+          # Packager le chart
+          helm package helm/ --destination .
+          
+          # Créer ou mettre à jour l'index Helm si nécessaire
+          if [ -f index.yaml ]; then
+            helm repo index . --merge index.yaml
+          else
+            helm repo index .
+          fi
+
+      - name: Summary
+        run: |
+          echo "🎉 **Release ${{ steps.bump_version.outputs.tag_name }} completed successfully!**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📋 Changes:" >> $GITHUB_STEP_SUMMARY
+          echo "- ⬆️ Version bumped from $(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo 'initial') to ${{ steps.bump_version.outputs.tag_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 🐳 Docker image built and pushed" >> $GITHUB_STEP_SUMMARY
+          echo "- 🏷️ Git tag created and pushed" >> $GITHUB_STEP_SUMMARY
+          echo "- 📖 GitHub release created with changelog" >> $GITHUB_STEP_SUMMARY
+          echo "- ⚙️ Helm chart version updated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔗 Links:" >> $GITHUB_STEP_SUMMARY
+          echo "- [GitHub Release](https://github.com/${{ github.repository }}/releases/tag/${{ steps.bump_version.outputs.tag_name }})" >> $GITHUB_STEP_SUMMARY
+          echo "- [Docker Image](https://ghcr.io/${{ github.repository }}:${{ steps.bump_version.outputs.new_version }})" >> $GITHUB_STEP_SUMMARY
