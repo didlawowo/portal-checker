@@ -30,7 +30,7 @@ env:
 # Branch-specific annotations
 podAnnotations:
   git.branch: "feat/perf"
-  git.commit: "d507eee"
+  git.commit: "0eea1fe"
   build.timestamp: "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   environment: "development"
 # Development-specific resource limits
