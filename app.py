@@ -29,10 +29,15 @@ def serialize_record(record):
     Cette fonction est appelée pour chaque enregistrement de log quand serialize=True.
     Elle transforme les attributs du record en un format JSON compatible.
     """
+    # Nettoyage du message pour supprimer les icônes indésirables
+    message = record["message"]
+    # Supprimer les icônes courantes (ladybug, etc.)
+    message = message.replace("🐞", "").replace("🔧", "").replace("⚠️", "").replace("❌", "").replace("✅", "")
+    
     subset = {
         "timestamp": record["time"].strftime("%Y-%m-%d %H:%M:%S.%f"),
         "level": record["level"].name,
-        "message": record["message"],
+        "message": message.strip(),
         "module": record["module"],
         "function": record["function"],
         "line": record["line"],
@@ -85,7 +90,7 @@ def setup_logger(log_format: str = "text", log_level: str = "INFO") -> None:
         logger.add(
             sys.stdout,
             level=log_level,
-            serialize=True,  # Active la sérialisation JSON
+            serialize=serialize_record,  # Utilise notre fonction personnalisée
             format="{message}",  # Format minimal car géré par serialize_record
             enqueue=True,  # Rend le logging thread-safe
             backtrace=True,  # Inclut les stack traces détaillées
@@ -93,7 +98,15 @@ def setup_logger(log_format: str = "text", log_level: str = "INFO") -> None:
             catch=True,  # Capture les erreurs de logging
         )
     else:
-        # Configuration pour le format texte lisible
+        # Configuration pour le format texte lisible (sans icônes)
+        def clean_message(record):
+            # Nettoyer le message des icônes
+            message = record["message"]
+            message = message.replace("🐞", "").replace("🔧", "").replace("⚠️", "").replace("❌", "").replace("✅", "")
+            message = message.replace("🔄", "").replace("📊", "").replace("🚀", "").replace("💾", "").replace("ℹ️", "")
+            record["message"] = message.strip()
+            return True
+            
         logger.add(
             sys.stdout,
             format="<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> | <level>{message}</level>",
@@ -103,12 +116,21 @@ def setup_logger(log_format: str = "text", log_level: str = "INFO") -> None:
             backtrace=True,
             diagnose=True,
             catch=True,
+            filter=clean_message,
         )
 
 
 # Configuration initiale du logger
-LOG_FORMAT = os.getenv("LOG_FORMAT", "json")
+# En développement, utiliser le format texte, sinon JSON
+flask_env = os.getenv("FLASK_ENV", "")
+default_format = "text" if flask_env == "development" else "json"
+LOG_FORMAT = os.getenv("LOG_FORMAT", default_format)
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+
+# Debug de la configuration
+print(f"FLASK_ENV: {flask_env}")
+print(f"LOG_FORMAT: {LOG_FORMAT}")
+
 setup_logger(LOG_FORMAT, LOG_LEVEL)
 
 
@@ -473,11 +495,24 @@ def _get_http_routes():
                     resource_version = route_metadata.get("resourceVersion")
 
                     logger.debug(
-                        f"Processing HTTPRoute {route_name} in {route_namespace} with {len(annotations)} annotations"
+                        f"Processing HTTPRoute {route_name} in {route_namespace} with {len(annotations)} annotations, gateway_refs: {gateway_refs}"
                     )
 
                     # 🏷️ Extraction des hostnames
                     hostnames = route["spec"].get("hostnames", [])
+
+                    # 🏃 Extraction de la gateway depuis gatewayRefs
+                    gateway_refs = route["spec"].get("gatewayRefs", [])
+                    gateway_name = None
+                    if gateway_refs:
+                        # Prendre la première gateway référencée
+                        gateway_ref = gateway_refs[0]
+                        gateway_name = gateway_ref.get("name", "unknown")
+                        # Ajouter le namespace si disponible
+                        if gateway_ref.get("namespace"):
+                            gateway_name = f"{gateway_ref['namespace']}/{gateway_name}"
+                    
+                    logger.debug(f"HTTPRoute {route_name}: gateway_name = {gateway_name}")
 
                     # 🛣️ Extraction des paths depuis les rules
                     paths = []
@@ -512,6 +547,7 @@ def _get_http_routes():
                                 "creation_timestamp": creation_timestamp,
                                 "resource_version": resource_version,
                                 "resource_type": "HTTPRoute",
+                                "gateway": gateway_name,
                             }
                         )
                         logger.debug(
@@ -826,6 +862,7 @@ def _get_all_urls_with_details():
                             "url": full_url,
                             "status": status,
                             "info": "Default path",
+                            "gateway": gateway_name,
                         }
                     )
                     logger.debug(f"Added default path for {hostname}")
@@ -851,6 +888,7 @@ def _get_all_urls_with_details():
                                 "url": full_url,
                                 "status": status,
                                 "info": f"Path: {path_value}",
+                                "gateway": gateway_name,
                             }
                         )
                         logger.debug(f"Added HTTPRoute URL: {full_url}")
@@ -876,6 +914,22 @@ def _get_all_urls_with_details():
                 )
                 annotations = ingress.metadata.annotations or {}
                 labels = ingress.metadata.labels or {}
+                
+                # 🏃 Extraction de l'ingress class
+                ingress_class = None
+                # Méthode 1: depuis la spec.ingressClassName (moderne)
+                if hasattr(ingress.spec, 'ingress_class_name') and ingress.spec.ingress_class_name:
+                    ingress_class = ingress.spec.ingress_class_name
+                elif hasattr(ingress.spec, 'ingressClassName') and ingress.spec.ingressClassName:
+                    ingress_class = ingress.spec.ingressClassName
+                # Méthode 2: depuis l'annotation (légacy)
+                elif annotations.get('kubernetes.io/ingress.class'):
+                    ingress_class = annotations.get('kubernetes.io/ingress.class')
+                # Méthode 3: depuis nginx.ingress.kubernetes.io/ingress.class
+                elif annotations.get('nginx.ingress.kubernetes.io/ingress.class'):
+                    ingress_class = annotations.get('nginx.ingress.kubernetes.io/ingress.class')
+                
+                logger.debug(f"Ingress {ingress_name}: ingress_class = {ingress_class}")
 
                 for rule in ingress.spec.rules:
                     if not rule.host:
@@ -899,6 +953,7 @@ def _get_all_urls_with_details():
                                     "url": full_url,
                                     "status": ingress_status,
                                     "info": "Default path",
+                                    "ingress_class": ingress_class,
                                 }
                             )
                             logger.debug(f"Added default Ingress path for {rule.host}")
@@ -934,6 +989,7 @@ def _get_all_urls_with_details():
                                     "url": full_url,
                                     "status": ingress_status,
                                     "info": f"Path: {path_value}, Backend: {backend_info}",
+                                    "ingress_class": ingress_class,
                                 }
                             )
                             logger.debug(f"Added Ingress URL: {full_url}")

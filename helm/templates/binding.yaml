@@ -25,7 +25,7 @@ metadata:
   name: {{ include "application.fullname" . }}-binding
 subjects:
 - kind: ServiceAccount
-  name: portal-checker
+  name: {{ default (include "application.fullname" .) .Values.serviceAccount.name }}
   namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole

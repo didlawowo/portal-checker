@@ -1,30 +1,802 @@
-- annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
-    nginx.ingress.kubernetes.io/ssl-redirect: 'false'
-    portal-checker.io/category: test
-    portal-checker.io/description: Test application for portal-checker validation
-    portal-checker.io/exclude: 'false'
-  info: 'Path: /, Backend: Service: test-app-service'
+- annotations: {}
+  info: 'Path: /, Backend: Service: agesetvie-rec-directus'
+  ingress_class: nginx
   labels:
-    app: test-app
-    environment: test
-  name: test-app-ingress
-  namespace: portal-checker-test
+    app.kubernetes.io/instance: agesetvie-rec
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: ageetvie
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: agesetvie-rec
+    helm.sh/chart: ageetvie-0.1.0
+  name: agesetvie-rec-ageetvie-directus
+  namespace: agesetvie
+  status: Active
+  type: Ingress
+  url: backoffice-recette.agesetvie.cloud/
+- annotations: {}
+  info: 'Path: /, Backend: Service: agesetvie-rec-nextjs'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: agesetvie-rec
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: ageetvie
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: agesetvie-rec
+    helm.sh/chart: ageetvie-0.1.0
+  name: agesetvie-rec-ageetvie-nextjs
+  namespace: agesetvie
+  status: Active
+  type: Ingress
+  url: recette.agesetvie.com/
+- annotations: {}
+  info: 'Path: /, Backend: Service: agesetvie-rec-nextjs'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: agesetvie-rec
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: ageetvie
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: agesetvie-rec
+    helm.sh/chart: ageetvie-0.1.0
+  name: agesetvie-rec-ageetvie-nextjs
+  namespace: agesetvie
+  status: Active
+  type: Ingress
+  url: www.recette.agesetvie.com/
+- annotations:
+    meta.helm.sh/release-name: argocd
+    meta.helm.sh/release-namespace: argocd
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/force-ssl-redirect: 'true'
+  info: 'Path: /, Backend: Service: argocd-server'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/component: server
+    app.kubernetes.io/instance: argocd
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: argocd-server
+    app.kubernetes.io/part-of: argocd
+    app.kubernetes.io/version: v2.9.3
+    helm.sh/chart: argo-cd-5.52.1
+  name: argocd-server
+  namespace: argocd
+  status: Active
+  type: Ingress
+  url: argocd.korian.cloud/
+- annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+  info: 'Path: /, Backend: Service: arkhineo-rec'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: arkhineo-rec
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: front-arkhineo
+    app.kubernetes.io/version: 1.0.0
+    argocd.argoproj.io/instance: arkhineo-rec
+    helm.sh/chart: front-arkhineo-0.1.0
+  name: arkhineo-rec-front-arkhineo
+  namespace: arkhineo
+  status: Active
+  type: Ingress
+  url: archivage-recette.clariane.cloud/
+- annotations:
+    meta.helm.sh/release-name: conciliation
+    meta.helm.sh/release-namespace: conciliation-frm
+  info: 'Path: /conciliation, Backend: Service: front'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: conciliation
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: conciliation
+    app.kubernetes.io/version: 1.0.39
+    helm.sh/chart: conciliation-1.0.0
+  name: conciliation
+  namespace: conciliation-frm
+  status: Active
+  type: Ingress
+  url: conciliation-frm.korian.cloud/conciliation
+- annotations:
+    meta.helm.sh/release-name: conciliation
+    meta.helm.sh/release-namespace: conciliation-frm
+  info: 'Path: /conciliation/api, Backend: Service: back'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: conciliation
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: conciliation
+    app.kubernetes.io/version: 1.0.39
+    helm.sh/chart: conciliation-1.0.0
+  name: conciliation
+  namespace: conciliation-frm
+  status: Active
+  type: Ingress
+  url: conciliation-frm.korian.cloud/conciliation/api
+- annotations:
+    meta.helm.sh/release-name: conciliation
+    meta.helm.sh/release-namespace: conciliation-frm2
+  info: 'Path: /conciliation, Backend: Service: front'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: conciliation
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: conciliation
+    app.kubernetes.io/version: 1.0.39
+    helm.sh/chart: conciliation-1.0.0
+  name: conciliation
+  namespace: conciliation-frm2
+  status: Active
+  type: Ingress
+  url: conciliation-frm2.korian.cloud/conciliation
+- annotations:
+    meta.helm.sh/release-name: conciliation
+    meta.helm.sh/release-namespace: conciliation-frm2
+  info: 'Path: /conciliation/api, Backend: Service: back'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: conciliation
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: conciliation
+    app.kubernetes.io/version: 1.0.39
+    helm.sh/chart: conciliation-1.0.0
+  name: conciliation
+  namespace: conciliation-frm2
+  status: Active
+  type: Ingress
+  url: conciliation-frm2.korian.cloud/conciliation/api
+- annotations:
+    meta.helm.sh/release-name: conciliation
+    meta.helm.sh/release-namespace: conciliation-qua
+  info: 'Path: /conciliation, Backend: Service: front'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: conciliation
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: conciliation
+    app.kubernetes.io/version: 1.0.39
+    helm.sh/chart: conciliation-1.0.0
+  name: conciliation
+  namespace: conciliation-qua
+  status: Active
+  type: Ingress
+  url: conciliation-qua.korian.cloud/conciliation
+- annotations:
+    meta.helm.sh/release-name: conciliation
+    meta.helm.sh/release-namespace: conciliation-qua
+  info: 'Path: /conciliation/api, Backend: Service: back'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: conciliation
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: conciliation
+    app.kubernetes.io/version: 1.0.39
+    helm.sh/chart: conciliation-1.0.0
+  name: conciliation
+  namespace: conciliation-qua
+  status: Active
+  type: Ingress
+  url: conciliation-qua.korian.cloud/conciliation/api
+- annotations:
+    meta.helm.sh/release-name: conciliation
+    meta.helm.sh/release-namespace: conciliation-upg
+  info: 'Path: /conciliation, Backend: Service: front'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: conciliation
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: conciliation
+    app.kubernetes.io/version: 1.0.39
+    helm.sh/chart: conciliation-1.0.0
+  name: conciliation
+  namespace: conciliation-upg
+  status: Active
+  type: Ingress
+  url: conciliation-upg.korian.cloud/conciliation
+- annotations:
+    meta.helm.sh/release-name: conciliation
+    meta.helm.sh/release-namespace: conciliation-upg
+  info: 'Path: /conciliation/api, Backend: Service: back'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: conciliation
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: conciliation
+    app.kubernetes.io/version: 1.0.39
+    helm.sh/chart: conciliation-1.0.0
+  name: conciliation
+  namespace: conciliation-upg
+  status: Active
+  type: Ingress
+  url: conciliation-upg.korian.cloud/conciliation/api
+- annotations:
+    meta.helm.sh/release-name: conciliation
+    meta.helm.sh/release-namespace: conciliation
+  info: 'Path: /conciliation, Backend: Service: front'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: conciliation
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: conciliation
+    app.kubernetes.io/version: 1.16.0
+    helm.sh/chart: conciliation-0.1.0
+  name: conciliation
+  namespace: conciliation
+  status: Active
+  type: Ingress
+  url: conciliation-rec.korian.cloud/conciliation
+- annotations:
+    meta.helm.sh/release-name: conciliation
+    meta.helm.sh/release-namespace: conciliation
+  info: 'Path: /conciliation/api, Backend: Service: back'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: conciliation
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: conciliation
+    app.kubernetes.io/version: 1.16.0
+    helm.sh/chart: conciliation-0.1.0
+  name: conciliation
+  namespace: conciliation
+  status: Active
+  type: Ingress
+  url: conciliation-rec.korian.cloud/conciliation/api
+- annotations:
+    nginx.ingress.kubernetes.io/affinity: cookie
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/proxy-buffer-size: 8k
+    nginx.ingress.kubernetes.io/session-cookie-expires: '172800'
+    nginx.ingress.kubernetes.io/session-cookie-max-age: '172800'
+    nginx.ingress.kubernetes.io/session-cookie-name: NEXTJS_ROUTE
+    nginx.ingress.kubernetes.io/session-cookie-path: /
+    nginx.ingress.kubernetes.io/ssl-sni-required: 'true'
+    nginx.ingress.kubernetes.io/ssl-sni-strict: 'true'
+  info: 'Path: /, Backend: Service: ekara-viewer-rec'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: ekara-viewer-rec
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: ekara-viewer
+    argocd.argoproj.io/instance: ekara-viewer-rec
+    helm.sh/chart: ekara-viewer-0.1.0
+  name: ekara-viewer-rec
+  namespace: ekara-viewer
+  status: Active
+  type: Ingress
+  url: ekara-viewer-poc.korian.cloud/
+- annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: 300m
+    nginx.org/client-max-body-size: 300m
+  info: 'Path: /, Backend: Service: groupeur-pmsi-frm'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: groupeur-pmsi-frm
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: groupeur-pmsi
+    app.kubernetes.io/version: 1.1.17
+    argocd.argoproj.io/instance: groupeur-pmsi-frm
+    helm.sh/chart: groupeur-pmsi-1.0.0
+  name: groupeur-pmsi-frm
+  namespace: groupeur-pmsi-frm
+  status: Active
+  type: Ingress
+  url: groupeur-pmsi-frm.korian.cloud/
+- annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: 300m
+    nginx.org/client-max-body-size: 300m
+  info: 'Path: /, Backend: Service: groupeur-pmsi-frm2'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: groupeur-pmsi-frm2
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: groupeur-pmsi
+    app.kubernetes.io/version: 1.1.17
+    argocd.argoproj.io/instance: groupeur-pmsi-frm2
+    helm.sh/chart: groupeur-pmsi-1.0.0
+  name: groupeur-pmsi-frm2
+  namespace: groupeur-pmsi-frm2
+  status: Active
+  type: Ingress
+  url: groupeur-pmsi-frm2.korian.cloud/
+- annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: 300m
+    nginx.org/client-max-body-size: 300m
+  info: 'Path: /, Backend: Service: groupeur-pmsi-qua'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: groupeur-pmsi-qua
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: groupeur-pmsi
+    app.kubernetes.io/version: 1.1.17
+    argocd.argoproj.io/instance: groupeur-pmsi-qua
+    helm.sh/chart: groupeur-pmsi-1.0.0
+  name: groupeur-pmsi-qua
+  namespace: groupeur-pmsi-qua
+  status: Active
+  type: Ingress
+  url: groupeur-pmsi-qua.korian.cloud/
+- annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: 300m
+    nginx.org/client-max-body-size: 300m
+  info: 'Path: /, Backend: Service: groupeur-pmsi-upg'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: groupeur-pmsi-upg
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: groupeur-pmsi
+    app.kubernetes.io/version: 1.1.17
+    argocd.argoproj.io/instance: groupeur-pmsi-upg
+    helm.sh/chart: groupeur-pmsi-1.0.0
+  name: groupeur-pmsi-upg
+  namespace: groupeur-pmsi-upg
+  status: Active
+  type: Ingress
+  url: groupeur-pmsi-upg.korian.cloud/
+- annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: 300m
+    nginx.org/client-max-body-size: 300m
+  info: 'Path: /, Backend: Service: groupeur-pmsi-rec'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: groupeur-pmsi-rec
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: groupeur-pmsi
+    app.kubernetes.io/version: 1.1.17
+    argocd.argoproj.io/instance: groupeur-pmsi-rec
+    helm.sh/chart: groupeur-pmsi-1.0.0
+  name: groupeur-pmsi-rec
+  namespace: groupeur-pmsi
+  status: Active
+  type: Ingress
+  url: groupeur-pmsi-rec.korian.cloud/
+- annotations: {}
+  info: 'Path: /, Backend: Service: backup-manager'
+  ingress_class: traefik
+  labels:
+    app: backup-manager
+    argocd.argoproj.io/instance: backup-manager
+  name: backup-manager
+  namespace: infra-backup-manager
+  status: Active
+  type: Ingress
+  url: backup-manager.tooling.webhosting.clariane.cloud/
+- annotations:
+    traefik.ingress.kubernetes.io/router.tls: 'true'
+  info: 'Path: /, Backend: Service: infisical-prod-infisical-standalone-infisical'
+  ingress_class: traefik
+  labels: {}
+  name: infisical-ingress
+  namespace: infra-infisical
+  status: Active
+  type: Ingress
+  url: infisical-prod.tooling.webhosting.clariane.cloud/
+- annotations:
+    traefik.ingress.kubernetes.io/router.tls: 'true'
+  info: 'Path: /ss-webhook, Backend: Service: infisical-prod-infisical-standalone-infisical'
+  ingress_class: traefik
+  labels: {}
+  name: infisical-ingress
+  namespace: infra-infisical
+  status: Active
+  type: Ingress
+  url: infisical-prod.tooling.webhosting.clariane.cloud/ss-webhook
+- annotations: {}
+  info: 'Path: /, Backend: Service: agesetvie-integration-directus'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: agesetvie-integration
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: ageetvie
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: agesetvie-integration
+    helm.sh/chart: ageetvie-0.1.0
+  name: agesetvie-integration-ageetvie-directus
+  namespace: integration-agesetvie
   status: Pending
   type: Ingress
-  url: test-app.local/
-- annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
-    nginx.ingress.kubernetes.io/ssl-redirect: 'false'
-    portal-checker.io/category: test
-    portal-checker.io/description: Test application for portal-checker validation
-    portal-checker.io/exclude: 'false'
-  info: 'Path: /api, Backend: Service: test-app-service'
+  url: backoffice-recette.agesetvie.cloud/
+- annotations: {}
+  info: 'Path: /, Backend: Service: agesetvie-integration-nextjs'
+  ingress_class: nginx
   labels:
-    app: test-app
-    environment: test
-  name: test-app-ingress
-  namespace: portal-checker-test
+    app.kubernetes.io/instance: agesetvie-integration
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: ageetvie
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: agesetvie-integration
+    helm.sh/chart: ageetvie-0.1.0
+  name: agesetvie-integration-ageetvie-nextjs
+  namespace: integration-agesetvie
   status: Pending
   type: Ingress
-  url: test-api.local/api
+  url: recette.agesetvie.com/
+- annotations: {}
+  info: 'Path: /, Backend: Service: agesetvie-integration-nextjs'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: agesetvie-integration
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: ageetvie
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: agesetvie-integration
+    helm.sh/chart: ageetvie-0.1.0
+  name: agesetvie-integration-ageetvie-nextjs
+  namespace: integration-agesetvie
+  status: Pending
+  type: Ingress
+  url: www.recette.agesetvie.com/
+- annotations:
+    meta.helm.sh/release-name: frankenphp-app
+    meta.helm.sh/release-namespace: integration-frankenphp
+  info: 'Path: /, Backend: Service: frankenphp-app'
+  ingress_class: traefik
+  labels:
+    app.kubernetes.io/instance: frankenphp-app
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: frankenphp-app
+    app.kubernetes.io/version: 1.2.0
+    helm.sh/chart: frankenphp-app-1.1.0
+  name: frankenphp-app
+  namespace: integration-frankenphp
+  status: Active
+  type: Ingress
+  url: frankenphp.integration.webhosting.clariane.cloud/
+- annotations: {}
+  info: 'Path: /, Backend: Service: integration-frankenphp-frankenphp-app'
+  ingress_class: traefik
+  labels:
+    app.kubernetes.io/instance: integration-frankenphp
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: frankenphp-app
+    app.kubernetes.io/version: 1.2.0
+    argocd.argoproj.io/instance: integration-frankenphp
+    helm.sh/chart: frankenphp-app-1.1.0
+  name: integration-frankenphp-frankenphp-app
+  namespace: integration-frankenphp
+  status: Active
+  type: Ingress
+  url: frankenphp.integration.webhosting.clariane.cloud/
+- annotations: {}
+  info: 'Path: /, Backend: Service: kopilot-rec'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: kopilot-rec
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: kopilot
+    app.kubernetes.io/version: 1.1.6
+    argocd.argoproj.io/instance: kopilot-rec
+    helm.sh/chart: kopilot-0.1.0
+  name: kopilot-rec
+  namespace: kopilot
+  status: Active
+  type: Ingress
+  url: kopilot-rec.clariane.cloud/
+- annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+  info: 'Path: /, Backend: Service: korall-hub'
+  ingress_class: nginx
+  labels:
+    argocd.argoproj.io/instance: korall-hub-rec
+  name: korall-hub
+  namespace: korall-hub
+  status: Active
+  type: Ingress
+  url: korall-hub-recette.korian.cloud/
+- annotations:
+    meta.helm.sh/release-name: argo
+    meta.helm.sh/release-namespace: kube-infra
+  info: 'Path: /, Backend: Service: argo-argocd-server'
+  ingress_class: traefik
+  labels:
+    app.kubernetes.io/component: server
+    app.kubernetes.io/instance: argo
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: argocd-server
+    app.kubernetes.io/part-of: argocd
+    app.kubernetes.io/version: v3.0.6
+    helm.sh/chart: argo-cd-8.1.2
+  name: argo-argocd-server
+  namespace: kube-infra
+  status: Active
+  type: Ingress
+  url: argocd.tooling.webhosting.clariane.cloud/
+- annotations: {}
+  info: 'Path: /, Backend: Service: goldilocks-dashboard'
+  ingress_class: traefik
+  labels:
+    app.kubernetes.io/component: dashboard
+    app.kubernetes.io/instance: goldilocks
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: goldilocks
+    argocd.argoproj.io/instance: goldilocks
+    helm.sh/chart: goldilocks-9.0.2
+  name: goldilocks-dashboard
+  namespace: kube-infra
+  status: Active
+  type: Ingress
+  url: goldilocks.tooling.webhosting.clariane.cloud/
+- annotations: {}
+  info: 'Path: /, Backend: Service: portal-checker'
+  ingress_class: traefik
+  labels:
+    app: portal-checker
+    argocd.argoproj.io/instance: oth-portal-checker
+  name: portal-checker
+  namespace: kube-infra
+  status: Active
+  type: Ingress
+  url: portal-checker.tooling.webhosting.clariane.cloud/
+- annotations: {}
+  info: 'Path: /, Backend: Service: victorialogs-victoria-logs-single-server'
+  ingress_class: traefik
+  labels:
+    app: server
+    app.kubernetes.io/instance: victorialogs
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: victoria-logs-single
+    app.kubernetes.io/version: v1.23.3-victorialogs
+    argocd.argoproj.io/instance: victorialogs
+    helm.sh/chart: victoria-logs-single-0.11.2
+  name: victorialogs-victoria-logs-single-server
+  namespace: kube-monitoring
+  status: Active
+  type: Ingress
+  url: logs.tooling.webhosting.clariane.cloud/
+- annotations: {}
+  info: 'Path: /, Backend: Service: infisical-infisical-standalone-infisical'
+  ingress_class: traefik
+  labels:
+    argocd.argoproj.io/instance: infisical
+  name: infisical-ingress
+  namespace: kube-security
+  status: Active
+  type: Ingress
+  url: infisical.tooling.webhosting.korian.cloud/
+- annotations: {}
+  info: 'Path: /ss-webhook, Backend: Service: infisical-infisical-standalone-infisical'
+  ingress_class: traefik
+  labels:
+    argocd.argoproj.io/instance: infisical
+  name: infisical-ingress
+  namespace: kube-security
+  status: Active
+  type: Ingress
+  url: infisical.tooling.webhosting.korian.cloud/ss-webhook
+- annotations: {}
+  info: 'Path: /azure-token-verify, Backend: Service: likor-integ-api'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: likor-integ
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: likor
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: likor-integ
+    helm.sh/chart: likor-0.1.0
+  name: likor-integ
+  namespace: likor-integ
+  status: Active
+  type: Ingress
+  url: likor-integration.clariane.cloud/azure-token-verify
+- annotations: {}
+  info: 'Path: /login-db, Backend: Service: likor-integ-api'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: likor-integ
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: likor
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: likor-integ
+    helm.sh/chart: likor-0.1.0
+  name: likor-integ
+  namespace: likor-integ
+  status: Active
+  type: Ingress
+  url: likor-integration.clariane.cloud/login-db
+- annotations: {}
+  info: 'Path: /login-ldap, Backend: Service: likor-integ-api'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: likor-integ
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: likor
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: likor-integ
+    helm.sh/chart: likor-0.1.0
+  name: likor-integ
+  namespace: likor-integ
+  status: Active
+  type: Ingress
+  url: likor-integration.clariane.cloud/login-ldap
+- annotations: {}
+  info: 'Path: /api, Backend: Service: likor-integ-api'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: likor-integ
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: likor
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: likor-integ
+    helm.sh/chart: likor-0.1.0
+  name: likor-integ
+  namespace: likor-integ
+  status: Active
+  type: Ingress
+  url: likor-integration.clariane.cloud/api
+- annotations: {}
+  info: 'Path: /, Backend: Service: likor-integ-front'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: likor-integ
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: likor
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: likor-integ
+    helm.sh/chart: likor-0.1.0
+  name: likor-integ
+  namespace: likor-integ
+  status: Active
+  type: Ingress
+  url: likor-integration.clariane.cloud/
+- annotations: {}
+  info: 'Path: /azure-token-verify, Backend: Service: likor-rec-api'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: likor-rec
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: likor
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: likor-rec
+    helm.sh/chart: likor-0.1.0
+  name: likor-rec
+  namespace: likor
+  status: Active
+  type: Ingress
+  url: likor-recette.clariane.cloud/azure-token-verify
+- annotations: {}
+  info: 'Path: /login-db, Backend: Service: likor-rec-api'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: likor-rec
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: likor
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: likor-rec
+    helm.sh/chart: likor-0.1.0
+  name: likor-rec
+  namespace: likor
+  status: Active
+  type: Ingress
+  url: likor-recette.clariane.cloud/login-db
+- annotations: {}
+  info: 'Path: /login-ldap, Backend: Service: likor-rec-api'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: likor-rec
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: likor
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: likor-rec
+    helm.sh/chart: likor-0.1.0
+  name: likor-rec
+  namespace: likor
+  status: Active
+  type: Ingress
+  url: likor-recette.clariane.cloud/login-ldap
+- annotations: {}
+  info: 'Path: /api, Backend: Service: likor-rec-api'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: likor-rec
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: likor
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: likor-rec
+    helm.sh/chart: likor-0.1.0
+  name: likor-rec
+  namespace: likor
+  status: Active
+  type: Ingress
+  url: likor-recette.clariane.cloud/api
+- annotations: {}
+  info: 'Path: /, Backend: Service: likor-rec-front'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: likor-rec
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: likor
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: likor-rec
+    helm.sh/chart: likor-0.1.0
+  name: likor-rec
+  namespace: likor
+  status: Active
+  type: Ingress
+  url: likor-recette.clariane.cloud/
+- annotations:
+    meta.helm.sh/release-name: mediation
+    meta.helm.sh/release-namespace: mediation
+  info: 'Path: /, Backend: Service: mediation-rec'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: mediation
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: mediation
+    app.kubernetes.io/version: 0.1.0
+    helm.sh/chart: mediation-0.1.0
+  name: mediation-rec
+  namespace: mediation
+  status: Active
+  type: Ingress
+  url: mediation-recette.clariane.cloud/
+- annotations:
+    nginx.org/client-max-body-size: 15m
+    nginx.org/redirect-to-https: 'true'
+    nginx.org/ssl-redirect: 'true'
+  info: 'Path: /, Backend: Service: onboarding-hr-int'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: onboarding-hr-int
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: onboarding-hr
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: onboarding-hr-int
+    helm.sh/chart: onboarding-hr-0.1.0
+  name: onboarding-hr-int
+  namespace: onboarding-hr-int
+  status: Active
+  type: Ingress
+  url: collaborateur-rh-integration.clariane.cloud/
+- annotations:
+    nginx.org/client-max-body-size: 15m
+    nginx.org/redirect-to-https: 'true'
+    nginx.org/ssl-redirect: 'true'
+  info: 'Path: /, Backend: Service: onboarding-hr-rec'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: onboarding-hr-rec
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: onboarding-hr
+    app.kubernetes.io/version: 1.16.0
+    argocd.argoproj.io/instance: onboarding-hr-rec
+    helm.sh/chart: onboarding-hr-0.1.0
+    k8slens-edit-resource-version: v1
+  name: onboarding-hr-rec
+  namespace: onboarding-hr
+  status: Active
+  type: Ingress
+  url: collaborateur-rh-recette.clariane.cloud/
+- annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/proxy-buffer-size: 8k
+    nginx.ingress.kubernetes.io/ssl-sni-required: 'true'
+    nginx.ingress.kubernetes.io/ssl-sni-strict: 'true'
+  info: 'Path: /api, Backend: Service: store-locator-rec-api'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: store-locator-rec
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: store-locator
+    argocd.argoproj.io/instance: store-locator-rec
+    helm.sh/chart: store-locator-0.1.0
+  name: store-locator-rec
+  namespace: store-locator
+  status: Active
+  type: Ingress
+  url: facility-locator-recette.clariane.cloud/api
+- annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: HTTP
+    nginx.ingress.kubernetes.io/proxy-buffer-size: 8k
+    nginx.ingress.kubernetes.io/ssl-sni-required: 'true'
+    nginx.ingress.kubernetes.io/ssl-sni-strict: 'true'
+  info: 'Path: /, Backend: Service: store-locator-rec-front'
+  ingress_class: nginx
+  labels:
+    app.kubernetes.io/instance: store-locator-rec
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: store-locator
+    argocd.argoproj.io/instance: store-locator-rec
+    helm.sh/chart: store-locator-0.1.0
+  name: store-locator-rec
+  namespace: store-locator
+  status: Active
+  type: Ingress
+  url: facility-locator-recette.clariane.cloud/

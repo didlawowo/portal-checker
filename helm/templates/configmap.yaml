@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "application.fullname" . }}-config
+  name: portal-checker-config
   labels: {{- include "application.labels" . | nindent 4 }}
 data:
   # 🔧 SOLUTION 1: Format YAML correct pour les exclusions
