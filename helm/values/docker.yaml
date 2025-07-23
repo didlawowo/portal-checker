@@ -3,7 +3,7 @@
 
 image:
   repository: fizzbuzz2/portal-checker
-  tag: "2.9.0-feat-perf-"
+  tag: "2.9.1-feat-release-builder-"
   pullPolicy: Always
 # Environment for branch testing
 env:
@@ -29,8 +29,8 @@ env:
     value: "/app/config/excluded-urls.yaml"
 # Branch-specific annotations
 podAnnotations:
-  git.branch: "feat/perf"
-  git.commit: "7d8ec0c"
+  git.branch: "feat/release-builder"
+  git.commit: "d5f5ad0"
   build.timestamp: "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   environment: "development"
 # Development-specific resource limits
