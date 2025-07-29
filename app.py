@@ -343,7 +343,10 @@ async def check_single_url(session: aiohttp.ClientSession, data: dict) -> dict:
             status_code = response.status
 
             details = ""
-            if status_code != 200 and status_code != 401:
+            # Codes considérés comme "OK" ou "warning" (pas d'erreur critique)
+            ok_warning_codes = {200, 301, 302, 401, 403, 405, 429}
+            
+            if status_code not in ok_warning_codes:
                 details = f"❌ {response.reason}"
                 logger.error(f"Erreur pour l'URL {full_url}")
                 if SLACK_NOTIFICATIONS_ENABLED:
@@ -494,15 +497,17 @@ def _get_http_routes():
                     creation_timestamp = route_metadata.get("creationTimestamp")
                     resource_version = route_metadata.get("resourceVersion")
 
+                    # 🏃 Extraction de la gateway depuis gatewayRefs
+                    gateway_refs = route["spec"].get("gatewayRefs", [])
+
                     logger.debug(
                         f"Processing HTTPRoute {route_name} in {route_namespace} with {len(annotations)} annotations, gateway_refs: {gateway_refs}"
                     )
 
                     # 🏷️ Extraction des hostnames
                     hostnames = route["spec"].get("hostnames", [])
-
-                    # 🏃 Extraction de la gateway depuis gatewayRefs
-                    gateway_refs = route["spec"].get("gatewayRefs", [])
+                    
+                    # 🏃 Extraction du nom de la gateway
                     gateway_name = None
                     if gateway_refs:
                         # Prendre la première gateway référencée
@@ -848,6 +853,7 @@ def _get_all_urls_with_details():
             namespace = route["namespace"]
             annotations = route["annotations"]
             status = route.get("status", "unknown")
+            gateway_name = route.get("gateway", "unknown")
 
             if not paths:
                 full_url = f"{hostname}/"
