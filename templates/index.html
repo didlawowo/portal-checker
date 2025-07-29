@@ -328,24 +328,160 @@
             padding: 8px 4px;
         }
 
+        /* Style spécifique pour la colonne URL */
+        td:nth-child(6) {
+            max-width: none;
+            min-width: 250px;
+            word-wrap: break-word;
+            white-space: normal;
+        }
+
         /* Style spécifique pour la colonne Details */
         td:nth-child(9) {
-            max-width: 450px;
+            width: 200px;
+            max-width: 200px;
+            min-width: 200px;
             word-wrap: break-word;
             white-space: normal;
             font-size: 12px;
-            line-height: 1.3;
+            line-height: 1.4;
             padding-right: 15px;
+            vertical-align: top;
+        }
+
+        /* Styles pour la modale des annotations */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #000;
+        }
+
+        .annotation-item {
+            margin-bottom: 12px;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border-left: 3px solid #007bff;
+        }
+
+        .annotation-key {
+            font-weight: bold;
+            color: #495057;
+            font-size: 13px;
+        }
+
+        .annotation-value {
+            margin-top: 4px;
+            color: #6c757d;
+            font-size: 12px;
+            word-wrap: break-word;
+        }
+
+        .annotation-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .annotation-button:hover {
+            background: #0056b3;
+        }
+
+        .annotation-button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .status-counter {
+            display: inline-flex;
+            gap: 10px;
+            margin-left: 15px;
+            align-items: center;
+        }
+
+        .counter-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .counter-ok {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .counter-warn {
+            background: #fef9c3;
+            color: #854d0e;
+        }
+
+        .counter-error {
+            background: #fee2e2;
+            color: #991b1b;
         }
 
         @media (max-width: 768px) {
             /* Ajustements mobile pour les colonnes */
             td:nth-child(6) { /* URL column */
-                max-width: 150px;
+                min-width: 180px;
             }
             
             td:nth-child(9) { /* Details column */
-                max-width: 120px;
+                width: 150px;
+                max-width: 150px;
+                min-width: 150px;
             }
             
             td:nth-child(1) { /* Namespace column */
@@ -428,8 +564,17 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1> Portals Discovery</h1>
-            <span class="version-badge">v{{ version }}</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <h1> Portals Discovery</h1>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div class="status-counter">
+                        <span class="counter-badge counter-ok" id="okCounter">✅ 0 OK</span>
+                        <span class="counter-badge counter-warn" id="warnCounter">⚠️ 0 WARN</span>
+                        <span class="counter-badge counter-error" id="errorCounter">❌ 0 ERROR</span>
+                    </div>
+                    <span class="version-badge">v{{ version }}</span>
+                </div>
+            </div>
         </div>
 
         <div class="search-bar">
@@ -444,13 +589,13 @@
                         <th onclick="sortTable('namespace')" style="width: 120px; min-width: 120px;">Namespace<span id="namespaceSort"></span></th>
                         <th onclick="sortTable('name')" style="width: 130px; min-width: 130px;">Name<span id="nameSort"></span></th>
                         <th onclick="sortTable('type')" style="width: 60px; min-width: 60px;">Type<span id="typeSort"></span></th>
-                        <th style="width: 60px; min-width: 60px;" title="Ingress Class / Gateway">Class</th>
-                        <th style="width: 50px; min-width: 50px;">Annotations</th>
+                        <th onclick="sortTable('class')" style="width: 60px; min-width: 60px;" title="Ingress Class / Gateway">Class<span id="classSort"></span></th>
+                        <th style="width: 50px; min-width: 50px;">Annot</th>
                         <!-- <th>Labels</th> -->
-                        <th onclick="sortTable('url')" style="width: 220px; min-width: 180px;">URL<span id="urlSort"></span></th>
+                        <th onclick="sortTable('url')" style="min-width: 250px;">URL<span id="urlSort"></span></th>
                         <th onclick="sortTable('status')" style="width: 70px; min-width: 70px;">Status<span id="statusSort"></span></th>
                         <th onclick="sortTable('response_time')" style="width: 70px; min-width: 70px;">Time (ms)<span id="response_timeSort"></span></th>
-                        <th style="width: 450px;">Details</th>
+                        <th style="width: 200px;">Details</th>
                     </tr>
                 </thead>
                 <tbody id="resultsTable"></tbody>
@@ -473,6 +618,7 @@
             document.getElementById('namespaceSort').textContent = '';
             document.getElementById('nameSort').textContent = '';
             document.getElementById('typeSort').textContent = '';
+            document.getElementById('classSort').textContent = '';
             document.getElementById('urlSort').textContent = '';
             document.getElementById('statusSort').textContent = '';
             document.getElementById('response_timeSort').textContent = '';
@@ -496,8 +642,18 @@
             }
 
             currentData.sort((a, b) => {
-                let aVal = a[field] || '';
-                let bVal = b[field] || '';
+                let aVal, bVal;
+                
+                // Handle special case for 'class' field
+                if (field === 'class') {
+                    aVal = (a.type === 'Ingress' && a.ingress_class) ? a.ingress_class : 
+                           (a.type === 'HTTPRoute' && a.gateway) ? a.gateway : '';
+                    bVal = (b.type === 'Ingress' && b.ingress_class) ? b.ingress_class : 
+                           (b.type === 'HTTPRoute' && b.gateway) ? b.gateway : '';
+                } else {
+                    aVal = a[field] || '';
+                    bVal = b[field] || '';
+                }
                 
                 // Convert to string for consistent comparison
                 aVal = String(aVal).toLowerCase();
@@ -526,6 +682,10 @@
             if (status === 200) return '✅';
             if (status === 401) return '⚠️';
             if (status === 404) return '❓';
+            if (status === 500) return '💥'; // Erreur serveur interne
+            if (status === 502) return '🔌'; // Bad Gateway (problème de proxy/gateway)
+            if (status === 503) return '🔧'; // Service indisponible
+            if (status === 504) return '⏰'; // Gateway timeout
             return '❌';
         }
 
@@ -563,8 +723,22 @@
                     <td>${item.details || ''}</td> `;
                 tbody.appendChild(tr);
             });
+            
+            // Mettre à jour les compteurs OK/KO
+            updateStatusCounters();
         }
-        // Fonction pour formater les annotations - bouton compact avec nombre
+
+        // Fonction pour mettre à jour les compteurs OK/WARN/ERROR
+        function updateStatusCounters() {
+            const okCount = currentData.filter(item => item.status === 200).length;
+            const warnCount = currentData.filter(item => item.status >= 400 && item.status < 500).length;
+            const errorCount = currentData.filter(item => item.status >= 500 || (item.status < 400 && item.status !== 200)).length;
+            
+            document.getElementById('okCounter').textContent = `✅ ${okCount} OK`;
+            document.getElementById('warnCounter').textContent = `⚠️ ${warnCount} WARN`;
+            document.getElementById('errorCounter').textContent = `❌ ${errorCount} ERROR`;
+        }
+        // Fonction pour formater les annotations - bouton avec modale
         function formatAnnotations(annotations) {
             if (!annotations) return '-';
 
@@ -574,7 +748,6 @@
                     try {
                         annotations = JSON.parse(annotations);
                     } catch (e) {
-                        // Si ce n'est pas du JSON valide, retournez tel quel si non vide
                         return annotations.trim() ? annotations : '-';
                     }
                 }
@@ -585,47 +758,50 @@
                     return '-';
                 }
 
-                // Générer un ID unique pour ce bloc d'annotations
-                const toggleId = 'toggle-' + Math.random().toString(36).substr(2, 9);
-
-                // Créer un bouton compact avec le nombre
-                let result = `
-            <div>
-                <button class="annotations-btn" onclick="toggleAnnotations('${toggleId}')" title="${annotationKeys.length} annotation${annotationKeys.length > 1 ? 's' : ''}">
+                // Créer un bouton qui ouvre la modale
+                return `<button class="annotation-button" onclick="showAnnotationsModal(this)" data-annotations='${JSON.stringify(annotations).replace(/'/g, "&apos;")}'>
                     ${annotationKeys.length}
-                </button>
-                <div id="${toggleId}" class="annotations-content" style="display: none;">
-                    <ul style="list-style-type: none; padding-left: 0;">
-        `;
-
-                for (const [key, value] of Object.entries(annotations)) {
-                    let displayValue = value;
-                    if (typeof value === 'object') {
-                        displayValue = JSON.stringify(value, null, 2);
-                    }
-                    result += `<li><strong>${key}</strong>: ${displayValue}</li>`;
-                }
-
-                result += `
-                    </ul>
-                </div>
-            </div>
-        `;
-                return result;
+                </button>`;
             } catch (error) {
-                // En cas d'erreur, retourner un tiret si vide ou le texte brut
                 const stringValue = String(annotations);
                 return stringValue.trim() ? stringValue : '-';
             }
         }
 
-        // Ajoutez cette fonction pour le toggle
-        function toggleAnnotations(id) {
-            const content = document.getElementById(id);
-            if (content.style.display === 'none') {
-                content.style.display = 'block';
-            } else {
-                content.style.display = 'none';
+        // Fonction pour afficher la modale des annotations
+        function showAnnotationsModal(button) {
+            const annotations = JSON.parse(button.getAttribute('data-annotations'));
+            const modal = document.getElementById('annotationsModal');
+            const modalBody = document.getElementById('modalAnnotations');
+            
+            let content = '';
+            for (const [key, value] of Object.entries(annotations)) {
+                let displayValue = value;
+                if (typeof value === 'object') {
+                    displayValue = JSON.stringify(value, null, 2);
+                }
+                content += `
+                    <div class="annotation-item">
+                        <div class="annotation-key">${key}</div>
+                        <div class="annotation-value">${displayValue}</div>
+                    </div>
+                `;
+            }
+            
+            modalBody.innerHTML = content;
+            modal.style.display = 'block';
+        }
+
+        // Fonction pour fermer la modale
+        function closeModal() {
+            document.getElementById('annotationsModal').style.display = 'none';
+        }
+
+        // Fermer la modale en cliquant à l'extérieur
+        window.onclick = function(event) {
+            const modal = document.getElementById('annotationsModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
             }
         }
 
@@ -660,6 +836,19 @@
         updateSortArrows();
         renderTable();
     </script>
+
+    <!-- Modale pour les annotations -->
+    <div id="annotationsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title">Annotations</span>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div id="modalAnnotations">
+                <!-- Le contenu sera injecté par JavaScript -->
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

@@ -1,4 +1,24 @@
 - annotations: {}
+  gateway: null
+  info: 'Path: /dashboard'
+  labels:
+    argocd.argoproj.io/instance: main-cluster-setup
+  name: traefik-dashboard
+  namespace: kube-infra
+  status: unknown
+  type: HTTPRoute
+  url: traefik.tooling.webhosting.clariane.cloud/dashboard
+- annotations: {}
+  gateway: null
+  info: 'Path: /api'
+  labels:
+    argocd.argoproj.io/instance: main-cluster-setup
+  name: traefik-dashboard
+  namespace: kube-infra
+  status: unknown
+  type: HTTPRoute
+  url: traefik.tooling.webhosting.clariane.cloud/api
+- annotations: {}
   info: 'Path: /, Backend: Service: agesetvie-rec-directus'
   ingress_class: nginx
   labels:
@@ -423,22 +443,6 @@
   status: Pending
   type: Ingress
   url: www.recette.agesetvie.com/
-- annotations:
-    meta.helm.sh/release-name: frankenphp-app
-    meta.helm.sh/release-namespace: integration-frankenphp
-  info: 'Path: /, Backend: Service: frankenphp-app'
-  ingress_class: traefik
-  labels:
-    app.kubernetes.io/instance: frankenphp-app
-    app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/name: frankenphp-app
-    app.kubernetes.io/version: 1.2.0
-    helm.sh/chart: frankenphp-app-1.1.0
-  name: frankenphp-app
-  namespace: integration-frankenphp
-  status: Active
-  type: Ingress
-  url: frankenphp.integration.webhosting.clariane.cloud/
 - annotations: {}
   info: 'Path: /, Backend: Service: integration-frankenphp-frankenphp-app'
   ingress_class: traefik
@@ -470,18 +474,6 @@
   type: Ingress
   url: kopilot-rec.clariane.cloud/
 - annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
-    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
-  info: 'Path: /, Backend: Service: korall-hub'
-  ingress_class: nginx
-  labels:
-    argocd.argoproj.io/instance: korall-hub-rec
-  name: korall-hub
-  namespace: korall-hub
-  status: Active
-  type: Ingress
-  url: korall-hub-recette.korian.cloud/
-- annotations:
     meta.helm.sh/release-name: argo
     meta.helm.sh/release-namespace: kube-infra
   info: 'Path: /, Backend: Service: argo-argocd-server'
@@ -492,8 +484,8 @@
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: argocd-server
     app.kubernetes.io/part-of: argocd
-    app.kubernetes.io/version: v3.0.6
-    helm.sh/chart: argo-cd-8.1.2
+    app.kubernetes.io/version: v3.0.11
+    helm.sh/chart: argo-cd-8.2.0
   name: argo-argocd-server
   namespace: kube-infra
   status: Active
@@ -525,6 +517,43 @@
   status: Active
   type: Ingress
   url: portal-checker.tooling.webhosting.clariane.cloud/
+- annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-dns
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-auth@kubernetescrd
+    traefik.ingress.kubernetes.io/router.tls: 'true'
+  info: 'Path: /, Backend: Service: satis'
+  ingress_class: traefik
+  labels:
+    app.kubernetes.io/instance: satis
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: satis
+    app.kubernetes.io/version: 2.7.4
+    helm.sh/chart: satis-1.0.0
+  name: satis
+  namespace: kube-infra
+  status: Active
+  type: Ingress
+  url: satis.tooling.webhosting.clariane.cloud/
+- annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-dns
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-auth@kubernetescrd
+    traefik.ingress.kubernetes.io/router.tls: 'true'
+  info: 'Path: /, Backend: Service: verdaccio'
+  ingress_class: traefik
+  labels:
+    app: verdaccio
+    app.kubernetes.io/instance: verdaccio
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: verdaccio
+    app.kubernetes.io/version: 6.0.5
+    argocd.argoproj.io/instance: verdaccio
+    helm.sh/chart: verdaccio-4.26.1
+  name: verdaccio
+  namespace: kube-infra
+  status: Active
+  type: Ingress
+  url: verdaccio.tooling.webhosting.clariane.cloud/
 - annotations: {}
   info: 'Path: /, Backend: Service: victorialogs-victoria-logs-single-server'
   ingress_class: traefik
@@ -541,26 +570,6 @@
   status: Active
   type: Ingress
   url: logs.tooling.webhosting.clariane.cloud/
-- annotations: {}
-  info: 'Path: /, Backend: Service: infisical-infisical-standalone-infisical'
-  ingress_class: traefik
-  labels:
-    argocd.argoproj.io/instance: infisical
-  name: infisical-ingress
-  namespace: kube-security
-  status: Active
-  type: Ingress
-  url: infisical.tooling.webhosting.korian.cloud/
-- annotations: {}
-  info: 'Path: /ss-webhook, Backend: Service: infisical-infisical-standalone-infisical'
-  ingress_class: traefik
-  labels:
-    argocd.argoproj.io/instance: infisical
-  name: infisical-ingress
-  namespace: kube-security
-  status: Active
-  type: Ingress
-  url: infisical.tooling.webhosting.korian.cloud/ss-webhook
 - annotations: {}
   info: 'Path: /azure-token-verify, Backend: Service: likor-integ-api'
   ingress_class: nginx
@@ -758,12 +767,25 @@
     app.kubernetes.io/version: 1.16.0
     argocd.argoproj.io/instance: onboarding-hr-rec
     helm.sh/chart: onboarding-hr-0.1.0
-    k8slens-edit-resource-version: v1
   name: onboarding-hr-rec
   namespace: onboarding-hr
   status: Active
   type: Ingress
   url: collaborateur-rh-recette.clariane.cloud/
+- annotations: {}
+  info: 'Path: /, Backend: Service: qualification-frankenphp-frankenphp-app'
+  ingress_class: traefik
+  labels:
+    app.kubernetes.io/instance: qualification-frankenphp
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: frankenphp-app
+    app.kubernetes.io/version: 1.2.0
+    helm.sh/chart: frankenphp-app-1.1.0
+  name: qualification-frankenphp-frankenphp-app
+  namespace: qualification-frankenphp
+  status: Active
+  type: Ingress
+  url: frankenphp.qualification.webhosting.clariane.cloud/
 - annotations:
     nginx.ingress.kubernetes.io/backend-protocol: HTTP
     nginx.ingress.kubernetes.io/proxy-buffer-size: 8k

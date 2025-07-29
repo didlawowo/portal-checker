@@ -345,7 +345,7 @@ async def check_single_url(session: aiohttp.ClientSession, data: dict) -> dict:
             details = ""
             if status_code != 200 and status_code != 401:
                 details = f"❌ {response.reason}"
-                logger.error(f"Erreur pour l'URL {full_url}")
+                logger.debug(f"Erreur pour l'URL {full_url} - Status: {status_code}")
                 if SLACK_NOTIFICATIONS_ENABLED:
                     await send_slack_alert_async(session, url, status_code, details)
 
@@ -446,6 +446,13 @@ async def check_urls_async(file_path: str | None = None, update_cache: bool = Tr
 
     final_results = [r for r in results if isinstance(r, dict)]
     
+    # Compteur OK / WARN / ERROR
+    ok_count = len([r for r in final_results if r.get("status") == 200])
+    warn_count = len([r for r in final_results if 400 <= r.get("status", 0) < 500])
+    error_count = len([r for r in final_results if r.get("status", 0) >= 500 or (r.get("status", 0) < 400 and r.get("status", 0) != 200)])
+    
+    logger.info(f"📊 Résultats des tests: {ok_count} OK / {warn_count} WARN / {error_count} ERROR sur {len(final_results)} URLs")
+    
     # Mettre à jour le cache des résultats si demandé
     if update_cache:
         _test_results_cache["results"] = final_results
@@ -461,20 +468,36 @@ def _get_http_routes():
     Returns: list des HTTPRoutes avec leurs paths
     """
     urls_with_paths = []  # 📝 Liste pour stocker les URLs et leurs paths
+    total_namespaces = 0
+    httproutes_found = 0
+    
     try:
         # 🔌 Initialisation des clients K8s
         core = client.CoreV1Api()
         v1Gateway = client.CustomObjectsApi()
 
         # 🔄 Parcours des namespaces
-        for ns in core.list_namespace().items:
+        namespaces = core.list_namespace().items
+        total_namespaces = len(namespaces)
+        logger.info(f"🔍 Début de la recherche HTTPRoute dans {total_namespaces} namespaces")
+        
+        for ns in namespaces:
+            namespace_name = ns.metadata.name
             try:
+                logger.debug(f"🔍 Recherche HTTPRoute dans le namespace: {namespace_name}")
                 routes = v1Gateway.list_namespaced_custom_object(
                     group="gateway.networking.k8s.io",
                     version="v1beta1",
                     plural="httproutes",
-                    namespace=ns.metadata.name,
+                    namespace=namespace_name,
                 )
+
+                routes_in_ns = len(routes["items"])
+                if routes_in_ns > 0:
+                    logger.info(f"✅ Trouvé {routes_in_ns} HTTPRoute(s) dans le namespace {namespace_name}")
+                    httproutes_found += routes_in_ns
+                else:
+                    logger.debug(f"➖ Aucune HTTPRoute dans le namespace {namespace_name}")
 
                 # ✨ Traitement de chaque HTTPRoute
                 for route in routes["items"]:
@@ -494,15 +517,15 @@ def _get_http_routes():
                     creation_timestamp = route_metadata.get("creationTimestamp")
                     resource_version = route_metadata.get("resourceVersion")
 
-                    logger.debug(
-                        f"Processing HTTPRoute {route_name} in {route_namespace} with {len(annotations)} annotations, gateway_refs: {gateway_refs}"
-                    )
-
                     # 🏷️ Extraction des hostnames
                     hostnames = route["spec"].get("hostnames", [])
 
                     # 🏃 Extraction de la gateway depuis gatewayRefs
                     gateway_refs = route["spec"].get("gatewayRefs", [])
+
+                    logger.debug(
+                        f"Processing HTTPRoute {route_name} in {route_namespace} with {len(annotations)} annotations, gateway_refs: {gateway_refs}"
+                    )
                     gateway_name = None
                     if gateway_refs:
                         # Prendre la première gateway référencée
@@ -556,15 +579,15 @@ def _get_http_routes():
 
             except Exception as e:
                 logger.warning(
-                    f"❌ Erreur lors de la lecture du namespace {ns.metadata.name}: {e}"
+                    f"❌ Erreur lors de la lecture du namespace {namespace_name}: {e}"
                 )
                 continue
 
     except Exception as e:
-        logger.error(f"❌ Erreur générale: {e}")
+        logger.error(f"❌ Erreur générale lors de la récupération HTTPRoute: {e}")
         raise
 
-    logger.info(f"📊 Total HTTPRoutes processed: {len(urls_with_paths)}")
+    logger.info(f"📊 HTTPRoute - Trouvé {httproutes_found} routes dans {total_namespaces} namespaces, généré {len(urls_with_paths)} URLs")
     return urls_with_paths
 
 
@@ -848,6 +871,7 @@ def _get_all_urls_with_details():
             namespace = route["namespace"]
             annotations = route["annotations"]
             status = route.get("status", "unknown")
+            gateway_name = route.get("gateway", "unknown")
 
             if not paths:
                 full_url = f"{hostname}/"
@@ -899,6 +923,7 @@ def _get_all_urls_with_details():
         logger.info(f"✅ {len(url_details)} URLs HTTPRoute générées")
 
         # 🔄 Traitement des Ingress classiques
+        ingress_count = 0
         try:
             v1 = client.NetworkingV1Api()
             ingress_list = v1.list_ingress_for_all_namespaces()
@@ -907,6 +932,7 @@ def _get_all_urls_with_details():
                 if not ingress.spec.rules:
                     continue
 
+                ingress_count += 1
                 ingress_name = ingress.metadata.name
                 ingress_namespace = ingress.metadata.namespace
                 ingress_status = (
@@ -996,9 +1022,7 @@ def _get_all_urls_with_details():
                         else:
                             filtered_count += 1
 
-            logger.info(
-                f"✅ {len(url_details)} URLs totales générées, {filtered_count} URLs exclues"
-            )
+            logger.info(f"📊 Ingress - Traité {ingress_count} ingress, généré {len(url_details)} URLs totales, {filtered_count} URLs exclues")
 
         except Exception as e:
             logger.error(f"❌ Erreur lors de la récupération des Ingress: {e}")
@@ -1009,7 +1033,9 @@ def _get_all_urls_with_details():
 
     # 🔄 Déduplication des URLs avant retour
     url_details = _deduplicate_urls(url_details)
-    logger.info(f"✅ {len(url_details)} URLs uniques après déduplication")
+    # Calculer le nombre de HTTPRoute depuis les données
+    httproute_count = len([url for url in url_details if url.get("type") == "HTTPRoute"])
+    logger.info(f"✅ Résumé final: {httproute_count} HTTPRoute(s) + {ingress_count} Ingress = {len(url_details)} URLs uniques")
 
     # 💾 Mettre à jour le cache avec les nouvelles données
     _update_cache(url_details)
@@ -1228,7 +1254,7 @@ def cache_force_refresh():
         )
     except Exception as e:
         logger.error(f"❌ Erreur lors du force refresh: {e}")
-        return jsonify({"error": str(e)}, status=500)
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/cache")
