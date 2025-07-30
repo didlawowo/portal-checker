@@ -3,7 +3,7 @@
 
 image:
   repository: fizzbuzz2/portal-checker
-  tag: "2.9.2-feat-new-error-code-"
+  tag: "2.9.5-fix-ci-uild-"
   pullPolicy: Always
 # Environment for branch testing
 env:
@@ -29,8 +29,8 @@ env:
     value: "/app/config/excluded-urls.yaml"
 # Branch-specific annotations
 podAnnotations:
-  git.branch: "feat/new-error-code"
-  git.commit: "84e9c40"
+  git.branch: "fix/ci-uild"
+  git.commit: "df47e39"
   build.timestamp: "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   environment: "development"
 # Development-specific resource limits
