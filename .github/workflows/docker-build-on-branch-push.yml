@@ -1,0 +1,62 @@
+name: Docker Build on Branch Push
+
+on:
+  push:
+    branches:
+      - '**'
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  docker-build-and-push:
+    name: Build Docker Image and Push to Docker Hub
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository Code
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx for Multi-Platform Builds
+        uses: docker/setup-buildx-action@v3
+
+      - name: Authenticate with Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract Version and Branch Metadata
+        id: extract-metadata
+        run: |
+          VERSION=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+          SHA=$(git rev-parse --short HEAD)
+          BRANCH=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}
+          # Clean branch name for Docker tag compatibility
+          BRANCH_CLEAN=$(echo "$BRANCH" | sed 's/[^a-zA-Z0-9._-]/-/g')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "sha=$SHA" >> $GITHUB_OUTPUT
+          echo "branch=$BRANCH_CLEAN" >> $GITHUB_OUTPUT
+
+      - name: Build Multi-Platform Docker Image and Push to Docker Hub
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/portal-checker:${{ steps.extract-metadata.outputs.branch }}-${{ steps.extract-metadata.outputs.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Generate Build Summary Report
+        run: |
+          echo "🐳 **Docker Image Successfully Built and Pushed to Docker Hub**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📋 Build Information:" >> $GITHUB_STEP_SUMMARY
+          echo "- 🏷️ Application Version: ${{ steps.extract-metadata.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 🌿 Source Branch: ${{ steps.extract-metadata.outputs.branch }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔗 Git SHA: ${{ steps.extract-metadata.outputs.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 🐳 Docker Hub Repository: ${{ secrets.DOCKERHUB_USERNAME }}/portal-checker" >> $GITHUB_STEP_SUMMARY
+          echo "- 🏗️ Docker Tag: ${{ steps.extract-metadata.outputs.branch }}-${{ steps.extract-metadata.outputs.sha }}" >> $GITHUB_STEP_SUMMARY
