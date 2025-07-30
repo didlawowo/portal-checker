@@ -18,10 +18,13 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout
+ 
+      - name: Checkout Main Branch After Merge
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: main
+ 
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure Git
@@ -182,6 +185,10 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
+ 
+          sbom: true
+          provenance: mode=max
+ 
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/portal-checker:${{ steps.bump_version.outputs.new_version }}
             ${{ secrets.DOCKER_USERNAME }}/portal-checker:latest

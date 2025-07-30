@@ -45,6 +45,10 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
+ 
+          sbom: true
+          provenance: mode=max
+ 
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/portal-checker:${{ steps.extract-metadata.outputs.branch }}-${{ steps.extract-metadata.outputs.sha }}
           cache-from: type=gha
