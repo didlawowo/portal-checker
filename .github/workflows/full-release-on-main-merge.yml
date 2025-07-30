@@ -183,6 +183,8 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
+          sbom: true
+          provenance: mode=max
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/portal-checker:${{ steps.bump_version.outputs.new_version }}
             ${{ secrets.DOCKER_USERNAME }}/portal-checker:latest
