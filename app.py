@@ -87,7 +87,7 @@ def setup_logger(log_format: str = "text", log_level: str = "INFO") -> None:
 
     if log_format.lower() == "json":
         # Configuration pour le format JSON
-        logger.add(
+        logger.add( # TODO refacto this
             sys.stdout,
             level=log_level,
             serialize=serialize_record,  # Utilise notre fonction personnalisée
@@ -1296,10 +1296,28 @@ def index():
     else:
         logger.debug(f"📊 Affichage de {len(results)} résultats mis en cache")
 
+    # Calculer les statistiques des statuts
+    status_counts = {
+        "success": 0,  # 2xx
+        "client_errors": 0,  # 4xx
+        "server_errors": 0,  # 5xx
+        "total": len(results)
+    }
+    
+    for result in results:
+        status = result.get("status", 0)
+        if 200 <= status < 300:
+            status_counts["success"] += 1
+        elif 400 <= status < 500:
+            status_counts["client_errors"] += 1
+        elif 500 <= status < 600:
+            status_counts["server_errors"] += 1
+    
     return render_template(
         "index.html", 
         results=results, 
         version=get_app_version(),
+        status_counts=status_counts,
         last_updated=last_updated.strftime("%Y-%m-%d %H:%M:%S") if last_updated else "En attente..."
     )
 

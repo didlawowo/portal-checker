@@ -1,7 +1,7 @@
 apiVersion: "v2"
 name: "portal-checker"
 version: 1.4.1
-appVersion: "2.7.1"
+appVersion: "2.9.4"
 description: A Helm chart for portal checker
 type: application
 
