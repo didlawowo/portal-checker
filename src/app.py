@@ -22,6 +22,9 @@ from icecream import ic
 from kubernetes import client, config
 from loguru import logger
 
+# Import Autoswagger integration
+from src.autoswagger_integration import discover_swagger_for_portal_checker, get_autoswagger_config
+
 
 def serialize_record(record):
     """
@@ -87,11 +90,11 @@ def setup_logger(log_format: str = "text", log_level: str = "INFO") -> None:
 
     if log_format.lower() == "json":
         # Configuration pour le format JSON
-        logger.add( # TODO refacto this
+        logger.add(
             sys.stdout,
             level=log_level,
-            serialize=serialize_record,  # Utilise notre fonction personnalisée
-            format="{message}",  # Format minimal car géré par serialize_record
+            serialize=True,  # Active la sérialisation JSON native
+            format="{message}",
             enqueue=True,  # Rend le logging thread-safe
             backtrace=True,  # Inclut les stack traces détaillées
             diagnose=False,  # Désactive l'affichage des variables locales dans les traces
@@ -151,11 +154,17 @@ KUBERNETES_POLL_INTERVAL = int(
 )  # 10 minutes
 CHECK_INTERVAL = int(os.getenv("CHECK_INTERVAL", "30"))  # 30 secondes par défaut
 
+# 📋 Configuration pour la découverte Swagger/OpenAPI 
+SWAGGER_DISCOVERY_INTERVAL = int(os.getenv("SWAGGER_DISCOVERY_INTERVAL", "3600"))  # 1 heure par défaut
+
 # 💾 Cache global pour les ressources Kubernetes
 _kubernetes_cache: dict[str, Any] = {"data": None, "last_updated": None, "expiry": None}
 
 # 🔄 Cache global pour les résultats de test des URLs
 _test_results_cache: dict[str, Any] = {"results": [], "last_updated": None}
+
+# 📋 Cache global pour les résultats de découverte Swagger
+_swagger_cache: dict[str, Any] = {"results": [], "last_updated": None}
 
 # 🔄 Variables pour le timer périodique
 _background_task = None
@@ -348,7 +357,7 @@ async def check_single_url(session: aiohttp.ClientSession, data: dict) -> dict:
             
             if status_code not in ok_warning_codes:
                 details = f"❌ {response.reason}"
-                logger.error(f"Erreur pour l'URL {full_url}")
+                logger.debug(f"Erreur pour l'URL {full_url}: {status_code} {response.reason}")
                 if SLACK_NOTIFICATIONS_ENABLED:
                     await send_slack_alert_async(session, url, status_code, details)
 
@@ -394,35 +403,42 @@ async def check_single_url(session: aiohttp.ClientSession, data: dict) -> dict:
         return result
 
 
-async def check_urls_async(file_path: str | None = None, update_cache: bool = True) -> list[dict]:
+async def check_urls_async(urls_data=None, file_path: str | None = None, update_cache: bool = True) -> list[dict]:
     """Test plusieurs URLs en parallèle avec limitation de concurrence
 
     Args:
+        urls_data: Liste des données URLs à tester (prioritaire sur file_path)
         file_path: Chemin du fichier YAML contenant les URLs
         update_cache: Si True, met à jour le cache des résultats
     Returns:
         Liste des résultats de test
     """
-    if file_path is None:
-        file_path = URLS_FILE
+    
+    # Si des données URL sont fournies directement, les utiliser
+    if urls_data is not None:
+        data_urls = urls_data
+    else:
+        # Sinon, lire depuis le fichier
+        if file_path is None:
+            file_path = URLS_FILE
 
-    try:
-        if os.path.exists(file_path):
-            with open(file_path, "r", encoding="utf-8") as file:
-                data = yaml.safe_load(file)
-                if isinstance(data, list):
-                    data_urls = data
-                else:
-                    logger.error(
-                        "❌ Format YAML incorrect pour les URLs (doit être une liste)"
-                    )
-                    data_urls = []
-        else:
-            logger.error(f"❌ Fichier URLs non trouvé: {file_path}")
+        try:
+            if os.path.exists(file_path):
+                with open(file_path, "r", encoding="utf-8") as file:
+                    data = yaml.safe_load(file)
+                    if isinstance(data, list):
+                        data_urls = data
+                    else:
+                        logger.error(
+                            "❌ Format YAML incorrect pour les URLs (doit être une liste)"
+                        )
+                        data_urls = []
+            else:
+                logger.error(f"❌ Fichier URLs non trouvé: {file_path}")
+                data_urls = []
+        except Exception as e:
+            logger.error(f"❌ Erreur lors du chargement des URLs: {str(e)}")
             data_urls = []
-    except Exception as e:
-        logger.error(f"❌ Erreur lors du chargement des URLs: {str(e)}")
-        data_urls = []
 
     # ⚡ Utilisation d'un connector TCP avec réutilisation des connexions
     connector = aiohttp.TCPConnector(limit=MAX_CONCURRENT_REQUESTS, force_close=False)
@@ -449,13 +465,94 @@ async def check_urls_async(file_path: str | None = None, update_cache: bool = Tr
 
     final_results = [r for r in results if isinstance(r, dict)]
     
+    # Créer un récapitulatif des résultats
+    status_counts = {
+        "success": 0,  # 2xx
+        "client_errors": 0,  # 4xx
+        "server_errors": 0,  # 5xx
+        "total": len(final_results)
+    }
+    
+    error_summary = {}
+    
+    for result in final_results:
+        status = result.get('status', 0)
+        if 200 <= status < 300:
+            status_counts["success"] += 1
+        elif 400 <= status < 500:
+            status_counts["client_errors"] += 1
+        elif 500 <= status < 600:
+            status_counts["server_errors"] += 1
+            
+        # Compter les types d'erreurs
+        if status >= 400:
+            error_type = f"{status}"
+            error_summary[error_type] = error_summary.get(error_type, 0) + 1
+    
+    # Log du récapitulatif
+    logger.info(f"📊 Récapitulatif: ✅ {status_counts['success']} OK | ⚠️ {status_counts['client_errors']} 4xx | ❌ {status_counts['server_errors']} 5xx")
+    
+    if error_summary:
+        error_details = ", ".join([f"{code}: {count}" for code, count in sorted(error_summary.items())])
+        logger.info(f"🔍 Détail erreurs: {error_details}")
+    
     # Mettre à jour le cache des résultats si demandé
     if update_cache:
         _test_results_cache["results"] = final_results
         _test_results_cache["last_updated"] = datetime.now()
         logger.debug(f"🔄 Cache des résultats mis à jour avec {len(final_results)} URLs")
 
+    # 📋 Découverte Swagger si activée
+    if update_cache:
+        await _discover_swagger_apis(data_urls)
+    
     return final_results
+
+
+async def _discover_swagger_apis(urls_to_test: list[dict]) -> None:
+    """Découvre les APIs Swagger/OpenAPI pour les URLs testées"""
+    try:
+        config = get_autoswagger_config()
+        if not config.get('enabled', False):
+            logger.debug("📋 Découverte Swagger désactivée")
+            return
+        
+        # Vérifier si une nouvelle découverte est nécessaire basée sur l'intervalle
+        now = datetime.now()
+        last_updated = _swagger_cache.get("last_updated")
+        
+        if last_updated and (now - last_updated).total_seconds() < SWAGGER_DISCOVERY_INTERVAL:
+            logger.debug(f"📋 Découverte Swagger sautée - prochaine dans {SWAGGER_DISCOVERY_INTERVAL - int((now - last_updated).total_seconds())}s")
+            return
+        
+        # Extraire les URLs uniques depuis les données de test
+        unique_urls = list(set(data['url'] for data in urls_to_test))
+        
+        logger.info(f"📋 Début de la découverte Swagger pour {len(unique_urls)} URLs (intervalle: {SWAGGER_DISCOVERY_INTERVAL}s)")
+        
+        # Exécuter la découverte Swagger
+        swagger_results = await discover_swagger_for_portal_checker(unique_urls)
+        
+        if swagger_results:
+            logger.info(f"📋 Découverte Swagger terminée: {len(swagger_results)} APIs trouvées")
+            
+            # Mettre à jour le cache
+            _swagger_cache["results"] = swagger_results
+            _swagger_cache["last_updated"] = datetime.now()
+            
+            # Log des découvertes importantes
+            for result in swagger_results:
+                security_issues = result.get('security_issues', 0)
+                endpoint_count = result.get('endpoint_count', 0)
+                if security_issues > 0:
+                    logger.warning(f"🚨 API avec {security_issues} problèmes de sécurité détectés: {result['host']}")
+                if endpoint_count > 0:
+                    logger.info(f"📋 API découverte: {result['title']} ({endpoint_count} endpoints) - {result['host']}")
+        else:
+            logger.debug("📋 Aucune API Swagger découverte")
+            
+    except Exception as e:
+        logger.error(f"❌ Erreur lors de la découverte Swagger: {e}")
 
 
 def _get_http_routes():
@@ -717,68 +814,7 @@ def _extract_essential_annotations(annotations):
     return result
 
 
-def _analyze_httproute_annotations(annotations, labels=None):
-    """
-    Analyse les annotations HTTPRoute et enrichit les données avec des informations utiles
-    Args:
-        annotations: Dict des annotations de la HTTPRoute
-        labels: Dict des labels de la HTTPRoute (optionnel)
-    Returns:
-        Dict avec les annotations analysées et des méta-informations
-    """
-    if not annotations:
-        return {"annotations": {}, "analysis": {}, "total_annotations": 0}
-
-    analysis = {
-        "has_tls": False,
-        "has_auth": False,
-        "has_rate_limiting": False,
-        "has_cors": False,
-        "gateway_config": None,
-        "cert_issuer": None,
-        "excluded": False,
-    }
-
-    # Analyse des annotations
-    for key, value in annotations.items():
-        # TLS et certificats
-        if "tls" in key.lower() or "cert-manager" in key:
-            analysis["has_tls"] = True
-            if "issuer" in key:
-                analysis["cert_issuer"] = value
-
-        # Authentification
-        elif "auth" in key.lower():
-            analysis["has_auth"] = True
-
-        # Rate limiting
-        elif "rate-limit" in key.lower():
-            analysis["has_rate_limiting"] = True
-
-        # CORS
-        elif "cors" in key.lower():
-            analysis["has_cors"] = True
-
-        # Gateway configuration
-        elif "gateway" in key.lower():
-            analysis["gateway_config"] = value
-
-        # Exclusion portal-checker
-        elif key == "portal-checker.io/exclude" and value.lower() == "true":
-            analysis["excluded"] = True
-
-    # Analyse des labels si disponibles
-    if labels:
-        for key, value in labels.items():
-            if "gateway" in key.lower():
-                analysis["gateway_config"] = f"label:{value}"
-
-    return {
-        "annotations": _extract_essential_annotations(annotations),
-        "analysis": analysis,
-        "total_annotations": len(annotations),
-    }
-
+ 
 
 def _is_cache_valid():
     """Vérifier si le cache Kubernetes est encore valide"""
@@ -818,13 +854,7 @@ def _update_cache(data):
     )
 
 
-def _reset_cache():
-    """Réinitialiser le cache - utilisé principalement pour les tests"""
-    global _kubernetes_cache
-    _kubernetes_cache = {"data": None, "last_updated": None, "expiry": None}
-    logger.debug("🗑️ Cache réinitialisé")
-
-
+ 
 def _get_all_urls_with_details():
     """
     Récupère toutes les URLs avec leurs détails depuis les HTTPRoutes et Ingress
@@ -1032,8 +1062,17 @@ async def _periodic_url_check():
     while not _stop_background_task:
         try:
             logger.debug(f"🔄 Démarrage du test périodique (intervalle: {CHECK_INTERVAL}s)")
-            await check_urls_async(update_cache=True)
-            logger.info(f"✅ Test périodique terminé, prochaine exécution dans {CHECK_INTERVAL}s")
+            
+            # Récupérer les données URLs pour le test
+            try:
+                urls_data = _get_all_urls_with_details()
+                if urls_data:
+                    await check_urls_async(urls_data, update_cache=True)
+                    logger.info(f"✅ Test périodique terminé, prochaine exécution dans {CHECK_INTERVAL}s")
+                else:
+                    logger.debug("🔄 Aucune URL à tester")
+            except Exception as e:
+                logger.error(f"❌ Erreur lors de la récupération des URLs: {e}")
         except Exception as e:
             logger.error(f"❌ Erreur lors du test périodique: {e}")
         
@@ -1066,16 +1105,7 @@ def _start_background_task():
     _background_task.start()
     logger.info(f"🚀 Tâche de fond démarrée (tests toutes les {CHECK_INTERVAL}s)")
 
-
-def _stop_background_task_func():
-    """
-    🛑 Arrête la tâche de fond
-    """
-    global _stop_background_task
-    _stop_background_task = True
-    logger.info("🛑 Arrêt de la tâche de fond demandé")
-
-
+ 
 def _refresh_urls_if_needed():
     """
     🚀 SOLUTION AUTO-REFRESH: Effectue un refresh automatique au démarrage si nécessaire
@@ -1175,11 +1205,7 @@ def favicon():
     )
 
 
-@app.route("/static/image.png")
-def logo():
-    return send_from_directory(
-        os.path.join(app.root_path, "static"), "image.png", mimetype="image/png"
-    )
+ 
 
 
 @app.route("/health")
@@ -1313,13 +1339,37 @@ def index():
         elif 500 <= status < 600:
             status_counts["server_errors"] += 1
     
+    # Récupérer les résultats Swagger
+    swagger_results = _swagger_cache["results"]
+    swagger_counts = {
+        "apis_found": len(swagger_results),
+        "endpoints_total": sum(api.get('endpoint_count', 0) for api in swagger_results),
+        "security_issues": sum(api.get('security_issues', 0) for api in swagger_results)
+    }
+    
     return render_template(
         "index.html", 
         results=results, 
         version=get_app_version(),
         status_counts=status_counts,
+        swagger_counts=swagger_counts,
         last_updated=last_updated.strftime("%Y-%m-%d %H:%M:%S") if last_updated else "En attente..."
     )
+
+
+@app.route("/api/swagger")
+def get_swagger_results():
+    """API endpoint pour récupérer les résultats de découverte Swagger"""
+    swagger_results = _swagger_cache["results"]
+    swagger_last_updated = _swagger_cache["last_updated"]
+    
+    return jsonify({
+        "swagger_apis": swagger_results,
+        "last_updated": swagger_last_updated.isoformat() if swagger_last_updated else None,
+        "total_apis": len(swagger_results),
+        "total_endpoints": sum(api.get('endpoint_count', 0) for api in swagger_results),
+        "total_security_issues": sum(api.get('security_issues', 0) for api in swagger_results)
+    })
 
 
 # 🚀 Initialisation au démarrage

@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 import json
 
-from app import app
+from src.app import app
 
 
 class TestHealthEndpoint:

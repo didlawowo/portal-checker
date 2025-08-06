@@ -6,6 +6,9 @@ let sortConfig = {
     direction: 'asc'
 };
 
+// Cache pour les données Swagger
+let swaggerData = null;
+
 // Fonction pour mettre à jour les flèches de tri
 function updateSortArrows() {
     // Reset all arrows
@@ -103,6 +106,7 @@ function renderTable() {
             <td>${item.type}</td>
             <td>${getIngressClassOrGateway(item)}</td>
             <td>${formatAnnotations(item.annotations)}</td>
+            <td>${getSwaggerButton(item.url)}</td>
             <td><a href="https://${item.url}" target="_blank" title="https://${item.url}">https://${item.url}</a></td>
             <td>
                 <span class="status-badge ${getStatusClass(item.status)}">
@@ -198,6 +202,142 @@ function closeAnnotationsModal() {
     modal.style.display = 'none';
 }
 
+// Fonction pour récupérer le bouton Swagger
+function getSwaggerButton(url) {
+    // Vérifier si une API Swagger existe pour cette URL
+    if (!swaggerData || !swaggerData.swagger_apis) {
+        return '-';
+    }
+    
+    const normalizedUrl = url.replace(/^https?:\/\//, '');
+    const api = swaggerData.swagger_apis.find(api => {
+        const apiHost = api.host.replace(/^https?:\/\//, '');
+        return apiHost === normalizedUrl || normalizedUrl.startsWith(apiHost);
+    });
+    
+    if (api) {
+        const securityClass = api.security_issues > 0 ? 'security-warning' : '';
+        const title = `${api.title} (${api.endpoint_count} endpoints${api.security_issues > 0 ? ', ' + api.security_issues + ' problèmes de sécurité' : ''})`;
+        
+        return `
+            <button class="swagger-btn ${securityClass}" onclick="showSwaggerModal('${api.host}')" title="${title}">
+                📋${api.security_issues > 0 ? ' 🚨' : ''}
+            </button>
+        `;
+    }
+    
+    return '-';
+}
+
+// Fonction pour afficher la modale Swagger
+function showSwaggerModal(host) {
+    if (!swaggerData || !swaggerData.swagger_apis) return;
+    
+    const api = swaggerData.swagger_apis.find(api => api.host === host);
+    if (!api) return;
+    
+    const modal = document.getElementById('swaggerModal');
+    const modalBody = document.getElementById('swaggerModalBody');
+    const modalTitle = document.getElementById('swaggerModalTitle');
+    
+    modalTitle.textContent = `API Swagger - ${api.title}`;
+    
+    let content = `
+        <div class="swagger-api-header">
+            <div class="swagger-api-title">${api.title}</div>
+            <div class="swagger-api-info">
+                Version: ${api.version} | Host: ${api.host} | ${api.endpoint_count} endpoint${api.endpoint_count > 1 ? 's' : ''}
+            </div>
+            ${api.description ? `<div class="swagger-api-info" style="margin-top: 8px;">${api.description}</div>` : ''}
+        </div>
+    `;
+    
+    // Afficher les problèmes de sécurité s'il y en a
+    if (api.security_issues > 0 && (api.pii_detected.length > 0 || api.secrets_detected.length > 0)) {
+        content += `
+            <div class="swagger-security-issues">
+                <div class="swagger-security-title">🚨 Problèmes de sécurité détectés (${api.security_issues})</div>
+        `;
+        
+        if (api.pii_detected.length > 0) {
+            content += '<div style="margin-bottom: 8px;"><strong>PII détectée:</strong></div>';
+            api.pii_detected.forEach(pii => {
+                content += `<div class="swagger-security-item">${pii}</div>`;
+            });
+        }
+        
+        if (api.secrets_detected.length > 0) {
+            content += '<div style="margin-bottom: 8px;"><strong>Secrets détectés:</strong></div>';
+            api.secrets_detected.forEach(secret => {
+                content += `<div class="swagger-security-item">${secret}</div>`;
+            });
+        }
+        
+        content += '</div>';
+    }
+    
+    // Afficher les endpoints
+    content += '<div class="swagger-endpoints">';
+    content += `<h4>Endpoints (${api.endpoint_count})</h4>`;
+    
+    api.endpoints.forEach((endpoint, index) => {
+        const methodClass = endpoint.method.toLowerCase();
+        const endpointId = `endpoint-${index}`;
+        
+        content += `
+            <div class="swagger-endpoint">
+                <div class="swagger-endpoint-header" onclick="toggleSwaggerEndpoint('${endpointId}')">
+                    <span class="swagger-method ${methodClass}">${endpoint.method}</span>
+                    <span class="swagger-path">${endpoint.path}</span>
+                    ${endpoint.has_security ? '🔒' : '🔓'}
+                </div>
+                <div class="swagger-endpoint-details" id="${endpointId}">
+                    ${endpoint.description ? `<p><strong>Description:</strong> ${endpoint.description}</p>` : ''}
+                    ${endpoint.tags.length > 0 ? `<p><strong>Tags:</strong> ${endpoint.tags.join(', ')}</p>` : ''}
+                    <p><strong>Paramètres:</strong> ${endpoint.parameter_count}</p>
+                    <p><strong>Sécurité:</strong> ${endpoint.has_security ? 'Protégé' : 'Non protégé'}</p>
+                    <p><strong>URL complète:</strong> <code>${endpoint.url}</code></p>
+                </div>
+            </div>
+        `;
+    });
+    
+    content += '</div>';
+    
+    modalBody.innerHTML = content;
+    modal.style.display = 'block';
+}
+
+// Fonction pour basculer l'affichage des détails d'un endpoint
+function toggleSwaggerEndpoint(endpointId) {
+    const details = document.getElementById(endpointId);
+    if (details.style.display === 'none' || details.style.display === '') {
+        details.style.display = 'block';
+    } else {
+        details.style.display = 'none';
+    }
+}
+
+// Fonction pour fermer la modale Swagger
+function closeSwaggerModal() {
+    const modal = document.getElementById('swaggerModal');
+    modal.style.display = 'none';
+}
+
+// Fonction pour charger les données Swagger
+async function loadSwaggerData() {
+    try {
+        const response = await fetch('/api/swagger');
+        if (response.ok) {
+            swaggerData = await response.json();
+            // Rerender le tableau pour mettre à jour les boutons Swagger
+            renderTable();
+        }
+    } catch (error) {
+        console.log('Swagger data not available:', error);
+    }
+}
+
 // Fonction de recherche
 function handleSearch(event) {
     const searchTerm = event.target.value.toLowerCase();
@@ -226,26 +366,41 @@ document.addEventListener('DOMContentLoaded', function() {
     // Écouteurs d'événements
     document.getElementById('searchInput').addEventListener('input', handleSearch);
 
-    // Écouteurs pour la modale
-    const modal = document.getElementById('annotationsModal');
-    const closeBtn = document.querySelector('.modal-close');
+    // Écouteurs pour la modale annotations
+    const annotationsModal = document.getElementById('annotationsModal');
+    const annotationsCloseBtn = annotationsModal.querySelector('.modal-close');
     
-    // Fermer la modale avec le bouton X
-    closeBtn.addEventListener('click', closeAnnotationsModal);
+    // Écouteurs pour la modale Swagger
+    const swaggerModal = document.getElementById('swaggerModal');
+    const swaggerCloseBtn = swaggerModal.querySelector('.swagger-modal-close');
     
-    // Fermer la modale en cliquant en dehors
-    modal.addEventListener('click', function(event) {
-        if (event.target === modal) {
+    // Fermer les modales avec les boutons X
+    annotationsCloseBtn.addEventListener('click', closeAnnotationsModal);
+    swaggerCloseBtn.addEventListener('click', closeSwaggerModal);
+    
+    // Fermer les modales en cliquant en dehors
+    annotationsModal.addEventListener('click', function(event) {
+        if (event.target === annotationsModal) {
             closeAnnotationsModal();
         }
     });
     
-    // Fermer la modale avec la touche Escape
+    swaggerModal.addEventListener('click', function(event) {
+        if (event.target === swaggerModal) {
+            closeSwaggerModal();
+        }
+    });
+    
+    // Fermer les modales avec la touche Escape
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
             closeAnnotationsModal();
+            closeSwaggerModal();
         }
     });
+
+    // Charger les données Swagger
+    loadSwaggerData();
 
     // Rendu initial
     updateSortArrows();

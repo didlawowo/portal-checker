@@ -30,6 +30,16 @@
                 <span class="status-indicator total-indicator" title="{{ status_counts.total }} URLs au total">
                     📊 {{ status_counts.total }}
                 </span>
+                {% if swagger_counts.apis_found > 0 %}
+                <span class="status-indicator swagger-indicator" title="{{ swagger_counts.apis_found }} APIs Swagger découvertes">
+                    📋 {{ swagger_counts.apis_found }}
+                </span>
+                {% endif %}
+                {% if swagger_counts.security_issues > 0 %}
+                <span class="status-indicator security-indicator" title="{{ swagger_counts.security_issues }} problèmes de sécurité détectés">
+                    🚨 {{ swagger_counts.security_issues }}
+                </span>
+                {% endif %}
             </div>
         </div>
 
@@ -47,6 +57,7 @@
                         <th onclick="sortTable('type')" style="width: 60px; min-width: 60px;">Type<span id="typeSort"></span></th>
                         <th style="width: 60px; min-width: 60px;" title="Ingress Class / Gateway">Class</th>
                         <th style="width: 50px; min-width: 50px;">Annotations</th>
+                        <th style="width: 50px; min-width: 50px;" title="Swagger/OpenAPI">Swagger</th>
                         <!-- <th>Labels</th> -->
                         <th onclick="sortTable('url')" style="width: 220px; min-width: 180px;">URL<span id="urlSort"></span></th>
                         <th onclick="sortTable('status')" style="width: 70px; min-width: 70px;">Status<span id="statusSort"></span></th>
@@ -68,6 +79,19 @@
             </div>
             <div class="modal-body" id="modalBody">
                 <!-- Contenu des annotations sera injecté ici -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal pour les détails Swagger -->
+    <div id="swaggerModal" class="modal">
+        <div class="modal-content swagger-modal-content">
+            <div class="modal-header">
+                <h3 id="swaggerModalTitle">Détails API Swagger</h3>
+                <span class="modal-close swagger-modal-close">&times;</span>
+            </div>
+            <div class="modal-body" id="swaggerModalBody">
+                <!-- Contenu des détails Swagger sera injecté ici -->
             </div>
         </div>
     </div>

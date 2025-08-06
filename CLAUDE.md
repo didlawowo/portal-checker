@@ -79,6 +79,15 @@ LOG_LEVEL=DEBUG|INFO|WARN|ERROR
 ENABLE_SLACK_NOTIFICATIONS=true|false
 SLACK_WEBHOOK_URL=https://hooks.slack.com/...
 CUSTOM_CERT=/path/to/custom-ca.pem
+
+# Autoswagger integration (API discovery)
+ENABLE_AUTOSWAGGER=true|false                   # Enable Swagger/OpenAPI discovery
+AUTOSWAGGER_RATE_LIMIT=30                       # Max requests per second (0=unlimited)
+AUTOSWAGGER_TIMEOUT=10                          # HTTP request timeout for Swagger discovery
+AUTOSWAGGER_MAX_CONCURRENT=5                    # Max concurrent Swagger discovery requests
+AUTOSWAGGER_BRUTE_FORCE=false                   # Enable brute force parameter testing
+AUTOSWAGGER_INCLUDE_NON_GET=false               # Include POST/PUT/DELETE methods in analysis
+DISABLE_PRESIDIO=true|false                     # Disable Presidio PII detection (use basic regex instead)
 ```
 
 ### Deployment Architecture

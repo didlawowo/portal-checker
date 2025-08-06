@@ -1,24 +1,29 @@
 - annotations: {}
+  details: ❓ Not Found
   gateway: null
   info: 'Path: /dashboard'
   labels:
     argocd.argoproj.io/instance: main-cluster-setup
   name: traefik-dashboard
   namespace: kube-infra
-  status: unknown
+  response_time: 126
+  status: 404
   type: HTTPRoute
   url: traefik.tooling.webhosting.clariane.cloud/dashboard
 - annotations: {}
+  details: ❓ Not Found
   gateway: null
   info: 'Path: /api'
   labels:
     argocd.argoproj.io/instance: main-cluster-setup
   name: traefik-dashboard
   namespace: kube-infra
-  status: unknown
+  response_time: 131
+  status: 404
   type: HTTPRoute
   url: traefik.tooling.webhosting.clariane.cloud/api
 - annotations: {}
+  details: ❌ Bad Gateway
   info: 'Path: /, Backend: Service: agesetvie-rec-directus'
   ingress_class: nginx
   labels:
@@ -30,7 +35,8 @@
     helm.sh/chart: ageetvie-0.1.0
   name: agesetvie-rec-ageetvie-directus
   namespace: agesetvie
-  status: Active
+  response_time: 163
+  status: 502
   type: Ingress
   url: backoffice-recette.agesetvie.cloud/
 - annotations: {}
@@ -68,6 +74,7 @@
     meta.helm.sh/release-namespace: argocd
     nginx.ingress.kubernetes.io/backend-protocol: HTTP
     nginx.ingress.kubernetes.io/force-ssl-redirect: 'true'
+  details: ''
   info: 'Path: /, Backend: Service: argocd-server'
   ingress_class: nginx
   labels:
@@ -80,11 +87,13 @@
     helm.sh/chart: argo-cd-5.52.1
   name: argocd-server
   namespace: argocd
-  status: Active
+  response_time: 152
+  status: 200
   type: Ingress
   url: argocd.korian.cloud/
 - annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+  details: ''
   info: 'Path: /, Backend: Service: arkhineo-rec'
   ingress_class: nginx
   labels:
@@ -96,12 +105,14 @@
     helm.sh/chart: front-arkhineo-0.1.0
   name: arkhineo-rec-front-arkhineo
   namespace: arkhineo
-  status: Active
+  response_time: 745
+  status: 200
   type: Ingress
   url: archivage-recette.clariane.cloud/
 - annotations:
     meta.helm.sh/release-name: conciliation
     meta.helm.sh/release-namespace: conciliation-frm
+  details: ❓ Not Found
   info: 'Path: /conciliation, Backend: Service: front'
   ingress_class: nginx
   labels:
@@ -112,12 +123,14 @@
     helm.sh/chart: conciliation-1.0.0
   name: conciliation
   namespace: conciliation-frm
-  status: Active
+  response_time: 169
+  status: 404
   type: Ingress
   url: conciliation-frm.korian.cloud/conciliation
 - annotations:
     meta.helm.sh/release-name: conciliation
     meta.helm.sh/release-namespace: conciliation-frm
+  details: ''
   info: 'Path: /conciliation/api, Backend: Service: back'
   ingress_class: nginx
   labels:
@@ -128,12 +141,14 @@
     helm.sh/chart: conciliation-1.0.0
   name: conciliation
   namespace: conciliation-frm
-  status: Active
+  response_time: 288
+  status: 401
   type: Ingress
   url: conciliation-frm.korian.cloud/conciliation/api
 - annotations:
     meta.helm.sh/release-name: conciliation
     meta.helm.sh/release-namespace: conciliation-frm2
+  details: ❓ Not Found
   info: 'Path: /conciliation, Backend: Service: front'
   ingress_class: nginx
   labels:
@@ -144,12 +159,14 @@
     helm.sh/chart: conciliation-1.0.0
   name: conciliation
   namespace: conciliation-frm2
-  status: Active
+  response_time: 208
+  status: 404
   type: Ingress
   url: conciliation-frm2.korian.cloud/conciliation
 - annotations:
     meta.helm.sh/release-name: conciliation
     meta.helm.sh/release-namespace: conciliation-frm2
+  details: ''
   info: 'Path: /conciliation/api, Backend: Service: back'
   ingress_class: nginx
   labels:
@@ -160,12 +177,14 @@
     helm.sh/chart: conciliation-1.0.0
   name: conciliation
   namespace: conciliation-frm2
-  status: Active
+  response_time: 274
+  status: 401
   type: Ingress
   url: conciliation-frm2.korian.cloud/conciliation/api
 - annotations:
     meta.helm.sh/release-name: conciliation
     meta.helm.sh/release-namespace: conciliation-qua
+  details: ❓ Not Found
   info: 'Path: /conciliation, Backend: Service: front'
   ingress_class: nginx
   labels:
@@ -176,12 +195,14 @@
     helm.sh/chart: conciliation-1.0.0
   name: conciliation
   namespace: conciliation-qua
-  status: Active
+  response_time: 186
+  status: 404
   type: Ingress
   url: conciliation-qua.korian.cloud/conciliation
 - annotations:
     meta.helm.sh/release-name: conciliation
     meta.helm.sh/release-namespace: conciliation-qua
+  details: ''
   info: 'Path: /conciliation/api, Backend: Service: back'
   ingress_class: nginx
   labels:
@@ -192,12 +213,14 @@
     helm.sh/chart: conciliation-1.0.0
   name: conciliation
   namespace: conciliation-qua
-  status: Active
+  response_time: 294
+  status: 401
   type: Ingress
   url: conciliation-qua.korian.cloud/conciliation/api
 - annotations:
     meta.helm.sh/release-name: conciliation
     meta.helm.sh/release-namespace: conciliation-upg
+  details: ❓ Not Found
   info: 'Path: /conciliation, Backend: Service: front'
   ingress_class: nginx
   labels:
@@ -208,12 +231,14 @@
     helm.sh/chart: conciliation-1.0.0
   name: conciliation
   namespace: conciliation-upg
-  status: Active
+  response_time: 204
+  status: 404
   type: Ingress
   url: conciliation-upg.korian.cloud/conciliation
 - annotations:
     meta.helm.sh/release-name: conciliation
     meta.helm.sh/release-namespace: conciliation-upg
+  details: ''
   info: 'Path: /conciliation/api, Backend: Service: back'
   ingress_class: nginx
   labels:
@@ -224,12 +249,14 @@
     helm.sh/chart: conciliation-1.0.0
   name: conciliation
   namespace: conciliation-upg
-  status: Active
+  response_time: 294
+  status: 401
   type: Ingress
   url: conciliation-upg.korian.cloud/conciliation/api
 - annotations:
     meta.helm.sh/release-name: conciliation
     meta.helm.sh/release-namespace: conciliation
+  details: ❓ Not Found
   info: 'Path: /conciliation, Backend: Service: front'
   ingress_class: nginx
   labels:
@@ -240,12 +267,14 @@
     helm.sh/chart: conciliation-0.1.0
   name: conciliation
   namespace: conciliation
-  status: Active
+  response_time: 179
+  status: 404
   type: Ingress
   url: conciliation-rec.korian.cloud/conciliation
 - annotations:
     meta.helm.sh/release-name: conciliation
     meta.helm.sh/release-namespace: conciliation
+  details: ''
   info: 'Path: /conciliation/api, Backend: Service: back'
   ingress_class: nginx
   labels:
@@ -256,7 +285,8 @@
     helm.sh/chart: conciliation-0.1.0
   name: conciliation
   namespace: conciliation
-  status: Active
+  response_time: 308
+  status: 401
   type: Ingress
   url: conciliation-rec.korian.cloud/conciliation/api
 - annotations:
@@ -269,6 +299,7 @@
     nginx.ingress.kubernetes.io/session-cookie-path: /
     nginx.ingress.kubernetes.io/ssl-sni-required: 'true'
     nginx.ingress.kubernetes.io/ssl-sni-strict: 'true'
+  details: ''
   info: 'Path: /, Backend: Service: ekara-viewer-rec'
   ingress_class: nginx
   labels:
@@ -279,12 +310,14 @@
     helm.sh/chart: ekara-viewer-0.1.0
   name: ekara-viewer-rec
   namespace: ekara-viewer
-  status: Active
+  response_time: 193
+  status: 200
   type: Ingress
   url: ekara-viewer-poc.korian.cloud/
 - annotations:
     nginx.ingress.kubernetes.io/proxy-body-size: 300m
     nginx.org/client-max-body-size: 300m
+  details: ''
   info: 'Path: /, Backend: Service: groupeur-pmsi-frm'
   ingress_class: nginx
   labels:
@@ -296,12 +329,14 @@
     helm.sh/chart: groupeur-pmsi-1.0.0
   name: groupeur-pmsi-frm
   namespace: groupeur-pmsi-frm
-  status: Active
+  response_time: 192
+  status: 401
   type: Ingress
   url: groupeur-pmsi-frm.korian.cloud/
 - annotations:
     nginx.ingress.kubernetes.io/proxy-body-size: 300m
     nginx.org/client-max-body-size: 300m
+  details: ''
   info: 'Path: /, Backend: Service: groupeur-pmsi-frm2'
   ingress_class: nginx
   labels:
@@ -313,12 +348,14 @@
     helm.sh/chart: groupeur-pmsi-1.0.0
   name: groupeur-pmsi-frm2
   namespace: groupeur-pmsi-frm2
-  status: Active
+  response_time: 174
+  status: 401
   type: Ingress
   url: groupeur-pmsi-frm2.korian.cloud/
 - annotations:
     nginx.ingress.kubernetes.io/proxy-body-size: 300m
     nginx.org/client-max-body-size: 300m
+  details: ''
   info: 'Path: /, Backend: Service: groupeur-pmsi-qua'
   ingress_class: nginx
   labels:
@@ -330,12 +367,14 @@
     helm.sh/chart: groupeur-pmsi-1.0.0
   name: groupeur-pmsi-qua
   namespace: groupeur-pmsi-qua
-  status: Active
+  response_time: 170
+  status: 401
   type: Ingress
   url: groupeur-pmsi-qua.korian.cloud/
 - annotations:
     nginx.ingress.kubernetes.io/proxy-body-size: 300m
     nginx.org/client-max-body-size: 300m
+  details: ''
   info: 'Path: /, Backend: Service: groupeur-pmsi-upg'
   ingress_class: nginx
   labels:
@@ -347,12 +386,14 @@
     helm.sh/chart: groupeur-pmsi-1.0.0
   name: groupeur-pmsi-upg
   namespace: groupeur-pmsi-upg
-  status: Active
+  response_time: 161
+  status: 401
   type: Ingress
   url: groupeur-pmsi-upg.korian.cloud/
 - annotations:
     nginx.ingress.kubernetes.io/proxy-body-size: 300m
     nginx.org/client-max-body-size: 300m
+  details: ''
   info: 'Path: /, Backend: Service: groupeur-pmsi-rec'
   ingress_class: nginx
   labels:
@@ -364,10 +405,12 @@
     helm.sh/chart: groupeur-pmsi-1.0.0
   name: groupeur-pmsi-rec
   namespace: groupeur-pmsi
-  status: Active
+  response_time: 180
+  status: 401
   type: Ingress
   url: groupeur-pmsi-rec.korian.cloud/
 - annotations: {}
+  details: ''
   info: 'Path: /, Backend: Service: backup-manager'
   ingress_class: traefik
   labels:
@@ -375,30 +418,36 @@
     argocd.argoproj.io/instance: backup-manager
   name: backup-manager
   namespace: infra-backup-manager
-  status: Active
+  response_time: 147
+  status: 200
   type: Ingress
   url: backup-manager.tooling.webhosting.clariane.cloud/
 - annotations:
     traefik.ingress.kubernetes.io/router.tls: 'true'
+  details: ''
   info: 'Path: /, Backend: Service: infisical-prod-infisical-standalone-infisical'
   ingress_class: traefik
   labels: {}
   name: infisical-ingress
   namespace: infra-infisical
-  status: Active
+  response_time: 120
+  status: 200
   type: Ingress
   url: infisical-prod.tooling.webhosting.clariane.cloud/
 - annotations:
     traefik.ingress.kubernetes.io/router.tls: 'true'
+  details: ''
   info: 'Path: /ss-webhook, Backend: Service: infisical-prod-infisical-standalone-infisical'
   ingress_class: traefik
   labels: {}
   name: infisical-ingress
   namespace: infra-infisical
-  status: Active
+  response_time: 114
+  status: 200
   type: Ingress
   url: infisical-prod.tooling.webhosting.clariane.cloud/ss-webhook
 - annotations: {}
+  details: ❌ Bad Gateway
   info: 'Path: /, Backend: Service: agesetvie-integration-directus'
   ingress_class: nginx
   labels:
@@ -410,10 +459,12 @@
     helm.sh/chart: ageetvie-0.1.0
   name: agesetvie-integration-ageetvie-directus
   namespace: integration-agesetvie
-  status: Pending
+  response_time: 25
+  status: 502
   type: Ingress
   url: backoffice-recette.agesetvie.cloud/
 - annotations: {}
+  details: ''
   info: 'Path: /, Backend: Service: backup-manager-integ'
   ingress_class: traefik
   labels:
@@ -421,11 +472,13 @@
     argocd.argoproj.io/instance: backup-manager-integ
   name: backup-manager-integ
   namespace: integration-backup-manager
-  status: Active
+  response_time: 134
+  status: 200
   type: Ingress
   url: backup-manager.integration.webhosting.clariane.cloud/
 - annotations:
     traefik.ingress.kubernetes.io/router.services: ekara-viewer-sticky
+  details: ❓ Not Found
   info: 'Path: /, Backend: Service: ekara-viewer-integration-ekara-viewer-app'
   ingress_class: traefik
   labels:
@@ -437,10 +490,12 @@
     helm.sh/chart: ekara-viewer-app-1.1.0
   name: ekara-viewer-integration-ekara-viewer-app
   namespace: integration-ekara-viewer
-  status: Active
+  response_time: 124
+  status: 404
   type: Ingress
   url: ekara-viewer.integration.webhosting.clariane.cloud/
 - annotations: {}
+  details: ''
   info: 'Path: /, Backend: Service: integration-frankenphp-frankenphp-app'
   ingress_class: traefik
   labels:
@@ -452,10 +507,12 @@
     helm.sh/chart: frankenphp-app-1.1.0
   name: integration-frankenphp-frankenphp-app
   namespace: integration-frankenphp
-  status: Active
+  response_time: 697
+  status: 200
   type: Ingress
   url: frankenphp.integration.webhosting.clariane.cloud/
 - annotations: {}
+  details: ''
   info: 'Path: /, Backend: Service: kopilot-rec'
   ingress_class: nginx
   labels:
@@ -467,12 +524,14 @@
     helm.sh/chart: kopilot-0.1.0
   name: kopilot-rec
   namespace: kopilot
-  status: Active
+  response_time: 554
+  status: 200
   type: Ingress
   url: kopilot-rec.clariane.cloud/
 - annotations:
     meta.helm.sh/release-name: argo
     meta.helm.sh/release-namespace: kube-infra
+  details: ''
   info: 'Path: /, Backend: Service: argo-argocd-server'
   ingress_class: traefik
   labels:
@@ -485,10 +544,12 @@
     helm.sh/chart: argo-cd-8.2.0
   name: argo-argocd-server
   namespace: kube-infra
-  status: Active
+  response_time: 135
+  status: 200
   type: Ingress
   url: argocd.tooling.webhosting.clariane.cloud/
 - annotations: {}
+  details: ''
   info: 'Path: /, Backend: Service: goldilocks-dashboard'
   ingress_class: traefik
   labels:
@@ -500,10 +561,12 @@
     helm.sh/chart: goldilocks-9.0.2
   name: goldilocks-dashboard
   namespace: kube-infra
-  status: Active
+  response_time: 214
+  status: 200
   type: Ingress
   url: goldilocks.tooling.webhosting.clariane.cloud/
 - annotations: {}
+  details: ''
   info: 'Path: /, Backend: Service: portal-checker'
   ingress_class: traefik
   labels:
@@ -511,10 +574,12 @@
     argocd.argoproj.io/instance: oth-portal-checker
   name: portal-checker
   namespace: kube-infra
-  status: Active
+  response_time: 179
+  status: 200
   type: Ingress
   url: portal-checker.tooling.webhosting.clariane.cloud/
 - annotations: {}
+  details: ❌ Internal Server Error
   info: 'Path: /azure-token-verify, Backend: Service: likor-integ-api'
   ingress_class: nginx
   labels:
@@ -526,10 +591,12 @@
     helm.sh/chart: likor-0.1.0
   name: likor-integ
   namespace: likor-integ
-  status: Active
+  response_time: 464
+  status: 500
   type: Ingress
   url: likor-integration.clariane.cloud/azure-token-verify
 - annotations: {}
+  details: ❌ Internal Server Error
   info: 'Path: /login-db, Backend: Service: likor-integ-api'
   ingress_class: nginx
   labels:
@@ -541,10 +608,12 @@
     helm.sh/chart: likor-0.1.0
   name: likor-integ
   namespace: likor-integ
-  status: Active
+  response_time: 362
+  status: 500
   type: Ingress
   url: likor-integration.clariane.cloud/login-db
 - annotations: {}
+  details: ❌ Internal Server Error
   info: 'Path: /login-ldap, Backend: Service: likor-integ-api'
   ingress_class: nginx
   labels:
@@ -556,10 +625,12 @@
     helm.sh/chart: likor-0.1.0
   name: likor-integ
   namespace: likor-integ
-  status: Active
+  response_time: 441
+  status: 500
   type: Ingress
   url: likor-integration.clariane.cloud/login-ldap
 - annotations: {}
+  details: ''
   info: 'Path: /api, Backend: Service: likor-integ-api'
   ingress_class: nginx
   labels:
@@ -571,10 +642,12 @@
     helm.sh/chart: likor-0.1.0
   name: likor-integ
   namespace: likor-integ
-  status: Active
+  response_time: 466
+  status: 200
   type: Ingress
   url: likor-integration.clariane.cloud/api
 - annotations: {}
+  details: ''
   info: 'Path: /, Backend: Service: likor-integ-front'
   ingress_class: nginx
   labels:
@@ -586,10 +659,12 @@
     helm.sh/chart: likor-0.1.0
   name: likor-integ
   namespace: likor-integ
-  status: Active
+  response_time: 182
+  status: 200
   type: Ingress
   url: likor-integration.clariane.cloud/
 - annotations: {}
+  details: ❌ Internal Server Error
   info: 'Path: /azure-token-verify, Backend: Service: likor-rec-api'
   ingress_class: nginx
   labels:
@@ -601,10 +676,12 @@
     helm.sh/chart: likor-0.1.0
   name: likor-rec
   namespace: likor
-  status: Active
+  response_time: 337
+  status: 500
   type: Ingress
   url: likor-recette.clariane.cloud/azure-token-verify
 - annotations: {}
+  details: ❌ Internal Server Error
   info: 'Path: /login-db, Backend: Service: likor-rec-api'
   ingress_class: nginx
   labels:
@@ -616,10 +693,12 @@
     helm.sh/chart: likor-0.1.0
   name: likor-rec
   namespace: likor
-  status: Active
+  response_time: 353
+  status: 500
   type: Ingress
   url: likor-recette.clariane.cloud/login-db
 - annotations: {}
+  details: ❌ Internal Server Error
   info: 'Path: /login-ldap, Backend: Service: likor-rec-api'
   ingress_class: nginx
   labels:
@@ -631,10 +710,12 @@
     helm.sh/chart: likor-0.1.0
   name: likor-rec
   namespace: likor
-  status: Active
+  response_time: 595
+  status: 500
   type: Ingress
   url: likor-recette.clariane.cloud/login-ldap
 - annotations: {}
+  details: ''
   info: 'Path: /api, Backend: Service: likor-rec-api'
   ingress_class: nginx
   labels:
@@ -646,10 +727,12 @@
     helm.sh/chart: likor-0.1.0
   name: likor-rec
   namespace: likor
-  status: Active
+  response_time: 524
+  status: 200
   type: Ingress
   url: likor-recette.clariane.cloud/api
 - annotations: {}
+  details: ''
   info: 'Path: /, Backend: Service: likor-rec-front'
   ingress_class: nginx
   labels:
@@ -661,12 +744,14 @@
     helm.sh/chart: likor-0.1.0
   name: likor-rec
   namespace: likor
-  status: Active
+  response_time: 121
+  status: 200
   type: Ingress
   url: likor-recette.clariane.cloud/
 - annotations:
     meta.helm.sh/release-name: mediation
     meta.helm.sh/release-namespace: mediation
+  details: ''
   info: 'Path: /, Backend: Service: mediation-rec'
   ingress_class: nginx
   labels:
@@ -677,13 +762,15 @@
     helm.sh/chart: mediation-0.1.0
   name: mediation-rec
   namespace: mediation
-  status: Active
+  response_time: 311
+  status: 200
   type: Ingress
   url: mediation-recette.clariane.cloud/
 - annotations:
     nginx.org/client-max-body-size: 15m
     nginx.org/redirect-to-https: 'true'
     nginx.org/ssl-redirect: 'true'
+  details: ''
   info: 'Path: /, Backend: Service: onboarding-hr-int'
   ingress_class: nginx
   labels:
@@ -695,13 +782,15 @@
     helm.sh/chart: onboarding-hr-0.1.0
   name: onboarding-hr-int
   namespace: onboarding-hr-int
-  status: Active
+  response_time: 712
+  status: 200
   type: Ingress
   url: collaborateur-rh-integration.clariane.cloud/
 - annotations:
     nginx.org/client-max-body-size: 15m
     nginx.org/redirect-to-https: 'true'
     nginx.org/ssl-redirect: 'true'
+  details: ''
   info: 'Path: /, Backend: Service: onboarding-hr-rec'
   ingress_class: nginx
   labels:
@@ -713,10 +802,12 @@
     helm.sh/chart: onboarding-hr-0.1.0
   name: onboarding-hr-rec
   namespace: onboarding-hr
-  status: Active
+  response_time: 818
+  status: 200
   type: Ingress
   url: collaborateur-rh-recette.clariane.cloud/
 - annotations: {}
+  details: ''
   info: 'Path: /, Backend: Service: qualification-frankenphp-frankenphp-app'
   ingress_class: traefik
   labels:
@@ -727,10 +818,12 @@
     helm.sh/chart: frankenphp-app-1.1.0
   name: qualification-frankenphp-frankenphp-app
   namespace: qualification-frankenphp
-  status: Active
+  response_time: 528
+  status: 200
   type: Ingress
   url: frankenphp.qualification.webhosting.clariane.cloud/
 - annotations: {}
+  details: ❌ Service Unavailable
   info: 'Path: /, Backend: Service: recette-frankenphp-frankenphp-app'
   ingress_class: traefik
   labels:
@@ -742,7 +835,8 @@
     helm.sh/chart: frankenphp-app-1.1.0
   name: recette-frankenphp-frankenphp-app
   namespace: recette-frankenphp
-  status: Active
+  response_time: 125
+  status: 503
   type: Ingress
   url: frankenphp.recette.webhosting.clariane.cloud/
 - annotations:
@@ -750,6 +844,7 @@
     nginx.ingress.kubernetes.io/proxy-buffer-size: 8k
     nginx.ingress.kubernetes.io/ssl-sni-required: 'true'
     nginx.ingress.kubernetes.io/ssl-sni-strict: 'true'
+  details: ❓ Not Found
   info: 'Path: /api, Backend: Service: store-locator-rec-api'
   ingress_class: nginx
   labels:
@@ -760,7 +855,8 @@
     helm.sh/chart: store-locator-0.1.0
   name: store-locator-rec
   namespace: store-locator
-  status: Active
+  response_time: 182
+  status: 404
   type: Ingress
   url: facility-locator-recette.clariane.cloud/api
 - annotations:
@@ -768,6 +864,7 @@
     nginx.ingress.kubernetes.io/proxy-buffer-size: 8k
     nginx.ingress.kubernetes.io/ssl-sni-required: 'true'
     nginx.ingress.kubernetes.io/ssl-sni-strict: 'true'
+  details: ''
   info: 'Path: /, Backend: Service: store-locator-rec-front'
   ingress_class: nginx
   labels:
@@ -778,6 +875,7 @@
     helm.sh/chart: store-locator-0.1.0
   name: store-locator-rec
   namespace: store-locator
-  status: Active
+  response_time: 143
+  status: 200
   type: Ingress
   url: facility-locator-recette.clariane.cloud/

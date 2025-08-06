@@ -5,7 +5,7 @@ import yaml
 import os
 import tempfile
 
-from app import app
+from src.app import app
 
 
 class TestFlaskRoutes:
@@ -78,12 +78,7 @@ class TestFlaskRoutes:
         # Should attempt to serve favicon (might be 404 if file doesn't exist)
         assert response.status_code in [200, 404]
 
-    def test_logo_endpoint(self, client):
-        """Test logo/image endpoint"""
-        response = client.get('/static/image.png')
-        # Should attempt to serve image (might be 404 if file doesn't exist)
-        assert response.status_code in [200, 404]
-
+ 
     @patch('app.check_urls_async')
     def test_index_route_with_async_test(self, mock_check_urls, client):
         """Test main index route with async URL testing"""

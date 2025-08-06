@@ -5,7 +5,7 @@ import os
 import ssl
 import certifi
 
-from app import serialize_record, get_app_version, setup_logger, sslMode, load_excluded_urls
+from src.app import serialize_record, get_app_version, setup_logger, sslMode, load_excluded_urls
 
 
 class TestConfigurationAndUtils:

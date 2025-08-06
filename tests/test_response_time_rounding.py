@@ -3,7 +3,7 @@ from unittest.mock import patch, MagicMock, AsyncMock
 import asyncio
 import aiohttp
 
-from app import check_single_url
+from src.app import check_single_url
 
 
 class TestResponseTimeRounding:
