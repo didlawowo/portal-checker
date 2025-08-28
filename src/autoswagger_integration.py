@@ -8,6 +8,8 @@ import sys
 import json
 import asyncio
 import aiohttp
+import ssl
+import certifi
 from urllib.parse import urljoin, urlparse
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
@@ -15,6 +17,20 @@ import re
 import yaml
 from bs4 import BeautifulSoup
 from loguru import logger
+
+# Configure SSL certificates for external dependencies
+def _configure_ssl_for_dependencies():
+    """Configure SSL certificates for external Python libraries"""
+    custom_cert = os.getenv('CUSTOM_CERT', 'zscalerroot.crt')
+    if custom_cert and os.path.exists(custom_cert):
+        # Set environment variables for requests, urllib3, and other libraries
+        os.environ['REQUESTS_CA_BUNDLE'] = custom_cert
+        os.environ['SSL_CERT_FILE'] = custom_cert
+        os.environ['CURL_CA_BUNDLE'] = custom_cert
+        logger.debug(f"📋 SSL certificates configured for dependencies: {custom_cert}")
+
+# Configure SSL on module import
+_configure_ssl_for_dependencies()
 
 # Import Presidio for PII detection if available and not disabled
 PRESIDIO_AVAILABLE = False
@@ -199,7 +215,12 @@ class AutoswaggerIntegration:
             logger.info("✅ Presidio PII analyzer initialized (pattern-based mode)")
             
         except Exception as e:
-            logger.warning(f"⚠️ Failed to setup Presidio PII analyzer (will use basic regex detection instead): {e}")
+            error_msg = str(e)
+            if "SSL" in error_msg or "certificate" in error_msg.lower():
+                logger.warning(f"⚠️ SSL certificate error during Presidio setup - using basic regex detection instead")
+                logger.debug(f"SSL error details: {e}")
+            else:
+                logger.warning(f"⚠️ Failed to setup Presidio PII analyzer (will use basic regex detection instead): {e}")
             self.pii_analyzer = None
     
     async def __aenter__(self):

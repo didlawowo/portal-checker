@@ -35,7 +35,7 @@ EXCLUDED_URLS_FILE = os.getenv(
 )
 
 # SSL Configuration
-CUSTOM_CERT: Optional[str] = os.getenv("CUSTOM_CERT")
+CUSTOM_CERT: Optional[str] = os.getenv("CUSTOM_CERT", "zscalerroot.crt")
 
 # Kubernetes Configuration
 KUBE_ENV = os.getenv("KUBE_ENV", "production")
@@ -44,6 +44,7 @@ KUBE_ENV = os.getenv("KUBE_ENV", "production")
 AUTO_REFRESH_ON_START = os.getenv("AUTO_REFRESH_ON_START", "true").lower() == "true"
 ENABLE_SLACK_NOTIFICATIONS = os.getenv("ENABLE_SLACK_NOTIFICATIONS", "false").lower() == "true"
 SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL", "")
+ENABLE_AUTOSWAGGER = os.getenv("ENABLE_AUTOSWAGGER", "true").lower() == "true"
 
 # Development/Debug
 DEBUG = FLASK_ENV == "development"

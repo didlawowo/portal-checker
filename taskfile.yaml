@@ -126,12 +126,17 @@ tasks:
   run-dev:
     desc: "🔧 Démarrer en mode développement"
     cmds:
-    - export FLASK_ENV=development && python app.py --port 5001
+    - export FLASK_ENV=development && python -m src.main
     env:
       FLASK_ENV: development
       LOG_LEVEL: DEBUG
       AUTO_REFRESH_ON_START: "true"
       PORT: "5001"
+      CUSTOM_CERT: "zscalerroot.crt"
+      SSL_CERT_FILE: "zscalerroot.crt"
+      REQUESTS_CA_BUNDLE: "zscalerroot.crt"
+      DISABLE_PRESIDIO: "true"
+      ENABLE_AUTOSWAGGER: "false"
 
   logs:
     desc: "📜 Afficher les logs de l'application"
