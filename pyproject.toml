@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "portal-checker"
  
-version = "3.0.2"
+version = "3.0.3"
  
 description = "Monitoring tool for Kubernetes ingress and routes"
 readme = "README.md"
