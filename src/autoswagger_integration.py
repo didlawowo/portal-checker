@@ -3,25 +3,24 @@ Autoswagger Integration Module for Portal Checker
 Integrates Autoswagger functionality to discover and analyze Swagger/OpenAPI endpoints
 """
 
-import os
-import sys
-import json
 import asyncio
-import aiohttp
-import ssl
-import certifi
-from urllib.parse import urljoin, urlparse
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass
+import json
+import os
 import re
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
+from urllib.parse import urljoin, urlparse
+
+import aiohttp
 import yaml
 from bs4 import BeautifulSoup
 from loguru import logger
 
+
 # Configure SSL certificates for external dependencies
 def _configure_ssl_for_dependencies():
     """Configure SSL certificates for external Python libraries"""
-    custom_cert = os.getenv('CUSTOM_CERT', 'zscalerroot.crt')
+    custom_cert = os.getenv('CUSTOM_CERT')
     if custom_cert and os.path.exists(custom_cert):
         # Set environment variables for requests, urllib3, and other libraries
         os.environ['REQUESTS_CA_BUNDLE'] = custom_cert
@@ -91,25 +90,25 @@ class AutoswaggerIntegration:
         self.session = None
         self.semaphore = None
         
-        # Common Swagger/OpenAPI paths to check
+        # Common Swagger/OpenAPI paths to check (ordered by likelihood)
         self.swagger_paths = [
-            '/swagger.json',
-            '/swagger.yaml',
-            '/swagger.yml',
-            '/openapi.json',
-            '/openapi.yaml',
-            '/openapi.yml',
-            '/api-docs',
-            '/api-docs.json',
-            '/v1/swagger.json',
+            '/openapi.json',      # Most common modern path
+            '/swagger.json',      # Most common classic path
+            '/api/swagger.json',  # Common API path
+            '/api/openapi.json',  # Common API path
+            '/docs',              # Swagger UI path
+            '/redoc',             # ReDoc path
+            '/api-docs',          # Spring Boot default
+            '/api-docs.json',     # Spring Boot JSON
+            '/v1/swagger.json',   # Versioned paths
             '/v2/swagger.json',
             '/v3/swagger.json',
+            '/swagger.yaml',      # YAML variants
+            '/openapi.yaml',
+            '/swagger.yml',
+            '/openapi.yml',
             '/docs/swagger.json',
-            '/swagger-ui.html',
-            '/docs',
-            '/redoc',
-            '/api/swagger.json',
-            '/api/openapi.json'
+            '/swagger-ui.html'
         ]
         
         # Initialize PII analyzer if available
@@ -479,7 +478,7 @@ def get_autoswagger_config() -> Dict[str, Any]:
     return {
         'enabled': os.getenv('ENABLE_AUTOSWAGGER', 'false').lower() == 'true',
         'rate_limit': int(os.getenv('AUTOSWAGGER_RATE_LIMIT', '30')),
-        'timeout': int(os.getenv('AUTOSWAGGER_TIMEOUT', '10')),
+        'timeout': int(os.getenv('AUTOSWAGGER_TIMEOUT', '3')),  # Reduced from 10s to 3s to prevent page blocking
         'max_concurrent': int(os.getenv('AUTOSWAGGER_MAX_CONCURRENT', '5')),
         'brute_force': os.getenv('AUTOSWAGGER_BRUTE_FORCE', 'false').lower() == 'true',
         'include_non_get': os.getenv('AUTOSWAGGER_INCLUDE_NON_GET', 'false').lower() == 'true'

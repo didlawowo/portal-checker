@@ -129,7 +129,7 @@ def main():
     if FLASK_ENV == "development":
         # Development mode with Flask dev server
         logger.info(f"🔧 Mode développement - Serveur Flask sur http://0.0.0.0:{PORT}")
-        app.run(debug=True, host="0.0.0.0", port=PORT)
+        app.run(debug=True, host="0.0.0.0", port=PORT, use_reloader=False)
     else:
         # Production mode with Hypercorn
         from asgiref.wsgi import WsgiToAsgi

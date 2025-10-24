@@ -35,7 +35,7 @@ EXCLUDED_URLS_FILE = os.getenv(
 )
 
 # SSL Configuration
-CUSTOM_CERT: Optional[str] = os.getenv("CUSTOM_CERT", "zscalerroot.crt")
+CUSTOM_CERT: Optional[str] = os.getenv("CUSTOM_CERT")
 
 # Kubernetes Configuration
 KUBE_ENV = os.getenv("KUBE_ENV", "production")

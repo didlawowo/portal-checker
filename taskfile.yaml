@@ -130,13 +130,10 @@ tasks:
     env:
       FLASK_ENV: development
       LOG_LEVEL: DEBUG
-      AUTO_REFRESH_ON_START: "true"
+      AUTO_REFRESH_ON_START: "false"
       PORT: "5001"
-      CUSTOM_CERT: "zscalerroot.crt"
-      SSL_CERT_FILE: "zscalerroot.crt"
-      REQUESTS_CA_BUNDLE: "zscalerroot.crt"
       DISABLE_PRESIDIO: "true"
-      ENABLE_AUTOSWAGGER: "false"
+      ENABLE_AUTOSWAGGER: "true"
 
   logs:
     desc: "📜 Afficher les logs de l'application"
