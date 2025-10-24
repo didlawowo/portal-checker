@@ -7,7 +7,7 @@ import pytest
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import de la fonction à tester
-from app import _is_url_excluded, excluded_urls
+from src.app import _is_url_excluded, excluded_urls
 
 
 @pytest.fixture

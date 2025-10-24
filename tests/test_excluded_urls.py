@@ -9,7 +9,7 @@ import yaml
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import functions to test
-from app import _is_url_excluded, excluded_urls
+from src.app import _is_url_excluded, excluded_urls
 
 
 class TestExcludedUrls:
@@ -139,7 +139,7 @@ class TestExcludedUrls:
             # Import again to get a fresh load_excluded_urls function
             import importlib
 
-            import app
+            import src.app as app
             importlib.reload(app)
             loaded_exclusions = app.load_excluded_urls()
             

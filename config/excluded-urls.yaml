@@ -1,3 +1,14 @@
-# - monitoring.* # Exclure tous les domaines qui commencent par "monitoring."
-# - "*.internal/*" # Exclure tous les sous-domaines .internal
- 
+- monitoring.*
+- '*.internal/*'
+- infisical.dc-tech.work/ss-webhook
+- falcosidekick.dc-tech.work
+- vcluster.dc-tech.work
+- portal-checker.dc-tech.work
+- grafana.dc-tech.work/metrics
+- traefik.dc-tech.work/dashboard
+- pyroscope.dc-tech.work/querier.v1.QuerierService
+- pyroscope.dc-tech.work/push.v1.PusherService
+- pyroscope.dc-tech.work/settings.v1.SettingsService
+- pyroscope.dc-tech.work/render-diff
+- pyroscope.dc-tech.work/render
+- pyroscope.dc-tech.work/adhocprofiles.v1.AdHocProfileService

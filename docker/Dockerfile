@@ -33,11 +33,14 @@ RUN pip install --upgrade pip  && \
 # Copie des fichiers application
 COPY templates /app/templates
 COPY static /app/static
-COPY app.py ./
+COPY src /app/src
 COPY pyproject.toml ./
- 
 
-RUN mkdir /app/config && chown -R appuser:appgroup /app && \
+# Create config directory and copy excluded-urls
+RUN mkdir -p /app/config
+COPY config/excluded-urls.yaml /app/config/
+
+RUN chown -R appuser:appgroup /app && \
     chmod -R 755 /app && \
     chmod 777 /app/config  
 
@@ -46,4 +49,4 @@ USER appuser
 
 EXPOSE 5000
 
-CMD ["hypercorn", "app:app", "--bind", "0.0.0.0:5000", "--worker-class", "asyncio"]
+CMD ["python", "-m", "src.main"]

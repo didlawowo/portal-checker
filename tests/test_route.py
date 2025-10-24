@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from app import check_single_url as app_check_single_url
+from src.app import check_single_url as app_check_single_url
 
 
 @pytest.mark.asyncio

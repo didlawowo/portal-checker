@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 from datetime import datetime, timedelta
 
-from app import app, _deduplicate_urls, _extract_essential_annotations, _is_cache_valid, _update_cache, _get_cached_urls, _kubernetes_cache, _reset_cache
+from src.app import app, _deduplicate_urls, _extract_essential_annotations, _is_cache_valid, _update_cache, _get_cached_urls, _kubernetes_cache, _reset_cache
 
 
 class TestMemoryMonitoring:
@@ -276,7 +276,7 @@ class TestMemoryMonitoring:
 
     def test_cache_validity_functions(self):
         """Test des fonctions de validité du cache"""
-        import app
+        import src.app as app
         
         # Réinitialiser le cache avant le test
         _reset_cache()
@@ -295,7 +295,7 @@ class TestMemoryMonitoring:
 
     def test_cache_update_function(self):
         """Test de la fonction de mise à jour du cache"""
-        import app
+        import src.app as app
         
         # Réinitialiser le cache avant le test
         _reset_cache()
@@ -322,7 +322,7 @@ class TestMemoryMonitoring:
 
     def test_get_cached_urls_invalid(self):
         """Test de récupération des URLs depuis un cache invalide"""
-        import app
+        import src.app as app
         
         # Réinitialiser le cache avant le test
         _reset_cache()

@@ -3,7 +3,7 @@ from unittest.mock import patch, MagicMock
 import tempfile
 import os
 
-from app import _is_url_excluded
+from src.app import _is_url_excluded
 
 
 class TestErrorHandling:

@@ -60,13 +60,30 @@ env:
   - name: CACHE_TTL_SECONDS
     value: "900"
   - name: KUBERNETES_POLL_INTERVAL
-    value: "1800"
+    value: "600"  # 🔍 10 minutes pour la découverte K8s normale
   - name: CHECK_INTERVAL
     value: "300" # 🔄 Fréquence de test des URLs en secondes
   - name: URLS_FILE
     value: "/app/data/urls.yaml" # 🔧 Use writable data directory
   - name: EXCLUDED_URLS_FILE
     value: "/app/config/excluded-urls.yaml" # ✅ Variable explicite
+  # Autoswagger integration (configured via values.autoswagger)
+  - name: ENABLE_AUTOSWAGGER
+    value: "{{ .Values.autoswagger.enabled }}"
+  - name: AUTOSWAGGER_RATE_LIMIT
+    value: "{{ .Values.autoswagger.rateLimit }}"
+  - name: AUTOSWAGGER_TIMEOUT
+    value: "{{ .Values.autoswagger.timeout }}"
+  - name: AUTOSWAGGER_MAX_CONCURRENT
+    value: "{{ .Values.autoswagger.maxConcurrent }}"
+  - name: AUTOSWAGGER_BRUTE_FORCE
+    value: "{{ .Values.autoswagger.bruteForce }}"
+  - name: AUTOSWAGGER_INCLUDE_NON_GET
+    value: "{{ .Values.autoswagger.includeNonGet }}"
+  - name: DISABLE_PRESIDIO
+    value: "{{ .Values.autoswagger.disablePresidio }}"
+  - name: SWAGGER_DISCOVERY_INTERVAL
+    value: "{{ .Values.autoswagger.discoveryInterval }}"
 envFrom: []
 # Volume mounts and volumes
 volumeMounts:
@@ -131,6 +148,22 @@ excludedUrls:
 certificate:
   enabled: false
   filePath: ""
+# Autoswagger configuration (API discovery)
+autoswagger:
+  enabled: false
+  rateLimit: 30
+  timeout: 10
+  maxConcurrent: 5
+  bruteForce: false
+  includeNonGet: false
+  disablePresidio: true
+  discoveryInterval: 3600  # 1 heure par défaut
+
+# Presidio configuration (PII detection)
+presidio:
+  initImage: "fizzbuzz2/portal-checker-spacy-init:latest"
+  storageClass: ""  # Use default storage class
+  storageSize: "1Gi"
 # DNS configuration
 dnsConfig: {}
 # nameservers:

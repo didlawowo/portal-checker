@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 import asyncio
 
-from app import _get_http_routes, _get_all_urls_with_details, _reset_cache
+from src.app import _get_http_routes, _get_all_urls_with_details, _reset_cache
 
 
 class TestKubernetesSimple:

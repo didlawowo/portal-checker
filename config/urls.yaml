@@ -1,0 +1,437 @@
+urls:
+- url: https://argo-workflow.dc-tech.work
+  namespace: argo-workflows
+  name: argo-workflows-server
+  type: ingress
+  ingress_class: traefik
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    traefik.ingress.kubernetes.io/router.middlewares: kube-infra-generic-dashboard-auth@kubernetescrd
+  labels:
+    app: server
+    app.kubernetes.io/component: server
+    app.kubernetes.io/instance: argo-workflows
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: argo-workflows-server
+    app.kubernetes.io/part-of: argo-workflows
+    argocd.argoproj.io/instance: in-cluster-argo-workflows
+    helm.sh/chart: argo-workflows-0.45.4
+  path: /
+  backend:
+    service: argo-workflows-server
+    port: 2746
+- url: https://goldilocks.dc-tech.work
+  namespace: kube-infra
+  name: goldilocks-dashboard
+  type: ingress
+  ingress_class: traefik
+  annotations: {}
+  labels:
+    app.kubernetes.io/component: dashboard
+    app.kubernetes.io/instance: goldilocks
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: goldilocks
+    argocd.argoproj.io/instance: goldilocks
+    helm.sh/chart: goldilocks-10.1.0
+  path: /
+  backend:
+    service: goldilocks-dashboard
+    port: null
+- url: https://helm-dashboard.dc-tech.work
+  namespace: kube-infra
+  name: helm-dashboard
+  type: ingress
+  ingress_class: traefik
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+  labels:
+    app.kubernetes.io/instance: helm-dashboard
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: helm-dashboard
+    app.kubernetes.io/version: 2.0.3
+    argocd.argoproj.io/instance: in-cluster-helm-dashboard
+    helm.sh/chart: helm-dashboard-2.0.3
+  path: /
+  backend:
+    service: helm-dashboard
+    port: 8080
+- url: https://helm-portal.dc-tech.work
+  namespace: kube-infra
+  name: helm-portal
+  type: ingress
+  ingress_class: traefik
+  annotations:
+    meta.helm.sh/release-name: helm-portal
+    meta.helm.sh/release-namespace: kube-infra
+  labels:
+    app: helm-portal
+    app.kubernetes.io/managed-by: Helm
+  path: /
+  backend:
+    service: helm-portal
+    port: 80
+- url: https://pod-monitor.dc-tech.work
+  namespace: kube-infra
+  name: pod-monitor
+  type: ingress
+  ingress_class: traefik
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    traefik.ingress.kubernetes.io/router.middlewares: kube-infra-generic-dashboard-auth@kubernetescrd
+  labels:
+    app.kubernetes.io/instance: pod-monitor
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: k8s-dashboard
+    app.kubernetes.io/part-of: k8s-dashboard
+    app.kubernetes.io/version: 2.0.0
+    argocd.argoproj.io/instance: pod-monitor
+    helm.sh/chart: k8s-dashboard-1.1.0
+  path: /
+  backend:
+    service: pod-monitor-k8s-dashboard
+    port: 80
+- url: https://logs.dc-tech.work
+  namespace: kube-monitoring
+  name: victorialogs-victoria-logs-single-server
+  type: ingress
+  ingress_class: traefik
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+  labels:
+    app: server
+    app.kubernetes.io/instance: victorialogs
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: victoria-logs-single
+    app.kubernetes.io/version: v1.23.3-victorialogs
+    argocd.argoproj.io/instance: in-cluster-victorialogs
+    helm.sh/chart: victoria-logs-single-0.11.2
+  path: /
+  backend:
+    service: victorialogs-victoria-logs-single-server
+    port: null
+- url: https://grafana.dc-tech.work
+  namespace: kube-monitoring
+  name: vm-stack-grafana
+  type: ingress
+  ingress_class: traefik
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+  labels:
+    app.kubernetes.io/instance: vm-stack
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/version: 12.0.0-security-01
+    argocd.argoproj.io/instance: victoriametrics
+    helm.sh/chart: grafana-9.2.1
+  path: /
+  backend:
+    service: vm-stack-grafana
+    port: 80
+- url: https://vmagent.dc-tech.work
+  namespace: kube-monitoring
+  name: vmagent-vm-k8s-stack
+  type: ingress
+  ingress_class: traefik
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+  labels:
+    app: vmagent
+    app.kubernetes.io/instance: vm-stack
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: victoria-metrics-k8s-stack
+    app.kubernetes.io/version: v1.119.0
+    argocd.argoproj.io/instance: victoriametrics
+    helm.sh/chart: victoria-metrics-k8s-stack-0.51.0
+  path: /
+  backend:
+    service: vmagent-vm-k8s-stack
+    port: null
+- url: https://hubble.dc-tech.work
+  namespace: kube-system
+  name: hubble-ui
+  type: ingress
+  ingress_class: traefik
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+    meta.helm.sh/release-name: cilium
+    meta.helm.sh/release-namespace: kube-system
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: hubble-ui
+    app.kubernetes.io/part-of: cilium
+    k8s-app: hubble-ui
+  path: /
+  backend:
+    service: hubble-ui
+    port: null
+- url: https://longhorn.dc-tech.work
+  namespace: longhorn-system
+  name: longhorn-ingress
+  type: ingress
+  ingress_class: traefik
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+  labels:
+    app: longhorn-ingress
+    app.kubernetes.io/instance: longhorn
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: longhorn
+    app.kubernetes.io/version: v1.8.2
+    argocd.argoproj.io/instance: longhorn
+    helm.sh/chart: longhorn-1.8.2
+  path: /
+  backend:
+    service: longhorn-frontend
+    port: 80
+- url: https://litellm.dc-tech.work
+  namespace: mlops
+  name: litellm
+  type: ingress
+  ingress_class: traefik
+  annotations: {}
+  labels:
+    app.kubernetes.io/instance: litellm
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: litellm
+    app.kubernetes.io/version: v1.78.6-nightly
+    argocd.argoproj.io/instance: litellm
+    helm.sh/chart: litellm-helm-0.1.800
+  path: /
+  backend:
+    service: litellm
+    port: 4000
+- url: https://locust.dc-tech.work
+  namespace: mlops
+  name: locust
+  type: ingress
+  ingress_class: traefik
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+  labels:
+    app.kubernetes.io/instance: locust
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: locust
+    app.kubernetes.io/version: 2.32.2
+    argocd.argoproj.io/instance: locust
+    helm.sh/chart: locust-0.32.6
+    load_test: my-loadtest
+  path: /
+  backend:
+    service: locust
+    port: 8089
+- url: https://mlflow.dc-tech.work
+  namespace: mlops
+  name: mlflow
+  type: ingress
+  ingress_class: traefik
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+  labels:
+    app: mlflow
+    app.kubernetes.io/instance: mlflow
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: mlflow
+    app.kubernetes.io/version: 3.5.0
+    argocd.argoproj.io/instance: mlflow
+    helm.sh/chart: mlflow-1.7.2
+    version: 3.5.0
+  path: /
+  backend:
+    service: mlflow
+    port: 80
+- url: https://open-webui.dc-tech.work
+  namespace: mlops
+  name: open-webui
+  type: ingress
+  ingress_class: traefik
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+  labels:
+    app.kubernetes.io/component: open-webui
+    app.kubernetes.io/instance: ollama-webui
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/version: 0.6.5
+    argocd.argoproj.io/instance: ollama-webui
+    helm.sh/chart: open-webui-6.5.0
+  path: /
+  backend:
+    service: open-webui
+    port: null
+- url: https://openlit.dc-tech.work
+  namespace: mlops
+  name: openlit
+  type: ingress
+  ingress_class: traefik
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+  labels:
+    app: openlit
+    app.kubernetes.io/component: networking
+    app.kubernetes.io/instance: openlit
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: openlit
+    app.kubernetes.io/part-of: openlit
+    app.kubernetes.io/version: 1.14.4
+    argocd.argoproj.io/instance: openlit
+    helm.sh/chart: openlit-1.14.6
+  path: /
+  backend:
+    service: openlit
+    port: 3000
+- url: https://promptfoo.dc-tech.work
+  namespace: mlops
+  name: promptfoo
+  type: ingress
+  ingress_class: traefik
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+  labels:
+    app: promptfoo
+    argocd.argoproj.io/instance: promptfoo
+  path: /
+  backend:
+    service: promptfoo
+    port: 3000
+- url: https://qdrant.dc-tech.work
+  namespace: mlops
+  name: qdrant
+  type: ingress
+  ingress_class: traefik
+  annotations: {}
+  labels:
+    app: qdrant
+    app.kubernetes.io/instance: qdrant
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: qdrant
+    app.kubernetes.io/version: v1.13.3
+    argocd.argoproj.io/instance: qdrant
+    helm.sh/chart: qdrant-1.13.3
+  path: /
+  backend:
+    service: qdrant
+    port: 6333
+- url: https://keycloak.dc-tech.work
+  namespace: security
+  name: keycloak
+  type: ingress
+  ingress_class: traefik
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+  labels:
+    app.kubernetes.io/component: keycloak
+    app.kubernetes.io/instance: keycloak
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: keycloak
+    app.kubernetes.io/version: 26.2.2
+    argocd.argoproj.io/instance: keycloak
+    helm.sh/chart: keycloak-24.6.3
+  path: /
+  backend:
+    service: keycloak
+    port: null
+- url: https://sonarqube.dc-tech.work
+  namespace: sonarqube
+  name: sonarqube-sonarqube
+  type: ingress
+  ingress_class: traefik
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+  labels:
+    app: sonarqube
+    argocd.argoproj.io/instance: sonarqube
+    chart: sonarqube-2025.5.0
+    heritage: Helm
+    release: sonarqube
+  path: /
+  backend:
+    service: sonarqube-sonarqube
+    port: 9000
+- url: https://zenml.dc-tech.work
+  namespace: zenml
+  name: zenml
+  type: ingress
+  ingress_class: traefik
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-cloudflare
+  labels:
+    app.kubernetes.io/instance: zenml
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: zenml
+    app.kubernetes.io/version: 0.90.0
+    argocd.argoproj.io/instance: zenml
+    helm.sh/chart: zenml-0.90.0
+  path: /
+  backend:
+    service: zenml
+    port: 80
+- url: https://argocd.dc-tech.work
+  namespace: kube-infra
+  name: argocd-server
+  type: httproute
+  ingress_class: gateway/traefik-gateway-global
+  annotations: {}
+  labels:
+    argocd.argoproj.io/instance: raspberry-crds
+  path: /
+  backend:
+    service: argo-argocd-server
+    port: 80
+- url: https://traefik.dc-tech.work/api
+  namespace: kube-infra
+  name: traefik-dashboard
+  type: httproute
+  ingress_class: gateway/traefik-gateway-global
+  annotations: {}
+  labels:
+    argocd.argoproj.io/instance: raspberry-crds
+  path: /api
+  backend:
+    service: api@internal
+    port: 9000
+- url: https://jaeger.dc-tech.work
+  namespace: kube-monitoring
+  name: jaeger
+  type: httproute
+  ingress_class: gateway/traefik-gateway-global
+  annotations: {}
+  labels:
+    argocd.argoproj.io/instance: testing-apps
+  path: /
+  backend:
+    service: jaeger-query
+    port: 16686
+- url: https://minio-console.dc-tech.work
+  namespace: minio
+  name: minio
+  type: httproute
+  ingress_class: gateway/traefik-gateway-global
+  annotations: {}
+  labels:
+    argocd.argoproj.io/instance: raspberry-crds
+  path: /
+  backend:
+    service: minio
+    port: 9001
+- url: https://kyverno.dc-tech.work
+  namespace: security
+  name: kyverno
+  type: httproute
+  ingress_class: gateway/traefik-gateway-global
+  annotations: {}
+  labels:
+    argocd.argoproj.io/instance: raspberry-crds
+  path: /
+  backend:
+    service: policy-reporter-ui
+    port: 8080
+- url: https://whoami.dc-tech.work
+  namespace: whoami
+  name: whoami
+  type: httproute
+  ingress_class: gateway/traefik-gateway-global
+  annotations: {}
+  labels:
+    argocd.argoproj.io/instance: raspberry-apps
+  path: /
+  backend:
+    service: whoami
+    port: 80
