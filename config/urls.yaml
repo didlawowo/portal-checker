@@ -90,34 +90,6 @@ urls:
   backend:
     service: pod-monitor-k8s-dashboard
     port: 80
-- url: https://pyroscope.dc-tech.work
-  namespace: kube-monitoring
-  name: pyroscope-ingress
-  type: ingress
-  ingress_class: traefik
-  annotations: {}
-  labels: &id001
-    app.kubernetes.io/instance: pyroscope
-    app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/name: pyroscope
-    app.kubernetes.io/version: 1.12.0
-    argocd.argoproj.io/instance: pyroscope
-    helm.sh/chart: pyroscope-1.12.0
-  path: /
-  backend:
-    service: pyroscope
-    port: 4040
-- url: https://pyroscope.dc-tech.work/ingest
-  namespace: kube-monitoring
-  name: pyroscope-ingress
-  type: ingress
-  ingress_class: traefik
-  annotations: {}
-  labels: *id001
-  path: /ingest
-  backend:
-    service: pyroscope
-    port: 4040
 - url: https://logs.dc-tech.work
   namespace: kube-monitoring
   name: victorialogs-victoria-logs-single-server
@@ -415,6 +387,18 @@ urls:
   backend:
     service: api@internal
     port: 9000
+- url: https://jaeger.dc-tech.work
+  namespace: kube-monitoring
+  name: jaeger
+  type: httproute
+  ingress_class: gateway/traefik-gateway-global
+  annotations: {}
+  labels:
+    argocd.argoproj.io/instance: testing-apps
+  path: /
+  backend:
+    service: jaeger-query
+    port: 16686
 - url: https://minio-console.dc-tech.work
   namespace: minio
   name: minio
