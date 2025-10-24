@@ -4,7 +4,7 @@ FROM python:3.13-alpine
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
-ENV HTTP_PROXY=http://proxy-cloud.korian.cloud:80
+# ENV HTTP_PROXY=http://proxy-cloud.korian.cloud:80
 ENV SSL_CERT_DIR=/etc/ssl/certs
 # ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 # Create group and user with specific IDs
