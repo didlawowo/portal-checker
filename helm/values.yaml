@@ -67,23 +67,23 @@ env:
     value: "/app/data/urls.yaml" # 🔧 Use writable data directory
   - name: EXCLUDED_URLS_FILE
     value: "/app/config/excluded-urls.yaml" # ✅ Variable explicite
-  # Autoswagger integration (configured via values.autoswagger)
+  # Autoswagger integration (values from autoswagger section below)
   - name: ENABLE_AUTOSWAGGER
-    value: "{{ .Values.autoswagger.enabled }}"
+    value: "false"
   - name: AUTOSWAGGER_RATE_LIMIT
-    value: "{{ .Values.autoswagger.rateLimit }}"
+    value: "30"
   - name: AUTOSWAGGER_TIMEOUT
-    value: "{{ .Values.autoswagger.timeout }}"
+    value: "10"
   - name: AUTOSWAGGER_MAX_CONCURRENT
-    value: "{{ .Values.autoswagger.maxConcurrent }}"
+    value: "5"
   - name: AUTOSWAGGER_BRUTE_FORCE
-    value: "{{ .Values.autoswagger.bruteForce }}"
+    value: "false"
   - name: AUTOSWAGGER_INCLUDE_NON_GET
-    value: "{{ .Values.autoswagger.includeNonGet }}"
+    value: "false"
   - name: DISABLE_PRESIDIO
-    value: "{{ .Values.autoswagger.disablePresidio }}"
+    value: "true"
   - name: SWAGGER_DISCOVERY_INTERVAL
-    value: "{{ .Values.autoswagger.discoveryInterval }}"
+    value: "3600"
 envFrom: []
 # Volume mounts and volumes
 volumeMounts:
