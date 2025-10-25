@@ -66,7 +66,7 @@ env:
   - name: URLS_FILE
     value: "/app/data/urls.yaml" # 🔧 Use writable data directory
   - name: EXCLUDED_URLS_FILE
-    value: "/app/config/excluded-urls.yaml" # ✅ Variable explicite
+    value: "/app/data/excluded-urls.yaml" # Writable copy in data volume
   # Autoswagger integration (values from autoswagger section below)
   - name: ENABLE_AUTOSWAGGER
     value: "false"
@@ -136,7 +136,26 @@ securityContext:
 # Node selector
 nodeSelector: {}
 # Init containers
-initContainers: []
+initContainers:
+  - name: copy-excluded-urls
+    image: busybox:latest
+    command:
+      - sh
+      - -c
+      - |
+        if [ ! -f /app/data/excluded-urls.yaml ]; then
+          echo "Copying excluded-urls.yaml to writable volume..."
+          cp /app/config/excluded-urls.yaml /app/data/excluded-urls.yaml
+          echo "Done!"
+        else
+          echo "excluded-urls.yaml already exists in data volume, skipping copy"
+        fi
+    volumeMounts:
+      - name: config-volume
+        mountPath: /app/config
+        readOnly: true
+      - name: data-volume
+        mountPath: /app/data
 # 🎯 Excluded URLs for the application - SOLUTION 1: Format liste YAML
 excludedUrls:
   - "monitoring.*"
