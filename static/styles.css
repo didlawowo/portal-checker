@@ -430,6 +430,12 @@ td {
     border-top: 1px solid #e5e7eb;
     word-wrap: break-word;
     vertical-align: top;
+    font-size: 13px;
+}
+
+/* Exception pour la colonne URL (colonne 8) qui garde sa taille différente */
+td:nth-child(8) {
+    font-size: 12px;
 }
 
 td:nth-child(6) {
