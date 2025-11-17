@@ -306,6 +306,35 @@ def exclude_url():
         return jsonify({"error": str(e), "status": "error"}), 500
 
 
+@app.route("/api/excluded-urls", methods=["GET"])
+def get_excluded_urls():
+    """Get list of excluded URLs"""
+    try:
+        import yaml
+        from .kubernetes_client import EXCLUDED_URLS_FILE
+
+        try:
+            with open(EXCLUDED_URLS_FILE, 'r') as f:
+                excluded_urls = yaml.safe_load(f)
+                # Handle both list format and dict format
+                if isinstance(excluded_urls, dict):
+                    excluded_urls = excluded_urls.get("excluded_urls", [])
+                elif not isinstance(excluded_urls, list):
+                    excluded_urls = []
+        except FileNotFoundError:
+            excluded_urls = []
+
+        return jsonify({
+            "excluded_urls": excluded_urls,
+            "count": len(excluded_urls),
+            "status": "ok"
+        })
+
+    except Exception as e:
+        logger.error(f"❌ Erreur lors de la récupération des URLs exclues: {e}")
+        return jsonify({"error": str(e), "status": "error"}), 500
+
+
 @app.route("/health")
 def health():
     """Health check endpoint"""

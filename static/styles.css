@@ -870,3 +870,69 @@ a:hover {
         margin-bottom: 4px;
     }
 }
+
+/* Styles pour la modale des URLs exclues */
+.excluded-urls-list {
+    padding: 10px 0;
+}
+
+.excluded-count {
+    margin: 0 0 15px 0;
+    padding: 10px;
+    background: #f3f4f6;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #374151;
+}
+
+.excluded-count strong {
+    color: #1f2937;
+    font-size: 16px;
+}
+
+.excluded-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.excluded-item {
+    padding: 10px 15px;
+    margin-bottom: 8px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 13px;
+    color: #374151;
+    transition: all 0.2s;
+}
+
+.excluded-item:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.no-data {
+    text-align: center;
+    padding: 30px;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.loading-text {
+    text-align: center;
+    padding: 30px;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.error-text {
+    text-align: center;
+    padding: 30px;
+    color: #dc2626;
+    font-size: 14px;
+}
