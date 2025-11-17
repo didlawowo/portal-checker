@@ -4,9 +4,9 @@
 application:
   containerName: portal-checker
   ports:
-    - containerPort: 5000
-      name: http
-      protocol: TCP
+  - containerPort: 5000
+    name: http
+    protocol: TCP
 # Image configuration
 image:
   repository: fizzbuzz2/portal-checker
@@ -49,55 +49,55 @@ resources:
     memory: 64Mi
 # Environment variables
 env:
-  - name: FLASK_ENV
-    value: production
-  - name: PORT
-    value: "5000"
-  - name: MAX_CONCURRENT_REQUESTS
-    value: "3"
-  - name: REQUEST_TIMEOUT
-    value: "5"
-  - name: CACHE_TTL_SECONDS
-    value: "900"
-  - name: KUBERNETES_POLL_INTERVAL
-    value: "600"  # 🔍 10 minutes pour la découverte K8s normale
-  - name: CHECK_INTERVAL
-    value: "300" # 🔄 Fréquence de test des URLs en secondes
-  - name: URLS_FILE
-    value: "/app/data/urls.yaml" # 🔧 Use writable data directory
-  - name: EXCLUDED_URLS_FILE
-    value: "/app/data/excluded-urls.yaml" # Writable copy in data volume
-  # Autoswagger integration (values from autoswagger section below)
-  - name: ENABLE_AUTOSWAGGER
-    value: "false"
-  - name: AUTOSWAGGER_RATE_LIMIT
-    value: "30"
-  - name: AUTOSWAGGER_TIMEOUT
-    value: "10"
-  - name: AUTOSWAGGER_MAX_CONCURRENT
-    value: "5"
-  - name: AUTOSWAGGER_BRUTE_FORCE
-    value: "false"
-  - name: AUTOSWAGGER_INCLUDE_NON_GET
-    value: "false"
-  - name: DISABLE_PRESIDIO
-    value: "true"
-  - name: SWAGGER_DISCOVERY_INTERVAL
-    value: "3600"
+- name: FLASK_ENV
+  value: production
+- name: PORT
+  value: "5000"
+- name: MAX_CONCURRENT_REQUESTS
+  value: "3"
+- name: REQUEST_TIMEOUT
+  value: "5"
+- name: CACHE_TTL_SECONDS
+  value: "900"
+- name: KUBERNETES_POLL_INTERVAL
+  value: "600" # 🔍 10 minutes pour la découverte K8s normale
+- name: CHECK_INTERVAL
+  value: "300" # 🔄 Fréquence de test des URLs en secondes
+- name: URLS_FILE
+  value: "/app/data/urls.yaml" # 🔧 Use writable data directory
+- name: EXCLUDED_URLS_FILE
+  value: "/app/data/excluded-urls.yaml" # Writable copy in data volume
+# Autoswagger integration (values from autoswagger section below)
+- name: ENABLE_AUTOSWAGGER
+  value: "false"
+- name: AUTOSWAGGER_RATE_LIMIT
+  value: "30"
+- name: AUTOSWAGGER_TIMEOUT
+  value: "10"
+- name: AUTOSWAGGER_MAX_CONCURRENT
+  value: "5"
+- name: AUTOSWAGGER_BRUTE_FORCE
+  value: "false"
+- name: AUTOSWAGGER_INCLUDE_NON_GET
+  value: "false"
+- name: DISABLE_PRESIDIO
+  value: "true"
+- name: SWAGGER_DISCOVERY_INTERVAL
+  value: "3600"
 envFrom: []
 # Volume mounts and volumes
 volumeMounts:
-  - name: config-volume
-    mountPath: /app/config
-    readOnly: true
-  - name: data-volume
-    mountPath: /app/data
+- name: config-volume
+  mountPath: /app/config
+  readOnly: true
+- name: data-volume
+  mountPath: /app/data
 volumes:
-  - name: config-volume
-    configMap:
-      name: portal-checker-config
-  - name: data-volume
-    emptyDir: {}
+- name: config-volume
+  configMap:
+    name: portal-checker-config
+- name: data-volume
+  emptyDir: {}
 # Probes
 livenessProbe:
   httpGet:
@@ -137,32 +137,32 @@ securityContext:
 nodeSelector: {}
 # Init containers
 initContainers:
-  - name: copy-excluded-urls
-    image: busybox:latest
-    command:
-      - sh
-      - -c
-      - |
-        if [ ! -f /app/data/excluded-urls.yaml ]; then
-          echo "Copying excluded-urls.yaml to writable volume..."
-          cp /app/config/excluded-urls.yaml /app/data/excluded-urls.yaml
-          echo "Done!"
-        else
-          echo "excluded-urls.yaml already exists in data volume, skipping copy"
-        fi
-    volumeMounts:
-      - name: config-volume
-        mountPath: /app/config
-        readOnly: true
-      - name: data-volume
-        mountPath: /app/data
+- name: copy-excluded-urls
+  image: busybox:latest
+  command:
+  - sh
+  - -c
+  - |
+    if [ ! -f /app/data/excluded-urls.yaml ]; then
+      echo "Copying excluded-urls.yaml to writable volume..."
+      cp /app/config/excluded-urls.yaml /app/data/excluded-urls.yaml
+      echo "Done!"
+    else
+      echo "excluded-urls.yaml already exists in data volume, skipping copy"
+    fi
+  volumeMounts:
+  - name: config-volume
+    mountPath: /app/config
+    readOnly: true
+  - name: data-volume
+    mountPath: /app/data
 # 🎯 Excluded URLs for the application - SOLUTION 1: Format liste YAML
 excludedUrls:
-  - "monitoring.*"
-  - "*.internal/*"
-  - "infisical.dc-tech.work/ss-webhook"
-  - "grafana.dc-tech.work/metrics"
-  - "prometheus.dc-tech.work/*"
+- "monitoring.*"
+- "*.internal/*"
+- "infisical.dc-tech.work/ss-webhook"
+- "grafana.dc-tech.work/metrics"
+- "prometheus.dc-tech.work/*"
 # Certificate configuration
 certificate:
   enabled: false
@@ -176,15 +176,16 @@ autoswagger:
   bruteForce: false
   includeNonGet: false
   disablePresidio: true
-  discoveryInterval: 3600  # 1 heure par défaut
+  discoveryInterval: 3600 # 1 heure par défaut
 
 # Presidio configuration (PII detection)
 presidio:
   initImage: "fizzbuzz2/portal-checker-spacy-init:latest"
-  storageClass: ""  # Use default storage class
+  storageClass: "" # Use default storage class
   storageSize: "1Gi"
 # DNS configuration
 dnsConfig: {}
+
 # nameservers:
 #   - "8.8.8.8"
 #   - "1.1.1.1"
