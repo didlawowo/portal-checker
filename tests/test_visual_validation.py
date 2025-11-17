@@ -1,3 +1,8 @@
+import sys
+import os
+# Add the project path to PYTHONPATH
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import pytest
 from unittest.mock import patch
 
@@ -14,7 +19,7 @@ class TestVisualValidation:
         with app.test_client() as client:
             yield client
 
-    @patch("app.check_urls_async")
+    @patch("src.utils.check_urls_async")
     def test_annotations_button_style_visual(self, mock_check_urls, client):
         """Test visuel du style des boutons d'annotations"""
         mock_check_urls.return_value = [
@@ -99,7 +104,7 @@ class TestVisualValidation:
         assert '"annotations": {}' in html_content
         assert '"annotations": null' in html_content
 
-    @patch("app.check_urls_async")
+    @patch("src.utils.check_urls_async")
     def test_ui_layout_consistency(self, mock_check_urls, client):
         """Test de la cohérence de la mise en page"""
         mock_check_urls.return_value = [
@@ -153,7 +158,7 @@ class TestVisualValidation:
         assert "statusSort" in html_content
         assert "response_timeSort" in html_content
 
-    @patch("app.check_urls_async")
+    @patch("src.utils.check_urls_async")
     def test_color_scheme_consistency(self, mock_check_urls, client):
         """Test de la cohérence du schéma de couleurs"""
         mock_check_urls.return_value = [
@@ -216,7 +221,7 @@ class TestVisualValidation:
         assert "#4b5563" in html_content  # Gris pour bouton
         assert "#374151" in html_content  # Gris foncé pour hover
 
-    @patch("app.check_urls_async")
+    @patch("src.utils.check_urls_async")
     def test_responsive_design_elements(self, mock_check_urls, client):
         """Test des éléments de design responsive"""
         mock_check_urls.return_value = [
@@ -254,7 +259,7 @@ class TestVisualValidation:
         assert 'type="search"' in html_content
         assert "flex: 1;" in html_content  # Search input flexible
 
-    @patch("app.check_urls_async")
+    @patch("src.utils.check_urls_async")
     def test_accessibility_compliance(self, mock_check_urls, client):
         """Test de conformité d'accessibilité"""
         mock_check_urls.return_value = [

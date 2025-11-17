@@ -1,3 +1,8 @@
+import sys
+import os
+# Add the project path to PYTHONPATH
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import pytest
 from unittest.mock import patch
 
@@ -14,7 +19,7 @@ class TestIntegrationUI:
         with app.test_client() as client:
             yield client
 
-    @patch("app.check_urls_async")
+    @patch("src.utils.check_urls_async")
     def test_complete_ui_flow(self, mock_check_urls, client):
         """Test du flux complet de l'interface utilisateur"""
         # Simuler des données réalistes
@@ -115,7 +120,7 @@ class TestIntegrationUI:
         assert "toggle-btn" not in html_content
         assert "Afficher/Masquer" not in html_content
 
-    @patch("app.check_urls_async")
+    @patch("src.utils.check_urls_async")
     def test_ui_responsive_elements(self, mock_check_urls, client):
         """Test des éléments responsifs de l'interface"""
         mock_check_urls.return_value = [
@@ -155,7 +160,7 @@ class TestIntegrationUI:
         assert 'onclick="sortTable(\'status\')"' in html_content
         assert 'onclick="sortTable(\'response_time\')"' in html_content
 
-    @patch("app.check_urls_async")
+    @patch("src.utils.check_urls_async")
     def test_accessibility_features(self, mock_check_urls, client):
         """Test des fonctionnalités d'accessibilité"""
         mock_check_urls.return_value = [
@@ -193,7 +198,7 @@ class TestIntegrationUI:
         assert "text-decoration: underline" in html_content
         assert ":hover" in html_content
 
-    @patch("app.check_urls_async")
+    @patch("src.utils.check_urls_async")
     def test_performance_elements(self, mock_check_urls, client):
         """Test des éléments liés à la performance"""
         # Simuler de nombreux services pour tester la performance

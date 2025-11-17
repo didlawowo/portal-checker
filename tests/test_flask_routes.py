@@ -3,7 +3,11 @@ from unittest.mock import patch, mock_open, MagicMock
 import json
 import yaml
 import os
+import sys
 import tempfile
+
+# Add the project path to PYTHONPATH
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.app import app
 
@@ -27,9 +31,9 @@ class TestFlaskRoutes:
         assert 'status' in data
         assert data['status'] == 'ok'
 
-    @patch('app.os.path.exists')
+    @patch('src.app.os.path.exists')
     @patch('builtins.open', new_callable=mock_open)
-    @patch('app.yaml.safe_load')
+    @patch('src.app.yaml.safe_load')
     def test_get_urls_endpoint_file_exists(self, mock_yaml_load, mock_file, mock_exists, client):
         """Test /urls endpoint when file exists"""
         mock_exists.return_value = True
@@ -51,7 +55,7 @@ class TestFlaskRoutes:
             assert 'name' in item
             assert 'namespace' not in item  # Should be dropped
 
-    @patch('app.os.path.exists')
+    @patch('src.app.os.path.exists')
     def test_get_urls_endpoint_file_not_exists(self, mock_exists, client):
         """Test /urls endpoint when file doesn't exist"""
         mock_exists.return_value = False
@@ -62,7 +66,7 @@ class TestFlaskRoutes:
         data = response.get_json()
         assert data == []
 
-    @patch('app.os.path.exists')
+    @patch('src.app.os.path.exists')
     def test_get_urls_endpoint_file_error(self, mock_exists, client):
         """Test /urls endpoint when file exists but can't be read"""
         mock_exists.return_value = False  # Simulate file doesn't exist
@@ -79,7 +83,7 @@ class TestFlaskRoutes:
         assert response.status_code in [200, 404]
 
  
-    @patch('app.check_urls_async')
+    @patch('src.app.check_urls_async')
     def test_index_route_with_async_test(self, mock_check_urls, client):
         """Test main index route with async URL testing"""
         # Mock async function result
@@ -101,8 +105,8 @@ class TestFlaskRoutes:
         # Verify the page contains expected content
         assert b'Portal' in response.data or b'portal' in response.data
 
-    @patch('app.get_app_version')
-    @patch('app.check_urls_async')
+    @patch('src.app.get_app_version')
+    @patch('src.app.check_urls_async')
     def test_index_route_initialization(self, mock_check_urls, mock_version, client):
         """Test index route calls initialization functions"""
         mock_version.return_value = "2.6.6"
@@ -128,9 +132,9 @@ class TestFlaskRoutes:
             pass
 
 
-    @patch('app.os.path.exists')
+    @patch('src.app.os.path.exists')
     @patch('builtins.open', new_callable=mock_open)
-    @patch('app.yaml.safe_load')
+    @patch('src.app.yaml.safe_load')
     def test_urls_endpoint_malformed_data(self, mock_yaml_load, mock_file, mock_exists, client):
         """Test /urls endpoint with malformed YAML data"""
         mock_exists.return_value = True
@@ -151,7 +155,7 @@ class TestFlaskRoutes:
         for item in data:
             assert set(item.keys()) == {"url", "name"}
 
-    @patch('app.check_urls_async')
+    @patch('src.app.check_urls_async')
     def test_index_route_with_test_failures(self, mock_check_urls, client):
         """Test index route handles test failures"""
         # Mock test results with failures
@@ -185,7 +189,7 @@ class TestFlaskRoutes:
         # Should not allow access to parent directories
         assert response.status_code in [404, 403]
 
-    @patch('app.get_app_version')
+    @patch('src.app.get_app_version')
     def test_version_in_template(self, mock_version, client):
         """Test that version is properly passed to template"""
         mock_version.return_value = "test-version-1.2.3"

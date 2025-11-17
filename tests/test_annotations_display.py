@@ -1,3 +1,7 @@
+import sys
+import os
+# Add the project path to PYTHONPATH
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from unittest.mock import patch
 
 import pytest
