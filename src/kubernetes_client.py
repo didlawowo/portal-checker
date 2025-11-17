@@ -69,6 +69,14 @@ def _load_excluded_patterns() -> List[str]:
     return patterns
 
 
+def invalidate_excluded_patterns_cache() -> None:
+    """Invalide le cache des patterns d'exclusion pour forcer un rechargement"""
+    global _excluded_patterns_cache, _excluded_patterns_last_loaded
+    _excluded_patterns_cache = None
+    _excluded_patterns_last_loaded = None
+    logger.debug("🔄 Cache des patterns d'exclusion invalidé")
+
+
 def _is_cache_valid() -> bool:
     """Check if Kubernetes cache is still valid"""
     if _kubernetes_cache["expiry"] is None:

@@ -286,6 +286,10 @@ def exclude_url():
             with open(EXCLUDED_URLS_FILE, 'w') as f:
                 yaml.dump(excluded_urls, f, default_flow_style=False, allow_unicode=True)
 
+            # Invalidate cache to force reload
+            from .kubernetes_client import invalidate_excluded_patterns_cache
+            invalidate_excluded_patterns_cache()
+
             logger.info(f"✅ URL ajoutée aux exclusions: {clean_url}")
             return jsonify({
                 "message": f"URL {clean_url} ajoutée aux exclusions",
