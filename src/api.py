@@ -211,8 +211,8 @@ def refresh():
     """Force refresh of URL discovery and checks"""
     from flask import redirect
     try:
-        # Discover URLs from Kubernetes
-        urls_data = get_all_urls_with_details()
+        # Discover URLs from Kubernetes (force refresh to bypass cache)
+        urls_data = get_all_urls_with_details(force_refresh=True)
         save_urls_to_file(urls_data, URLS_FILE)
 
         # Run tests
