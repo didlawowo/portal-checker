@@ -211,8 +211,8 @@ def refresh():
     """Force refresh of URL discovery and checks"""
     from flask import redirect
     try:
-        # Discover URLs from Kubernetes
-        urls_data = get_all_urls_with_details()
+        # Discover URLs from Kubernetes (force refresh to bypass cache)
+        urls_data = get_all_urls_with_details(force_refresh=True)
         save_urls_to_file(urls_data, URLS_FILE)
 
         # Run tests
@@ -286,6 +286,10 @@ def exclude_url():
             with open(EXCLUDED_URLS_FILE, 'w') as f:
                 yaml.dump(excluded_urls, f, default_flow_style=False, allow_unicode=True)
 
+            # Invalidate cache to force reload
+            from .kubernetes_client import invalidate_excluded_patterns_cache
+            invalidate_excluded_patterns_cache()
+
             logger.info(f"✅ URL ajoutée aux exclusions: {clean_url}")
             return jsonify({
                 "message": f"URL {clean_url} ajoutée aux exclusions",
@@ -299,6 +303,35 @@ def exclude_url():
 
     except Exception as e:
         logger.error(f"❌ Erreur lors de l'exclusion de l'URL: {e}")
+        return jsonify({"error": str(e), "status": "error"}), 500
+
+
+@app.route("/api/excluded-urls", methods=["GET"])
+def get_excluded_urls():
+    """Get list of excluded URLs"""
+    try:
+        import yaml
+        from .kubernetes_client import EXCLUDED_URLS_FILE
+
+        try:
+            with open(EXCLUDED_URLS_FILE, 'r') as f:
+                excluded_urls = yaml.safe_load(f)
+                # Handle both list format and dict format
+                if isinstance(excluded_urls, dict):
+                    excluded_urls = excluded_urls.get("excluded_urls", [])
+                elif not isinstance(excluded_urls, list):
+                    excluded_urls = []
+        except FileNotFoundError:
+            excluded_urls = []
+
+        return jsonify({
+            "excluded_urls": excluded_urls,
+            "count": len(excluded_urls),
+            "status": "ok"
+        })
+
+    except Exception as e:
+        logger.error(f"❌ Erreur lors de la récupération des URLs exclues: {e}")
         return jsonify({"error": str(e), "status": "error"}), 500
 
 

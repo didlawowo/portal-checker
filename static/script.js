@@ -428,6 +428,56 @@ async function loadSwaggerData() {
     }
 }
 
+// Fonction pour afficher les URLs exclues
+async function showExcludedUrls() {
+    const modal = document.getElementById('excludedUrlsModal');
+    const modalBody = document.getElementById('excludedUrlsModalBody');
+
+    // Afficher la modale avec le message de chargement
+    modal.style.display = 'block';
+    modalBody.innerHTML = '<p class="loading-text">Chargement...</p>';
+
+    try {
+        console.log('Fetching excluded URLs from /api/excluded-urls');
+        const response = await fetch('/api/excluded-urls');
+        console.log('Response status:', response.status);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error(`Erreur HTTP ${response.status}: ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log('Received data:', data);
+        const excludedUrls = data.excluded_urls || [];
+
+        if (excludedUrls.length === 0) {
+            modalBody.innerHTML = '<p class="no-data">Aucune URL exclue</p>';
+        } else {
+            let html = '<div class="excluded-urls-list">';
+            html += `<p class="excluded-count">Nombre d'URLs exclues: <strong>${excludedUrls.length}</strong></p>`;
+            html += '<ul class="excluded-list">';
+
+            excludedUrls.forEach(url => {
+                html += `<li class="excluded-item">${url}</li>`;
+            });
+
+            html += '</ul></div>';
+            modalBody.innerHTML = html;
+        }
+    } catch (error) {
+        console.error('Error fetching excluded URLs:', error);
+        modalBody.innerHTML = '<p class="error-text">Erreur lors du chargement des URLs exclues</p>';
+    }
+}
+
+// Fonction pour fermer la modale des URLs exclues
+function closeExcludedUrlsModal() {
+    const modal = document.getElementById('excludedUrlsModal');
+    modal.style.display = 'none';
+}
+
 // Fonction pour exclure une URL
 async function excludeUrl(url) {
     if (!confirm(`Voulez-vous vraiment exclure l'URL "${url}" ?\n\nElle sera ajoutée au fichier excluded-urls.yaml et ne sera plus testée.`)) {
@@ -550,10 +600,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Écouteurs pour la modale Swagger
     const swaggerModal = document.getElementById('swaggerModal');
     const swaggerCloseBtn = swaggerModal.querySelector('.swagger-modal-close');
-    
+
+    // Écouteurs pour la modale URLs exclues
+    const excludedUrlsModal = document.getElementById('excludedUrlsModal');
+    const excludedUrlsCloseBtn = excludedUrlsModal.querySelector('.excluded-modal-close');
+
     // Fermer les modales avec les boutons X
     annotationsCloseBtn.addEventListener('click', closeAnnotationsModal);
     swaggerCloseBtn.addEventListener('click', closeSwaggerModal);
+    excludedUrlsCloseBtn.addEventListener('click', closeExcludedUrlsModal);
     
     // Fermer les modales en cliquant en dehors
     annotationsModal.addEventListener('click', function(event) {
@@ -567,12 +622,19 @@ document.addEventListener('DOMContentLoaded', function() {
             closeSwaggerModal();
         }
     });
-    
+
+    excludedUrlsModal.addEventListener('click', function(event) {
+        if (event.target === excludedUrlsModal) {
+            closeExcludedUrlsModal();
+        }
+    });
+
     // Fermer les modales avec la touche Escape
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
             closeAnnotationsModal();
             closeSwaggerModal();
+            closeExcludedUrlsModal();
         }
     });
 

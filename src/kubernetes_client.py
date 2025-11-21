@@ -69,6 +69,14 @@ def _load_excluded_patterns() -> List[str]:
     return patterns
 
 
+def invalidate_excluded_patterns_cache() -> None:
+    """Invalide le cache des patterns d'exclusion pour forcer un rechargement"""
+    global _excluded_patterns_cache, _excluded_patterns_last_loaded
+    _excluded_patterns_cache = None
+    _excluded_patterns_last_loaded = None
+    logger.debug("🔄 Cache des patterns d'exclusion invalidé")
+
+
 def _is_cache_valid() -> bool:
     """Check if Kubernetes cache is still valid"""
     if _kubernetes_cache["expiry"] is None:
@@ -147,17 +155,24 @@ def _deduplicate_urls(urls_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return unique_urls
 
 
-def get_all_urls_with_details() -> List[Dict[str, Any]]:
+def get_all_urls_with_details(force_refresh: bool = False) -> List[Dict[str, Any]]:
     """
     Get all URLs with details from HTTPRoutes and Ingress
     Uses cache to reduce CPU load from Kubernetes API calls
+
+    Args:
+        force_refresh: If True, bypass cache and fetch fresh data from Kubernetes
     """
-    # Check cache first
-    cached_data = _get_cached_urls()
-    if cached_data is not None:
-        return cached_data
-    
-    logger.debug("🔄 Récupération des données depuis l'API Kubernetes")
+    # Check cache first (unless force_refresh is True)
+    if not force_refresh:
+        cached_data = _get_cached_urls()
+        if cached_data is not None:
+            return cached_data
+
+    if force_refresh:
+        logger.info("🔄 Refresh forcé - récupération des données depuis l'API Kubernetes")
+    else:
+        logger.debug("🔄 Récupération des données depuis l'API Kubernetes")
     
     v1 = client.NetworkingV1Api()
     v1_core = client.CoreV1Api()
@@ -284,7 +299,7 @@ def get_all_urls_with_details() -> List[Dict[str, Any]]:
 def is_url_excluded(url: str, annotations: Dict[str, str], excluded_patterns: Optional[List[str]] = None) -> bool:
     """Check if URL should be excluded based on patterns or annotations"""
     # Check Kubernetes annotation
-    if annotations.get("portal-checker.io/exclude", "").lower() == "true":
+    if annotations and annotations.get("portal-checker.io/exclude", "").lower() == "true":
         return True
     
     # Load patterns if not provided

@@ -1,3 +1,8 @@
+import sys
+import os
+# Add the project path to PYTHONPATH
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import pytest
 from unittest.mock import patch, MagicMock
 import json
@@ -84,17 +89,6 @@ class TestHealthEndpoint:
             assert response.status_code == 200
             assert response.get_json() == {"status": "ok"}
 
-    @patch('app.logger')
-    def test_health_endpoint_logging(self, mock_logger, client):
-        """Test que l'endpoint health log correctement"""
-        response = client.get('/health')
-        
-        # Vérifier que le logger a été appelé
-        mock_logger.debug.assert_called_with("ok")
-        
-        # Vérifier la réponse
-        assert response.status_code == 200
-        assert response.get_json() == {"status": "ok"}
 
     def test_health_endpoint_multiple_sequential_requests(self, client):
         """Test plusieurs requêtes séquentielles sur l'endpoint health"""

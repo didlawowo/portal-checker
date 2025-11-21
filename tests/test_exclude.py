@@ -1,45 +1,73 @@
-import os
 import sys
-
-import pytest
-
-# Ajoutez le chemin du projet au PYTHONPATH
+import os
+# Add the project path to PYTHONPATH
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Import de la fonction à tester
-from src.app import _is_url_excluded, excluded_urls
+import pytest
+import tempfile
+import yaml
+
+from src.kubernetes_client import is_url_excluded, invalidate_excluded_patterns_cache
 
 
-@pytest.fixture
-def setup_excluded_urls():
-    # Réinitialiser les URLs exclues pour chaque test
-    global excluded_urls
-    excluded_urls.clear()
-    
-    # Ajouter des URLs de test
-    excluded_urls.update([
-        "example.com/admin",
-        "api.example.com/private/*",
-        "test.com"
-    ])
+class TestExclude:
+    """Test suite for URL exclusion functionality"""
 
-def test_exact_match(setup_excluded_urls):
-    assert _is_url_excluded("example.com/admin") is True
-    assert _is_url_excluded("example.com/public") is False
+    @pytest.fixture
+    def setup_excluded_urls(self, monkeypatch):
+        """Setup fixture with temporary YAML file"""
+        # Create temporary YAML file with test patterns
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+            yaml.dump([
+                "example.com/admin",
+                "api.example.com/private/*",
+                "test.com"
+            ], f)
+            temp_file = f.name
 
-def test_wildcard_match(setup_excluded_urls):
-    assert _is_url_excluded("api.example.com/private/users") is True
-    assert _is_url_excluded("api.example.com/private/settings") is True
-    assert _is_url_excluded("api.example.com/public/users") is False
+        # Patch EXCLUDED_URLS_FILE to use temp file
+        monkeypatch.setattr('src.kubernetes_client.EXCLUDED_URLS_FILE', temp_file)
 
-def test_domain_match(setup_excluded_urls):
-    assert _is_url_excluded("test.com") is True
-    assert _is_url_excluded("test.com/") is True  # Test avec slash à la fin
-    assert _is_url_excluded("test.com/any") is False  # Ne devrait pas matcher les sous-chemins
+        # Invalidate cache to force reload
+        invalidate_excluded_patterns_cache()
 
-def test_trailing_slash(setup_excluded_urls):
-    # Ajouter une URL avec slash final pour tester
-    excluded_urls.add("service.example.com/")
-    
-    assert _is_url_excluded("service.example.com") is True
-    assert _is_url_excluded("service.example.com/") is True
+        yield temp_file
+
+        # Cleanup
+        os.unlink(temp_file)
+        invalidate_excluded_patterns_cache()
+
+    def test_exact_match(self, setup_excluded_urls):
+        """Test exact URL matching"""
+        assert is_url_excluded("example.com/admin", {}) is True
+        assert is_url_excluded("example.com/public", {}) is False
+
+    def test_wildcard_match(self, setup_excluded_urls):
+        """Test wildcard pattern matching"""
+        assert is_url_excluded("api.example.com/private/users", {}) is True
+        assert is_url_excluded("api.example.com/private/settings", {}) is True
+        assert is_url_excluded("api.example.com/public/users", {}) is False
+
+    def test_domain_match(self, setup_excluded_urls):
+        """Test domain-only matching"""
+        assert is_url_excluded("test.com", {}) is True
+        assert is_url_excluded("test.com/", {}) is True  # Test avec slash à la fin
+        # Sous-chemins ne devraient pas matcher sans wildcard
+        assert is_url_excluded("test.com/any", {}) is False
+
+    def test_trailing_slash(self, monkeypatch):
+        """Test URL normalization with trailing slashes"""
+        # Create YAML with trailing slash pattern
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+            yaml.dump(["service.example.com/"], f)
+            temp_file = f.name
+
+        try:
+            monkeypatch.setattr('src.kubernetes_client.EXCLUDED_URLS_FILE', temp_file)
+            invalidate_excluded_patterns_cache()
+
+            assert is_url_excluded("service.example.com", {}) is True
+            assert is_url_excluded("service.example.com/", {}) is True
+        finally:
+            os.unlink(temp_file)
+            invalidate_excluded_patterns_cache()

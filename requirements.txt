@@ -1,12 +1,12 @@
-aiohappyeyeballs==2.4.4
-aiohttp
-aiosignal 
+aiohappyeyeballs>=2.5.0
+aiohttp==3.12.14
+aiosignal>=1.4.0 
 asgiref==3.8.1
 asttokens==3.0.0
 attrs==24.3.0
 blinker==1.9.0
-cachetools==5.5.0
-certifi==2024.12.14
+cachetools==6.2.2
+certifi==2025.11.12
 charset-normalizer==3.4.1
 click==8.1.8
 colorama==0.4.6

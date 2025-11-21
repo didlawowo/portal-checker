@@ -46,6 +46,7 @@
         <div class="search-bar">
             <input type="search" id="searchInput" placeholder="Rechercher...">
             <button onclick="window.location.href='/refresh'">Refresh</button>
+            <button onclick="showExcludedUrls()">Exclusions</button>
         </div>
 
         <div class="table-container">
@@ -94,6 +95,19 @@
             </div>
             <div class="modal-body" id="swaggerModalBody">
                 <!-- Contenu des détails Swagger sera injecté ici -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal pour les URLs exclues -->
+    <div id="excludedUrlsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>URLs Exclues</h3>
+                <span class="modal-close excluded-modal-close">&times;</span>
+            </div>
+            <div class="modal-body" id="excludedUrlsModalBody">
+                <p class="loading-text">Chargement...</p>
             </div>
         </div>
     </div>
