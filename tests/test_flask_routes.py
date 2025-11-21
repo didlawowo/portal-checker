@@ -118,3 +118,48 @@ class TestFlaskRoutes:
         response = client.get('/refresh', follow_redirects=False)
         # Should call discovery functions
         mock_get_urls.assert_called_once()
+
+    def test_exclude_url_endpoint(self, client):
+        """Test /api/exclude endpoint adds URL to exclusion list"""
+        import tempfile
+        import yaml
+
+        # Create temp excluded URLs file
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+            yaml.dump(["existing.com"], f)
+            temp_file = f.name
+
+        try:
+            # Patch EXCLUDED_URLS_FILE from kubernetes_client where it's imported
+            with patch('src.kubernetes_client.EXCLUDED_URLS_FILE', temp_file):
+                response = client.post('/api/exclude', json={"url": "https://new.example.com/path"})
+
+                assert response.status_code == 200
+                data = response.get_json()
+                assert data['status'] == 'ok'
+
+                # Verify URL was added
+                with open(temp_file, 'r') as f:
+                    excluded = yaml.safe_load(f)
+                    assert "new.example.com/path" in excluded
+                    assert "existing.com" in excluded
+        finally:
+            import os
+            os.unlink(temp_file)
+
+    def test_exclude_url_endpoint_no_url(self, client):
+        """Test /api/exclude endpoint returns error when URL missing"""
+        response = client.post('/api/exclude', json={})
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data['status'] == 'error'
+        assert 'URL required' in data['error']
+
+    def test_refresh_async_endpoint(self, client):
+        """Test /api/refresh-async endpoint"""
+        response = client.post('/api/refresh-async')
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data['status'] == 'ok'
