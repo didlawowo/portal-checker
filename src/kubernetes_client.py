@@ -299,7 +299,7 @@ def get_all_urls_with_details(force_refresh: bool = False) -> List[Dict[str, Any
 def is_url_excluded(url: str, annotations: Dict[str, str], excluded_patterns: Optional[List[str]] = None) -> bool:
     """Check if URL should be excluded based on patterns or annotations"""
     # Check Kubernetes annotation
-    if annotations.get("portal-checker.io/exclude", "").lower() == "true":
+    if annotations and annotations.get("portal-checker.io/exclude", "").lower() == "true":
         return True
     
     # Load patterns if not provided
