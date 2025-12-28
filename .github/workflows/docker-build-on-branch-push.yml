@@ -15,7 +15,7 @@ permissions:
 jobs:
   docker-build-and-push:
     name: Build Docker Image and Push to Docker Hub
-    runs-on: ubuntu-latest
+    runs-on: arc-runner-portal-checker
 
     steps:
       - name: Checkout Repository Code
