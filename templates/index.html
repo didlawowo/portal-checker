@@ -7,6 +7,7 @@
     <meta http-equiv="refresh" content="120">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <title>Portal Urls Checker</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 
@@ -19,25 +20,31 @@
             </div>
             <div class="header-badges">
                 <span class="status-indicator success-indicator" title="{{ status_counts.success }} URLs OK">
-                    ✅ {{ status_counts.success }}
+                    <i class="fa-solid fa-check"></i>
+                    {{ status_counts.success }}
                 </span>
                 <span class="status-indicator warning-indicator" title="{{ status_counts.client_errors }} erreurs client">
-                    ⚠️ {{ status_counts.client_errors }}
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    {{ status_counts.client_errors }}
                 </span>
                 <span class="status-indicator error-indicator" title="{{ status_counts.server_errors }} erreurs serveur">
-                    ❌ {{ status_counts.server_errors }}
+                    <i class="fa-solid fa-xmark"></i>
+                    {{ status_counts.server_errors }}
                 </span>
                 <span class="status-indicator total-indicator" title="{{ status_counts.total }} URLs au total">
-                    📊 {{ status_counts.total }}
+                    <i class="fa-solid fa-chart-simple"></i>
+                    {{ status_counts.total }}
                 </span>
                 {% if swagger_counts.apis_found > 0 %}
                 <span class="status-indicator swagger-indicator" title="{{ swagger_counts.apis_found }} APIs Swagger découvertes">
-                    📋 {{ swagger_counts.apis_found }}
+                    <i class="fa-solid fa-file-code"></i>
+                    {{ swagger_counts.apis_found }}
                 </span>
                 {% endif %}
                 {% if swagger_counts.security_issues > 0 %}
                 <span class="status-indicator security-indicator" title="{{ swagger_counts.security_issues }} problèmes de sécurité détectés">
-                    🚨 {{ swagger_counts.security_issues }}
+                    <i class="fa-solid fa-shield-halved"></i>
+                    {{ swagger_counts.security_issues }}
                 </span>
                 {% endif %}
             </div>
@@ -53,15 +60,15 @@
             <table>
                 <thead>
                     <tr>
-                        <th onclick="sortTable('namespace')" style="width: 150px; min-width: 150px;">Namespace<span id="namespaceSort"></span></th>
-                        <th onclick="sortTable('name')" style="width: 200px; min-width: 200px;">Name<span id="nameSort"></span></th>
-                        <th onclick="sortTable('type')" style="width: 80px; min-width: 80px;">Type<span id="typeSort"></span></th>
-                        <th style="width: 50px; min-width: 50px;" title="Ingress Class / Gateway">Class</th>
-                        <th style="width: 45px; min-width: 45px;" title="Annotations">Annot</th>
+                        <th onclick="sortTable('namespace')" style="width: 120px; min-width: 120px;">Namespace<span id="namespaceSort"></span></th>
+                        <th onclick="sortTable('name')" style="width: 180px; min-width: 180px;">Name<span id="nameSort"></span></th>
+                        <th style="width: 100px; min-width: 100px;" title="Type, Class, Annotations">Info</th>
+                        {% if autoswagger_enabled %}
                         <th style="width: 45px; min-width: 45px;" title="Swagger/OpenAPI">Swag</th>
+                        {% endif %}
                         <th onclick="sortTable('ssl_days')" style="width: 32px; min-width: 32px;" title="SSL Certificate Expiration">SSL<span id="ssl_daysSort"></span></th>
                         <!-- <th>Labels</th> -->
-                        <th onclick="sortTable('url')" style="width: 180px; min-width: 150px;">URL<span id="urlSort"></span></th>
+                        <th onclick="sortTable('url')" style="width: 200px; min-width: 170px;">URL<span id="urlSort"></span></th>
                         <th onclick="sortTable('status')" style="width: 80px; min-width: 80px;">Status<span id="statusSort"></span></th>
                         <th onclick="sortTable('response_time')" style="width: 60px; min-width: 60px;">Time<span id="response_timeSort"></span></th>
                         <th style="width: 40px; min-width: 40px;" title="Exclure l'URL">Excl</th>
@@ -115,6 +122,7 @@
     <script>
         // Récupération des données depuis Flask
         window.initialData = {{ results | tojson | safe }};
+        window.autoswaggerEnabled = {{ autoswagger_enabled | tojson }};
     </script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>

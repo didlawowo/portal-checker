@@ -9,13 +9,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Major Changes in v3.0.0
 
 1. **Modular Architecture**: Complete refactoring from monolithic `app.py` to `src/` module structure
-2. **Autoswagger Integration**: Automated Swagger/OpenAPI discovery with PII and secrets detection
-3. **Presidio PII Detection**: Optional NLP-based PII detection with SpaCy model support via init container
-4. **Enhanced Configuration**: Centralized config management in `src/config.py`
-5. **Improved Resource Usage**: Optimized memory limits (256Mi) and requests (64Mi)
-6. **Better Testing**: Modular structure enables isolated unit testing
-7. **Type Safety**: Full type hints throughout codebase
-8. **Async Patterns**: Consistent async/await for I/O operations
+2. **Autoswagger Integration**: Automated Swagger/OpenAPI discovery with PII and secrets detection (regex-based)
+3. **Enhanced Configuration**: Centralized config management in `src/config.py`
+4. **Improved Resource Usage**: Optimized memory limits (256Mi) and requests (64Mi)
+5. **Better Testing**: Modular structure enables isolated unit testing
+6. **Type Safety**: Full type hints throughout codebase
+7. **Async Patterns**: Consistent async/await for I/O operations
 
 ## Development Commands
 
@@ -100,7 +99,7 @@ Portal Checker v3.0.0 uses a modular architecture with dedicated modules in the 
 - **Smart URL Exclusions**: YAML patterns, Kubernetes annotations, and fnmatch support
 - **Auto-Discovery**: Creates URLs file on startup if missing
 - **Swagger/OpenAPI Discovery**: Automated API documentation discovery with 13+ common endpoints
-- **PII Detection**: Presidio-based (with SpaCy models) or regex-based fallback
+- **PII Detection**: Regex-based pattern detection for emails, phones, SSN, credit cards
 - **Security Scanning**: Detects API keys, JWT tokens, AWS keys, database URLs, private keys
 
 ### Key Configuration Patterns
@@ -143,7 +142,6 @@ AUTOSWAGGER_TIMEOUT=3                           # HTTP request timeout for Swagg
 AUTOSWAGGER_MAX_CONCURRENT=5                    # Max concurrent Swagger discovery requests
 AUTOSWAGGER_BRUTE_FORCE=false                   # Enable brute force parameter testing
 AUTOSWAGGER_INCLUDE_NON_GET=false               # Include POST/PUT/DELETE methods in analysis
-DISABLE_PRESIDIO=true|false                     # Disable Presidio PII detection (use basic regex instead)
 SWAGGER_DISCOVERY_INTERVAL=3600                 # Swagger discovery interval in seconds (default: 1 hour)
 
 # Caching configuration
@@ -160,15 +158,6 @@ CHECK_INTERVAL=30                               # Periodic URL testing interval 
 - **Volume Mounts**:
   - `/app/config` (read-only): ConfigMap with exclusion patterns
   - `/app/data` (writable): EmptyDir for runtime URLs cache
-  - `/app/spacy_models` (optional): Shared volume with SpaCy models from init container
-- **Init Container** (optional, when Presidio enabled):
-  - Image: `fizzbuzz2/portal-checker-spacy-init:latest`
-  - Copies pre-installed SpaCy models to PVC
-  - Avoids network downloads at runtime
-- **PVC** (optional, when Presidio enabled):
-  - Name: `{release-name}-spacy-models`
-  - Size: 1Gi (configurable via `presidio.storageSize`)
-  - Contains SpaCy models (`en_core_web_sm`, `en_core_web_md`)
 - **RBAC**: Cluster-wide read permissions for Ingress/HTTPRoute discovery
 - **Security**: Non-root user (1000:1000), security context enforced
 
@@ -217,10 +206,6 @@ task validate-yaml
 │   └── excluded-urls.yaml  # Exclusion patterns
 ├── data/                   # Writable EmptyDir mount
 │   └── urls.yaml          # Auto-generated discovered URLs
-├── spacy_models/           # Optional: SpaCy models from init container
-│   ├── .ready             # Marker file indicating models ready
-│   ├── en_core_web_sm/    # Small SpaCy model
-│   └── en_core_web_md/    # Medium SpaCy model
 ├── templates/              # Jinja2 templates
 └── static/                 # CSS/JS assets
 ```
@@ -297,48 +282,15 @@ The integration automatically tests 13+ common Swagger/OpenAPI paths:
 - **Security Scanning**: Automatic PII and secrets detection
 - **Endpoint Analysis**: Extracts paths, methods, parameters, tags, and security requirements
 
-### PII Detection System
+### PII Detection
 
-#### Three-Tier Detection Strategy
+Uses regex patterns to detect sensitive data in API specifications:
 
-1. **Presidio with SpaCy Models** (Most Accurate):
-   - Uses pre-trained NLP models for context-aware detection
-   - Models loaded from init container PVC
-   - Detects: EMAIL_ADDRESS, PHONE_NUMBER, CREDIT_CARD, PERSON names, SSN
-
-2. **Presidio Pattern-Based** (Fallback):
-   - Custom regex patterns without NLP
-   - Lightweight, no external dependencies
-   - Works in environments without SpaCy models
-
-3. **Basic Regex** (Minimal Fallback):
-   - Simple pattern matching
-   - Used when Presidio is disabled (`DISABLE_PRESIDIO=true`)
-
-#### SpaCy Model Integration
-
-**Init Container Workflow:**
-```
-1. spacy-init container starts
-2. Copies pre-installed models to PVC (/app/spacy_models)
-3. Creates .ready marker file
-4. Main container starts and checks for .ready
-5. If found: Load SpaCy models → Enhanced PII detection
-6. If not found: Fallback to pattern-based detection
-```
-
-**Configuration:**
-```yaml
-# helm/values.yaml
-presidio:
-  initImage: "fizzbuzz2/portal-checker-spacy-init:latest"
-  storageClass: ""  # Use default storage class
-  storageSize: "1Gi"
-
-autoswagger:
-  enabled: true
-  disablePresidio: false  # Set to true to skip Presidio entirely
-```
+- **EMAIL_ADDRESS**: Email patterns
+- **PHONE_NUMBER**: Phone number formats
+- **PERSON**: Name patterns (First Last)
+- **SSN**: Social Security Number patterns
+- **CREDIT_CARD**: Credit card number patterns
 
 ### Secrets Detection
 
@@ -372,9 +324,6 @@ AUTOSWAGGER_MAX_CONCURRENT=5
 # Advanced features (experimental)
 AUTOSWAGGER_BRUTE_FORCE=false        # Parameter brute-forcing
 AUTOSWAGGER_INCLUDE_NON_GET=false    # Include POST/PUT/DELETE methods
-
-# PII Detection control
-DISABLE_PRESIDIO=true                # Set to false for enhanced PII detection
 SWAGGER_DISCOVERY_INTERVAL=3600      # Discovery interval (1 hour default)
 ```
 
@@ -388,7 +337,6 @@ autoswagger:
   maxConcurrent: 5
   bruteForce: false
   includeNonGet: false
-  disablePresidio: true  # Recommended for production (uses basic regex)
   discoveryInterval: 3600
 ```
 
@@ -405,7 +353,6 @@ REQUESTS_CA_BUNDLE=zscalerroot.crt
 
 The integration automatically configures SSL for:
 - aiohttp client sessions
-- Presidio library dependencies
 - External API requests
 
 ### API Endpoints
@@ -418,12 +365,10 @@ Portal Checker exposes Swagger discovery results via the main interface:
 
 ### Dependencies
 
-Additional packages for Autoswagger (in requirements.txt):
+Additional packages for Autoswagger (in pyproject.toml):
 
 ```
-beautifulsoup4==4.12.3    # HTML parsing for Swagger UI pages
-presidio-analyzer==2.2.358 # PII detection (optional)
-# SpaCy models loaded from init container, not pip-installed
+bs4>=0.0.2               # HTML parsing for Swagger UI pages (BeautifulSoup4)
 ```
 
 ### Performance Considerations
@@ -436,24 +381,11 @@ presidio-analyzer==2.2.358 # PII detection (optional)
 
 ### Troubleshooting
 
-#### Presidio Not Loading
-
-**Symptoms:**
-```
-⚠️ Failed to setup Presidio PII analyzer (will use basic regex detection instead)
-```
-
-**Solutions:**
-1. Check `DISABLE_PRESIDIO` environment variable
-2. Verify init container completed successfully
-3. Check PVC is mounted at `/app/spacy_models`
-4. Verify `.ready` marker file exists
-
 #### SSL Certificate Errors
 
 **Symptoms:**
 ```
-⚠️ SSL certificate error during Presidio setup
+⚠️ SSL certificate verification failed
 ```
 
 **Solutions:**
@@ -472,22 +404,12 @@ presidio-analyzer==2.2.358 # PII detection (optional)
 
 ### Best Practices
 
-1. **Production Environment**:
-   - Set `DISABLE_PRESIDIO=true` for basic regex detection
-   - Reduces container complexity and resource usage
-   - Avoids dependency on SpaCy models
-
-2. **Enhanced Security Scanning**:
-   - Set `DISABLE_PRESIDIO=false` for NLP-based PII detection
-   - Ensure init container and PVC are configured
-   - Monitor memory usage with SpaCy models loaded
-
-3. **Rate Limiting**:
+1. **Rate Limiting**:
    - Set `AUTOSWAGGER_RATE_LIMIT` based on your cluster size
    - Lower values for large clusters (100+ services)
    - Higher values for smaller environments
 
-4. **Discovery Interval**:
+2. **Discovery Interval**:
    - Default 3600s (1 hour) balances freshness vs. load
    - Increase for stable environments
    - Decrease for development/testing
@@ -532,7 +454,7 @@ Version 3.0.0 introduces a complete refactoring from monolithic `app.py` to a mo
 
 **src/autoswagger_integration.py**
 - Swagger/OpenAPI discovery logic
-- PII detection (Presidio + SpaCy)
+- PII detection (regex-based)
 - Secrets scanning
 - SSL certificate configuration
 
@@ -595,8 +517,6 @@ Consistent async patterns throughout:
 
 #### Error Handling
 Robust error handling with fallbacks:
-- Presidio initialization failures → pattern-based detection
-- SpaCy model loading failures → basic regex
 - SSL certificate errors → development mode fallback
 - Kubernetes API errors → graceful degradation
 
@@ -784,13 +704,12 @@ Portal Checker v3.0.0
 │   ├── URL exclusion (YAML patterns + annotations)
 │   ├── Memory optimization (deduplication, filtering)
 │   ├── Swagger/OpenAPI discovery (13+ endpoints)
-│   ├── PII detection (Presidio + SpaCy or regex)
+│   ├── PII detection (regex-based)
 │   └── Secrets scanning (API keys, tokens, etc.)
 │
 └── Deployment
     ├── Docker multi-arch (AMD64/ARM64)
     ├── Helm chart with ConfigMap
-    ├── Optional init container (SpaCy models)
     └── RBAC for cluster-wide discovery
 ```
 
@@ -863,7 +782,6 @@ task cache-status
 - Config: `/app/config/excluded-urls.yaml` (read-only ConfigMap)
 - Data: `/app/data/urls.yaml` (writable EmptyDir)
 - Source: `/app/src/*.py`
-- SpaCy: `/app/spacy_models/` (optional PVC)
 
 ### Environment Variable Quick Reference
 
@@ -874,7 +792,6 @@ task cache-status
 | `REQUEST_TIMEOUT` | `10` | HTTP request timeout (seconds) |
 | `MAX_CONCURRENT_REQUESTS` | `10` | Concurrent URL tests |
 | `ENABLE_AUTOSWAGGER` | `true` | Enable API discovery |
-| `DISABLE_PRESIDIO` | `true` | Disable NLP PII detection |
 | `LOG_FORMAT` | `text` | `json` or `text` logging |
 | `LOG_LEVEL` | `INFO` | Logging level |
 | `CUSTOM_CERT` | `zscalerroot.crt` | Custom CA certificate |
@@ -885,7 +802,6 @@ task cache-status
 |----------|---------|-------|
 | **Memory** | 64Mi | 256Mi |
 | **CPU** | 100m | 600m |
-| **Storage (PVC)** | - | 1Gi (optional, Presidio only) |
 
 ### Testing Quick Reference
 
@@ -923,19 +839,11 @@ from src.utils import check_urls_async
 3. Check logs for SSL certificate errors
 4. Verify rate limiting isn't too aggressive
 
-#### Issue: Presidio not loading
-**Check:**
-1. `DISABLE_PRESIDIO=false` to enable
-2. Init container completed successfully: `kubectl get pods -n <namespace>`
-3. PVC mounted: `kubectl describe pod <pod-name> -n <namespace>`
-4. `.ready` file exists: `kubectl exec <pod> -- ls /app/spacy_models/`
-
 #### Issue: High memory usage
 **Solutions:**
 1. Check annotation filtering is working: `task memory-check`
 2. Verify URL deduplication: Check `_test_results_cache` size
 3. Reduce `MAX_CONCURRENT_REQUESTS` if testing many URLs
-4. Disable Presidio if not needed: `DISABLE_PRESIDIO=true`
 
 #### Issue: Tests failing after modular refactor
 **Solution**: Update test imports to use `src.` prefix

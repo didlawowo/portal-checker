@@ -24,16 +24,8 @@ spec:
       {{- with .Values.securityContext }}
       securityContext: {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- $initContainers := list }}
       {{- if .Values.initContainers }}
-        {{- $initContainers = concat $initContainers .Values.initContainers }}
-      {{- end }}
-      {{- if not .Values.autoswagger.disablePresidio }}
-        {{- $spacyInit := dict "name" "spacy-model-init" "image" .Values.presidio.initImage "imagePullPolicy" "IfNotPresent" "volumeMounts" (list (dict "name" "spacy-models-volume" "mountPath" "/shared")) "resources" (dict "requests" (dict "cpu" "100m" "memory" "128Mi") "limits" (dict "cpu" "500m" "memory" "512Mi")) }}
-        {{- $initContainers = append $initContainers $spacyInit }}
-      {{- end }}
-      {{- if $initContainers }}
-      initContainers: {{- toYaml $initContainers | nindent 8 }}
+      initContainers: {{- toYaml .Values.initContainers | nindent 8 }}
       {{- end }}
       containers:
         - name: {{ default .Values.application.containerName (include "application.fullname" .) }}
@@ -57,13 +49,8 @@ spec:
           {{- with .Values.envFrom }}
           envFrom: {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- $volumeMounts := .Values.volumeMounts | default list }}
-          {{- if not .Values.autoswagger.disablePresidio }}
-            {{- $spacyMount := dict "name" "spacy-models-volume" "mountPath" "/app/spacy_models" "readOnly" true }}
-            {{- $volumeMounts = append $volumeMounts $spacyMount }}
-          {{- end }}
-          {{- if $volumeMounts }}
-          volumeMounts: {{- toYaml $volumeMounts | nindent 12 }}
+          {{- with .Values.volumeMounts }}
+          volumeMounts: {{- toYaml . | nindent 12 }}
           {{- end }}
           {{- with .Values.livenessProbe }}
           livenessProbe:
@@ -89,13 +76,8 @@ spec:
             successThreshold: {{ .successThreshold }}
             failureThreshold: {{ .failureThreshold }}
           {{- end }}
-      {{- $volumes := .Values.volumes | default list }}
-      {{- if not .Values.autoswagger.disablePresidio }}
-        {{- $spacyVolume := dict "name" "spacy-models-volume" "persistentVolumeClaim" (dict "claimName" (printf "%s-spacy-models" (include "application.fullname" .))) }}
-        {{- $volumes = append $volumes $spacyVolume }}
-      {{- end }}
-      {{- if $volumes }}
-      volumes: {{- toYaml $volumes | nindent 8 }}
+      {{- with .Values.volumes }}
+      volumes: {{- toYaml . | nindent 8 }}
       {{- end }}
       {{- with .Values.dnsConfig }}
       dnsConfig: {{- toYaml . | nindent 8 }}

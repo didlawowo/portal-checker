@@ -3,3 +3,7 @@ static-analysis.datadog.yml
 **/certs/*
 __pycache__/
 *.pyc
+*.egg-info/
+.eggs/
+dist/
+build/

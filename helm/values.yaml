@@ -80,8 +80,6 @@ env:
   value: "false"
 - name: AUTOSWAGGER_INCLUDE_NON_GET
   value: "false"
-- name: DISABLE_PRESIDIO
-  value: "true"
 - name: SWAGGER_DISCOVERY_INTERVAL
   value: "3600"
 envFrom: []
@@ -175,14 +173,7 @@ autoswagger:
   maxConcurrent: 5
   bruteForce: false
   includeNonGet: false
-  disablePresidio: true
   discoveryInterval: 3600 # 1 heure par défaut
-
-# Presidio configuration (PII detection)
-presidio:
-  initImage: "fizzbuzz2/portal-checker-spacy-init:latest"
-  storageClass: "" # Use default storage class
-  storageSize: "1Gi"
 # DNS configuration
 dnsConfig: {}
 

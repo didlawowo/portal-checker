@@ -1,5 +1,6 @@
 // Récupération des données depuis Flask
 window.initialData = window.initialData || [];
+window.autoswaggerEnabled = window.autoswaggerEnabled !== undefined ? window.autoswaggerEnabled : false;
 let currentData = [...initialData];
 let sortConfig = {
     field: 'url',
@@ -11,14 +12,12 @@ let swaggerData = null;
 
 // Fonction pour mettre à jour les flèches de tri
 function updateSortArrows() {
-    // Reset all arrows
-    document.getElementById('namespaceSort').textContent = '';
-    document.getElementById('nameSort').textContent = '';
-    document.getElementById('typeSort').textContent = '';
-    document.getElementById('urlSort').textContent = '';
-    document.getElementById('statusSort').textContent = '';
-    document.getElementById('response_timeSort').textContent = '';
-    document.getElementById('ssl_daysSort').textContent = '';
+    // Reset all arrows - use optional chaining for elements that may not exist
+    const sortElements = ['namespaceSort', 'nameSort', 'urlSort', 'statusSort', 'response_timeSort', 'ssl_daysSort'];
+    sortElements.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = '';
+    });
 
     // Set arrow for current sort field
     const arrow = sortConfig.direction === 'asc' ? '↑' : '↓';
@@ -70,51 +69,110 @@ function getStatusClass(status) {
     return 'status-error';
 }
 
-// Fonction pour obtenir l'emoji du status
-function getStatusEmoji(status) {
-    if (status === 200) return '✅';
-    if (status === 301 || status === 302) return '🔄';
-    if (status === 401) return '⚠️';
-    if (status === 403) return '🚫';
-    if (status === 404) return '❓';
-    if (status === 405) return '⚠️';
-    if (status === 408) return '⏱️';
-    if (status === 429) return '🐌';
-    if (status === 502 || status === 503) return '💥';
-    return '❌';
+// Font Awesome icons for status display
+const statusIcons = {
+    success: '<i class="fa-solid fa-check"></i>',
+    redirect: '<i class="fa-solid fa-rotate"></i>',
+    warning: '<i class="fa-solid fa-triangle-exclamation"></i>',
+    forbidden: '<i class="fa-solid fa-ban"></i>',
+    notFound: '<i class="fa-solid fa-question"></i>',
+    timeout: '<i class="fa-solid fa-clock"></i>',
+    rateLimit: '<i class="fa-solid fa-gauge-high"></i>',
+    error: '<i class="fa-solid fa-xmark"></i>'
+};
+
+// Fonction pour obtenir l'icône du status
+function getStatusIcon(status) {
+    if (status === 200) return statusIcons.success;
+    if (status === 301 || status === 302) return statusIcons.redirect;
+    if (status === 401) return statusIcons.warning;
+    if (status === 403) return statusIcons.forbidden;
+    if (status === 404) return statusIcons.notFound;
+    if (status === 405) return statusIcons.warning;
+    if (status === 408) return statusIcons.timeout;
+    if (status === 429) return statusIcons.rateLimit;
+    if (status === 502 || status === 503) return statusIcons.error;
+    return statusIcons.error;
 }
 
-// Fonction pour obtenir l'ingress class ou la gateway
-function getIngressClassOrGateway(item) {
-    const itemType = (item.type || '').toLowerCase();
+// Fonction pour formater la colonne Info (Type + Class + Annotations)
+function formatInfoColumn(item) {
+    const parts = [];
 
-    if (itemType === 'ingress' && item.ingress_class) {
-        return `<span style="background: #e5f3ff; color: #0066cc; padding: 1px 4px; border-radius: 3px; font-size: 11px; white-space: nowrap;">${item.ingress_class}</span>`;
-    } else if (itemType === 'httproute' && item.ingress_class) {
-        // Pour HTTPRoute, ingress_class contient "gateway/{name}"
-        return `<span style="background: #f0f9ff; color: #0284c7; padding: 1px 4px; border-radius: 3px; font-size: 11px; white-space: nowrap;">${item.ingress_class}</span>`;
+    // Type badge
+    const itemType = (item.type || '').toLowerCase();
+    if (itemType === 'ingress') {
+        parts.push(`<span class="info-badge info-type-ingress" title="Ingress">ing</span>`);
+    } else if (itemType === 'httproute') {
+        parts.push(`<span class="info-badge info-type-httproute" title="HTTPRoute">http</span>`);
     }
-    return '-';
+
+    // Class/Gateway badge
+    if (item.ingress_class) {
+        const fullName = item.ingress_class;
+        // Pour les gateways, on extrait juste le nom court
+        let shortName = fullName;
+        if (fullName.includes('/')) {
+            const parts = fullName.split('/');
+            shortName = parts[parts.length - 1];
+        }
+        if (shortName.length > 10) {
+            shortName = shortName.slice(0, 10) + '…';
+        }
+        parts.push(`<span class="info-badge info-class" title="${fullName}">${shortName}</span>`);
+    }
+
+    // Annotations badge (si présent)
+    const annotationsHtml = formatAnnotationsCompact(item.annotations);
+    if (annotationsHtml !== '-') {
+        parts.push(annotationsHtml);
+    }
+
+    return parts.length > 0 ? `<div class="info-column">${parts.join('')}</div>` : '-';
+}
+
+// Fonction pour formater les annotations de manière compacte
+function formatAnnotationsCompact(annotations) {
+    if (!annotations) return '-';
+
+    try {
+        if (typeof annotations === 'string') {
+            try {
+                annotations = JSON.parse(annotations);
+            } catch (e) {
+                return annotations.trim() ? annotations : '-';
+            }
+        }
+
+        const annotationKeys = Object.keys(annotations || {});
+        if (annotationKeys.length === 0) {
+            return '-';
+        }
+
+        const dataId = 'data-' + Math.random().toString(36).slice(2, 11);
+        window.annotationsData = window.annotationsData || {};
+        window.annotationsData[dataId] = annotations;
+
+        return `<span class="info-badge info-annotations" onclick="showAnnotationsModal('${dataId}')" title="${annotationKeys.length} annotation${annotationKeys.length > 1 ? 's' : ''}">${annotationKeys.length}</span>`;
+    } catch (error) {
+        return '-';
+    }
 }
 
 // Fonction pour formater les informations SSL
 function formatSSLInfo(ssl_info) {
     if (!ssl_info) {
-        console.debug('No SSL info');
         return '<span style="color: #999; font-size: 10px;">N/A</span>';
     }
 
     // Check if it's an HTTP-only URL
     if (ssl_info.http_only === true) {
-        return '<span style="color: #ea580c; background: #ffedd5; padding: 2px 4px; border-radius: 3px; font-size: 10px; font-weight: 600;" title="⚠️ HTTP uniquement - Pas de certificat SSL">⚠️ HTTP</span>';
+        return '<span style="color: #ea580c; background: #ffedd5; padding: 2px 4px; border-radius: 3px; font-size: 10px; font-weight: 600;" title="HTTP uniquement - Pas de certificat SSL">HTTP</span>';
     }
 
     if (ssl_info.days_remaining === undefined) {
-        console.debug('SSL info exists but no days_remaining:', ssl_info);
-        return '<span style="color: #ea580c; background: #ffedd5; padding: 2px 4px; border-radius: 3px; font-size: 10px; font-weight: 600;" title="⚠️ Certificat SSL non disponible">⚠️ N/A</span>';
+        return '<span style="color: #ea580c; background: #ffedd5; padding: 2px 4px; border-radius: 3px; font-size: 10px; font-weight: 600;" title="Certificat SSL non disponible">N/A</span>';
     }
-
-    console.debug('Formatting SSL info:', ssl_info);
 
     const days = ssl_info.days_remaining;
     let color, bgColor;
@@ -185,15 +243,13 @@ function renderTable() {
         tr.innerHTML = `
             <td>${item.namespace}</td>
             <td>${item.name}</td>
-            <td>${item.type}</td>
-            <td>${getIngressClassOrGateway(item)}</td>
-            <td>${formatAnnotations(item.annotations)}</td>
-            <td>${getSwaggerButton(item.url)}</td>
+            <td>${formatInfoColumn(item)}</td>
+            ${window.autoswaggerEnabled ? `<td>${getSwaggerButton(item.url)}</td>` : ''}
             <td>${formatSSLInfo(item.ssl_info)}</td>
             <td><a href="${linkUrl}" target="_blank" title="${displayUrl}">${displayUrl}</a></td>
             <td>
                 <span class="status-badge ${getStatusClass(item.status)}">
-                    ${getStatusEmoji(item.status)} ${item.status}
+                    ${getStatusIcon(item.status)} ${item.status}
                 </span>
             </td>
             <td>${item.response_time ? Math.round(item.response_time) + ' ms' : '-'}</td>
@@ -346,7 +402,7 @@ function showSwaggerModal(host) {
     if (api.security_issues > 0 && (api.pii_detected.length > 0 || api.secrets_detected.length > 0)) {
         content += `
             <div class="swagger-security-issues">
-                <div class="swagger-security-title">🚨 Problèmes de sécurité détectés (${api.security_issues})</div>
+                <div class="swagger-security-title"><i class="fa-solid fa-shield-exclamation"></i> Problèmes de sécurité détectés (${api.security_issues})</div>
         `;
         
         if (api.pii_detected.length > 0) {
@@ -379,7 +435,7 @@ function showSwaggerModal(host) {
                 <div class="swagger-endpoint-header" onclick="toggleSwaggerEndpoint('${endpointId}')">
                     <span class="swagger-method ${methodClass}">${endpoint.method}</span>
                     <span class="swagger-path">${endpoint.path}</span>
-                    ${endpoint.has_security ? '🔒' : '🔓'}
+                    ${endpoint.has_security ? '<i class="fa-solid fa-lock" style="color: #16a34a;"></i>' : '<i class="fa-solid fa-lock-open" style="color: #dc2626;"></i>'}
                 </div>
                 <div class="swagger-endpoint-details" id="${endpointId}">
                     ${endpoint.description ? `<p><strong>Description:</strong> ${endpoint.description}</p>` : ''}
@@ -424,7 +480,7 @@ async function loadSwaggerData() {
             renderTable();
         }
     } catch (error) {
-        console.log('Swagger data not available:', error);
+        // Swagger data not available - silent fail
     }
 }
 
@@ -438,18 +494,13 @@ async function showExcludedUrls() {
     modalBody.innerHTML = '<p class="loading-text">Chargement...</p>';
 
     try {
-        console.log('Fetching excluded URLs from /api/excluded-urls');
         const response = await fetch('/api/excluded-urls');
-        console.log('Response status:', response.status);
 
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Error response:', errorText);
-            throw new Error(`Erreur HTTP ${response.status}: ${errorText}`);
+            throw new Error(`Erreur HTTP ${response.status}`);
         }
 
         const data = await response.json();
-        console.log('Received data:', data);
         const excludedUrls = data.excluded_urls || [];
 
         if (excludedUrls.length === 0) {
@@ -467,7 +518,6 @@ async function showExcludedUrls() {
             modalBody.innerHTML = html;
         }
     } catch (error) {
-        console.error('Error fetching excluded URLs:', error);
         modalBody.innerHTML = '<p class="error-text">Erreur lors du chargement des URLs exclues</p>';
     }
 }
@@ -496,15 +546,14 @@ async function excludeUrl(url) {
         const data = await response.json();
 
         if (response.ok) {
-            alert(`✅ ${data.message}\n\nPour voir les changements, cliquez sur le bouton "Refresh 🔄" en haut de la page.`);
+            alert(`${data.message}\n\nPour voir les changements, cliquez sur le bouton "Refresh" en haut de la page.`);
             // Return to home page
             window.location.href = '/';
         } else {
-            alert(`❌ Erreur: ${data.error || data.message}`);
+            alert(`Erreur: ${data.error || data.message}`);
         }
     } catch (error) {
-        console.error('Error excluding URL:', error);
-        alert(`❌ Erreur lors de l'exclusion: ${error.message}`);
+        alert(`Erreur lors de l'exclusion: ${error.message}`);
     }
 }
 
@@ -517,7 +566,7 @@ async function scanSwagger(url, event) {
         // Show loading indicator
         const button = event.target;
         const originalContent = button.innerHTML;
-        button.innerHTML = '⏳';
+        button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
         button.disabled = true;
 
         const response = await fetch(`/api/swagger/scan/${encodedUrl}`, {
@@ -531,12 +580,12 @@ async function scanSwagger(url, event) {
 
         if (response.ok) {
             if (data.result) {
-                alert(`✅ Swagger trouvé pour ${url}!\n\n${data.result.title}\n${data.result.endpoint_count} endpoints détectés`);
+                alert(`Swagger trouvé pour ${url}!\n\n${data.result.title}\n${data.result.endpoint_count} endpoints détectés`);
                 // Reload Swagger data and refresh table
                 await loadSwaggerData();
                 renderTable();
             } else {
-                alert(`ℹ️ ${data.message}`);
+                alert(data.message);
             }
         } else {
             throw new Error(data.error || 'Erreur lors du scan');
@@ -547,8 +596,7 @@ async function scanSwagger(url, event) {
         button.disabled = false;
 
     } catch (error) {
-        console.error('Error scanning Swagger:', error);
-        alert(`❌ Erreur lors du scan Swagger: ${error.message}`);
+        alert(`Erreur lors du scan Swagger: ${error.message}`);
 
         // Restore button on error
         if (button) {
@@ -583,13 +631,6 @@ function handleSearch(event) {
 
 // Initialisation au chargement du DOM
 document.addEventListener('DOMContentLoaded', function() {
-    // Log des données initiales pour debug
-    console.log('Initial data loaded:', window.initialData.length, 'items');
-    if (window.initialData.length > 0) {
-        console.log('Sample item:', window.initialData[0]);
-        console.log('Sample SSL info:', window.initialData[0].ssl_info);
-    }
-
     // Écouteurs d'événements
     document.getElementById('searchInput').addEventListener('input', handleSearch);
 
@@ -638,8 +679,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Charger les données Swagger
-    loadSwaggerData();
+    // Charger les données Swagger seulement si activé
+    if (window.autoswaggerEnabled) {
+        loadSwaggerData();
+    }
 
     // Rendu initial
     updateSortArrows();

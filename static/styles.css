@@ -240,7 +240,11 @@ body {
     cursor: default;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
+}
+
+.status-indicator i {
+    font-size: 14px;
 }
 
 .success-indicator {
@@ -480,22 +484,61 @@ td:nth-child(3) {
     text-align: center;
 }
 
-/* Style spécifique pour la colonne Ingress Class */
-td:nth-child(4) {
-    max-width: 60px;
-    text-align: center;
-    padding: 8px 4px;
+/* Style spécifique pour la colonne Info (Type + Class + Annotations) */
+td:nth-child(3) {
+    max-width: 120px;
+    padding: 6px 4px;
 }
 
-/* Style spécifique pour la colonne Annotations */
-td:nth-child(5) {
-    max-width: 50px;
+.info-column {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    align-items: center;
+}
+
+.info-badge {
+    display: inline-block;
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: default;
+}
+
+.info-type-ingress {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.info-type-httproute {
+    background: #f0fdf4;
+    color: #166534;
+}
+
+.info-class {
+    background: #f3f4f6;
+    color: #374151;
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.info-annotations {
+    background: #3b82f6;
+    color: white;
+    cursor: pointer;
+    min-width: 18px;
     text-align: center;
-    padding: 8px 4px;
+}
+
+.info-annotations:hover {
+    background: #2563eb;
 }
 
 /* Style spécifique pour la colonne Swagger */
-td:nth-child(6) {
+td:nth-child(4) {
     max-width: 50px;
     text-align: center;
     padding: 8px 4px;
@@ -574,6 +617,13 @@ td:nth-child(10) {
     padding: 4px 8px;
     border-radius: 9999px;
     font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.status-badge i {
+    font-size: 12px;
 }
 
 .status-200 {

@@ -1,6 +1,7 @@
 """
 Configuration settings for Portal Checker
 """
+
 import os
 from typing import Optional
 
@@ -18,11 +19,15 @@ MAX_CONCURRENT_REQUESTS = int(os.getenv("MAX_CONCURRENT_REQUESTS", "10"))
 
 # Cache Configuration
 CACHE_TTL_SECONDS = int(os.getenv("CACHE_TTL_SECONDS", "300"))  # 5 minutes
-KUBERNETES_POLL_INTERVAL = int(os.getenv("KUBERNETES_POLL_INTERVAL", "600"))  # 10 minutes
+KUBERNETES_POLL_INTERVAL = int(
+    os.getenv("KUBERNETES_POLL_INTERVAL", "600")
+)  # 10 minutes
 CHECK_INTERVAL = int(os.getenv("CHECK_INTERVAL", "30"))  # 30 seconds
 
 # Swagger Discovery Configuration
-SWAGGER_DISCOVERY_INTERVAL = int(os.getenv("SWAGGER_DISCOVERY_INTERVAL", "3600"))  # 1 hour
+SWAGGER_DISCOVERY_INTERVAL = int(
+    os.getenv("SWAGGER_DISCOVERY_INTERVAL", "3600")
+)  # 1 hour
 
 # File Paths
 URLS_FILE = os.getenv(
@@ -31,7 +36,9 @@ URLS_FILE = os.getenv(
 )
 EXCLUDED_URLS_FILE = os.getenv(
     "EXCLUDED_URLS_FILE",
-    "config/excluded-urls.yaml" if FLASK_ENV == "development" else "/app/config/excluded-urls.yaml",
+    "config/excluded-urls.yaml"
+    if FLASK_ENV == "development"
+    else "/app/config/excluded-urls.yaml",
 )
 
 # SSL Configuration
@@ -42,7 +49,9 @@ KUBE_ENV = os.getenv("KUBE_ENV", "production")
 
 # Features
 AUTO_REFRESH_ON_START = os.getenv("AUTO_REFRESH_ON_START", "true").lower() == "true"
-ENABLE_SLACK_NOTIFICATIONS = os.getenv("ENABLE_SLACK_NOTIFICATIONS", "false").lower() == "true"
+ENABLE_SLACK_NOTIFICATIONS = (
+    os.getenv("ENABLE_SLACK_NOTIFICATIONS", "false").lower() == "true"
+)
 SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL", "")
 ENABLE_AUTOSWAGGER = os.getenv("ENABLE_AUTOSWAGGER", "true").lower() == "true"
 
