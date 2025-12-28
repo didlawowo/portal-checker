@@ -243,26 +243,8 @@ body {
     gap: 6px;
 }
 
-.status-indicator .icon {
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-}
-
-/* Inline icons for dynamic content */
-.inline-icon {
-    width: 16px;
-    height: 16px;
-    vertical-align: middle;
-    display: inline-block;
-}
-
-.inline-icon.lock-icon {
-    color: #16a34a;
-}
-
-.inline-icon.unlock-icon {
-    color: #dc2626;
+.status-indicator i {
+    font-size: 14px;
 }
 
 .success-indicator {
@@ -640,10 +622,8 @@ td:nth-child(10) {
     gap: 4px;
 }
 
-.status-badge .status-icon {
-    width: 14px;
-    height: 14px;
-    flex-shrink: 0;
+.status-badge i {
+    font-size: 12px;
 }
 
 .status-200 {

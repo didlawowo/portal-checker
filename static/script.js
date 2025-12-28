@@ -69,20 +69,20 @@ function getStatusClass(status) {
     return 'status-error';
 }
 
-// SVG icons for status display
+// Font Awesome icons for status display
 const statusIcons = {
-    success: '<svg class="status-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>',
-    redirect: '<svg class="status-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0020 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 004 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>',
-    warning: '<svg class="status-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>',
-    forbidden: '<svg class="status-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8 0-1.85.63-3.55 1.69-4.9L16.9 18.31C15.55 19.37 13.85 20 12 20zm6.31-3.1L7.1 5.69C8.45 4.63 10.15 4 12 4c4.42 0 8 3.58 8 8 0 1.85-.63 3.55-1.69 4.9z"/></svg>',
-    notFound: '<svg class="status-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/></svg>',
-    timeout: '<svg class="status-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>',
-    rateLimit: '<svg class="status-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/></svg>',
-    error: '<svg class="status-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>'
+    success: '<i class="fa-solid fa-check"></i>',
+    redirect: '<i class="fa-solid fa-rotate"></i>',
+    warning: '<i class="fa-solid fa-triangle-exclamation"></i>',
+    forbidden: '<i class="fa-solid fa-ban"></i>',
+    notFound: '<i class="fa-solid fa-question"></i>',
+    timeout: '<i class="fa-solid fa-clock"></i>',
+    rateLimit: '<i class="fa-solid fa-gauge-high"></i>',
+    error: '<i class="fa-solid fa-xmark"></i>'
 };
 
 // Fonction pour obtenir l'icône du status
-function getStatusEmoji(status) {
+function getStatusIcon(status) {
     if (status === 200) return statusIcons.success;
     if (status === 301 || status === 302) return statusIcons.redirect;
     if (status === 401) return statusIcons.warning;
@@ -249,7 +249,7 @@ function renderTable() {
             <td><a href="${linkUrl}" target="_blank" title="${displayUrl}">${displayUrl}</a></td>
             <td>
                 <span class="status-badge ${getStatusClass(item.status)}">
-                    ${getStatusEmoji(item.status)} ${item.status}
+                    ${getStatusIcon(item.status)} ${item.status}
                 </span>
             </td>
             <td>${item.response_time ? Math.round(item.response_time) + ' ms' : '-'}</td>
@@ -402,7 +402,7 @@ function showSwaggerModal(host) {
     if (api.security_issues > 0 && (api.pii_detected.length > 0 || api.secrets_detected.length > 0)) {
         content += `
             <div class="swagger-security-issues">
-                <div class="swagger-security-title"><svg class="inline-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg> Problèmes de sécurité détectés (${api.security_issues})</div>
+                <div class="swagger-security-title"><i class="fa-solid fa-shield-exclamation"></i> Problèmes de sécurité détectés (${api.security_issues})</div>
         `;
         
         if (api.pii_detected.length > 0) {
@@ -435,7 +435,7 @@ function showSwaggerModal(host) {
                 <div class="swagger-endpoint-header" onclick="toggleSwaggerEndpoint('${endpointId}')">
                     <span class="swagger-method ${methodClass}">${endpoint.method}</span>
                     <span class="swagger-path">${endpoint.path}</span>
-                    ${endpoint.has_security ? '<svg class="inline-icon lock-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>' : '<svg class="inline-icon unlock-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h1.9c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10z"/></svg>'}
+                    ${endpoint.has_security ? '<i class="fa-solid fa-lock" style="color: #16a34a;"></i>' : '<i class="fa-solid fa-lock-open" style="color: #dc2626;"></i>'}
                 </div>
                 <div class="swagger-endpoint-details" id="${endpointId}">
                     ${endpoint.description ? `<p><strong>Description:</strong> ${endpoint.description}</p>` : ''}
@@ -566,7 +566,7 @@ async function scanSwagger(url, event) {
         // Show loading indicator
         const button = event.target;
         const originalContent = button.innerHTML;
-        button.innerHTML = '<svg class="inline-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>';
+        button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
         button.disabled = true;
 
         const response = await fetch(`/api/swagger/scan/${encodedUrl}`, {
