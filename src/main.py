@@ -1,6 +1,7 @@
 """
 Main entry point for Portal Checker application
 """
+
 import asyncio
 import sys
 import threading
@@ -38,8 +39,20 @@ def setup_logger(log_format: str = "text", log_level: str = "INFO") -> None:
         def clean_message(record):
             # Clean message from icons
             message = record["message"]
-            message = message.replace("🐞", "").replace("🔧", "").replace("⚠️", "").replace("❌", "").replace("✅", "")
-            message = message.replace("🔄", "").replace("📊", "").replace("🚀", "").replace("💾", "").replace("ℹ️", "")
+            message = (
+                message.replace("🐞", "")
+                .replace("🔧", "")
+                .replace("⚠️", "")
+                .replace("❌", "")
+                .replace("✅", "")
+            )
+            message = (
+                message.replace("🔄", "")
+                .replace("📊", "")
+                .replace("🚀", "")
+                .replace("💾", "")
+                .replace("ℹ️", "")
+            )
             record["message"] = message.strip()
             return True
 
@@ -61,20 +74,24 @@ def setup_logger(log_format: str = "text", log_level: str = "INFO") -> None:
 async def periodic_url_tests():
     """Background task to periodically test URLs"""
     global _stop_background_task
-    
+
     while not _stop_background_task:
         try:
-            logger.debug(f"🔄 Démarrage du test périodique (intervalle: {CHECK_INTERVAL}s)")
-            
+            logger.debug(
+                f"🔄 Démarrage du test périodique (intervalle: {CHECK_INTERVAL}s)"
+            )
+
             # Run tests with cache update
             await _run_url_tests(update_cache=True)
-            
+
             if not _stop_background_task:
-                logger.info(f"✅ Test périodique terminé, prochaine exécution dans {CHECK_INTERVAL}s")
-                
+                logger.info(
+                    f"✅ Test périodique terminé, prochaine exécution dans {CHECK_INTERVAL}s"
+                )
+
         except Exception as e:
             logger.error(f"❌ Erreur lors du test périodique: {e}")
-            
+
         # Wait for next interval or until stop signal
         for _ in range(CHECK_INTERVAL):
             if _stop_background_task:
@@ -84,6 +101,7 @@ async def periodic_url_tests():
 
 def start_background_tasks():
     """Start background tasks in a separate thread"""
+
     def run_background():
         try:
             loop = asyncio.new_event_loop()
@@ -93,7 +111,7 @@ def start_background_tasks():
             logger.error(f"❌ Erreur dans la tâche de fond: {e}")
         finally:
             loop.close()
-    
+
     global _background_task
     _background_task = threading.Thread(target=run_background, daemon=True)
     _background_task.start()
@@ -110,20 +128,20 @@ def main():
     # Setup logging
     setup_logger(LOG_FORMAT, LOG_LEVEL)
     logger.info("🚀 Démarrage de Portal Checker...")
-    
+
     # Initialize Kubernetes client
     try:
         init_kubernetes()
     except Exception as e:
         logger.error(f"❌ Impossible d'initialiser Kubernetes: {e}")
         sys.exit(1)
-    
+
     # Auto-refresh URLs if needed
     refresh_urls_if_needed()
-    
+
     # Start background tasks
     start_background_tasks()
-    
+
     if FLASK_ENV == "development":
         # Development mode with Flask dev server
         logger.info(f"🔧 Mode développement - Serveur Flask sur http://0.0.0.0:{PORT}")
@@ -131,16 +149,16 @@ def main():
     else:
         # Production mode with Hypercorn
         from asgiref.wsgi import WsgiToAsgi
-        
+
         config = HypercornConfig()
         config.bind = [f"0.0.0.0:{PORT}"]
         config.use_reloader = False
         config.accesslog = "-"
         config.errorlog = "-"
         config.worker_class = "asyncio"
-        
+
         logger.info(f"🚀 Mode production - Serveur Hypercorn sur http://0.0.0.0:{PORT}")
-        
+
         try:
             # Convert Flask WSGI app to ASGI
             asgi_app = WsgiToAsgi(app)

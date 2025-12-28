@@ -16,7 +16,7 @@ from .main import main, setup_logger
 from .utils import get_app_version
 
 # For backwards compatibility, expose the main Flask app
-__all__ = ['app', 'main', 'setup_logger', 'get_app_version']
+__all__ = ["app", "main", "setup_logger", "get_app_version"]
 
 
 # Entry point when running as a module

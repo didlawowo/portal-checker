@@ -1,6 +1,7 @@
 """
 Utility functions for Portal Checker
 """
+
 import asyncio
 import os
 import ssl
@@ -35,7 +36,7 @@ def get_app_version() -> str:
         "/app/pyproject.toml",
         os.path.join(os.path.dirname(os.path.dirname(__file__)), "pyproject.toml"),
     ]
-    
+
     for path in possible_paths:
         try:
             with open(path, "rb") as f:
@@ -43,7 +44,7 @@ def get_app_version() -> str:
                 return data.get("project", {}).get("version", "unknown")
         except (FileNotFoundError, KeyError):
             continue
-    
+
     return "unknown"
 
 
@@ -66,11 +67,11 @@ def get_ssl_context() -> ssl.SSLContext:
 async def get_ssl_cert_info(url: str) -> Optional[Dict[str, Any]]:
     """Get SSL certificate information for a URL"""
     try:
-        parsed = urlparse(url if url.startswith('http') else f'https://{url}')
+        parsed = urlparse(url if url.startswith("http") else f"https://{url}")
         hostname = parsed.hostname
         port = parsed.port or 443
 
-        if not hostname or parsed.scheme != 'https':
+        if not hostname or parsed.scheme != "https":
             return None
 
         # Create SSL context for certificate retrieval
@@ -86,12 +87,11 @@ async def get_ssl_cert_info(url: str) -> Optional[Dict[str, Any]]:
 
         # Connect and get certificate
         reader, writer = await asyncio.wait_for(
-            asyncio.open_connection(hostname, port, ssl=ssl_context),
-            timeout=5
+            asyncio.open_connection(hostname, port, ssl=ssl_context), timeout=5
         )
 
         # Get SSL object from transport
-        ssl_object = writer.get_extra_info('ssl_object')
+        ssl_object = writer.get_extra_info("ssl_object")
         if not ssl_object:
             writer.close()
             await writer.wait_closed()
@@ -106,26 +106,28 @@ async def get_ssl_cert_info(url: str) -> Optional[Dict[str, Any]]:
             return None
 
         # Parse expiration date
-        not_after = cert.get('notAfter')
+        not_after = cert.get("notAfter")
         if not not_after:
             return None
 
         # Parse date format: 'Jan 1 00:00:00 2025 GMT'
-        expiry_date = datetime.strptime(not_after, '%b %d %H:%M:%S %Y %Z')
+        expiry_date = datetime.strptime(not_after, "%b %d %H:%M:%S %Y %Z")
         days_remaining = (expiry_date - datetime.now()).days
 
         return {
-            'expiry_date': expiry_date.isoformat(),
-            'days_remaining': days_remaining,
-            'issuer': cert.get('issuer', []),
-            'subject': cert.get('subject', [])
+            "expiry_date": expiry_date.isoformat(),
+            "days_remaining": days_remaining,
+            "issuer": cert.get("issuer", []),
+            "subject": cert.get("subject", []),
         }
 
     except asyncio.TimeoutError:
         logger.debug(f"Timeout lors de la récupération du certificat SSL pour {url}")
         return None
     except Exception as e:
-        logger.debug(f"Erreur lors de la récupération du certificat SSL pour {url}: {e}")
+        logger.debug(
+            f"Erreur lors de la récupération du certificat SSL pour {url}: {e}"
+        )
         return None
 
 
@@ -134,7 +136,7 @@ def load_urls_from_file(filepath: str) -> List[Dict[str, Any]]:
     try:
         with open(filepath, "r") as f:
             data = yaml.safe_load(f)
-            
+
         if isinstance(data, dict) and "urls" in data:
             return data["urls"]
         elif isinstance(data, list):
@@ -153,8 +155,14 @@ def serialize_record(record: Dict[str, Any]) -> Dict[str, Any]:
     """Serialize log record for JSON output"""
     message = record["message"]
     # Remove common icons
-    message = message.replace("🐞", "").replace("🔧", "").replace("⚠️", "").replace("❌", "").replace("✅", "")
-    
+    message = (
+        message.replace("🐞", "")
+        .replace("🔧", "")
+        .replace("⚠️", "")
+        .replace("❌", "")
+        .replace("✅", "")
+    )
+
     subset = {
         "timestamp": record["time"].strftime("%Y-%m-%d %H:%M:%S.%f"),
         "level": record["level"].name,
@@ -165,21 +173,23 @@ def serialize_record(record: Dict[str, Any]) -> Dict[str, Any]:
         "process": {"id": record["process"].id, "name": record["process"].name},
         "thread": {"id": record["thread"].id, "name": record["thread"].name},
     }
-    
+
     if record["extra"]:
         subset["extra"] = record["extra"]
-    
+
     if record["exception"] is not None:
         subset["exception"] = record["exception"]
-    
+
     return subset
 
 
-async def send_slack_alert_async(session: aiohttp.ClientSession, url: str, status_code: int, details: str) -> None:
+async def send_slack_alert_async(
+    session: aiohttp.ClientSession, url: str, status_code: int, details: str
+) -> None:
     """Send Slack alert for critical errors"""
     if not ENABLE_SLACK_NOTIFICATIONS or not SLACK_WEBHOOK_URL:
         return
-    
+
     try:
         message = {
             "text": "🚨 Portal Checker Alert",
@@ -190,19 +200,25 @@ async def send_slack_alert_async(session: aiohttp.ClientSession, url: str, statu
                         {"title": "URL", "value": url, "short": False},
                         {"title": "Status", "value": f"{status_code}", "short": True},
                         {"title": "Details", "value": details, "short": True},
-                        {"title": "Time", "value": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "short": True},
+                        {
+                            "title": "Time",
+                            "value": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                            "short": True,
+                        },
                     ],
                 }
             ],
         }
-        
+
         await session.post(SLACK_WEBHOOK_URL, json=message)
         logger.debug(f"📧 Alerte Slack envoyée pour {url}")
     except Exception as e:
         logger.error(f"❌ Erreur lors de l'envoi de l'alerte Slack: {e}")
 
 
-async def check_single_url(session: aiohttp.ClientSession, data: Dict[str, Any]) -> Dict[str, Any]:
+async def check_single_url(
+    session: aiohttp.ClientSession, data: Dict[str, Any]
+) -> Dict[str, Any]:
     """Check a single URL and return results"""
     url = data.get("url", "")
 
@@ -224,7 +240,9 @@ async def check_single_url(session: aiohttp.ClientSession, data: Dict[str, Any])
 
             if status_code not in ok_warning_codes:
                 details = response.reason or "Unknown error"
-                logger.debug(f"Erreur pour l'URL {full_url}: {status_code} {response.reason}")
+                logger.debug(
+                    f"Erreur pour l'URL {full_url}: {status_code} {response.reason}"
+                )
                 if ENABLE_SLACK_NOTIFICATIONS:
                     await send_slack_alert_async(session, url, status_code, details)
 
@@ -246,10 +264,12 @@ async def check_single_url(session: aiohttp.ClientSession, data: Dict[str, Any])
 
             # Get SSL certificate info for HTTPS URLs
             ssl_info = None
-            if full_url.startswith('https://'):
+            if full_url.startswith("https://"):
                 ssl_info = await get_ssl_cert_info(full_url)
                 if ssl_info:
-                    logger.debug(f"✅ SSL info récupérée pour {url}: {ssl_info.get('days_remaining')} jours restants")
+                    logger.debug(
+                        f"✅ SSL info récupérée pour {url}: {ssl_info.get('days_remaining')} jours restants"
+                    )
                 else:
                     logger.debug(f"⚠️ Pas d'info SSL pour {url}")
             else:
@@ -262,16 +282,18 @@ async def check_single_url(session: aiohttp.ClientSession, data: Dict[str, Any])
             data["response_time"] = response_time
             data["ssl_info"] = ssl_info
 
-            logger.debug(f"Test de l'URL {url} : {status_code}, {response_time}ms, SSL: {ssl_info is not None}")
+            logger.debug(
+                f"Test de l'URL {url} : {status_code}, {response_time}ms, SSL: {ssl_info is not None}"
+            )
 
             return data
-    
+
     except asyncio.TimeoutError:
         data["status"] = 408
         data["details"] = "Timeout"
         data["response_time"] = int((time.time() - start_time) * 1000)
         return data
-    
+
     except aiohttp.ClientError as e:
         error_msg = str(e)
         if "certificate" in error_msg.lower():
@@ -292,28 +314,29 @@ async def check_single_url(session: aiohttp.ClientSession, data: Dict[str, Any])
 
 
 async def check_urls_async(
-    data_urls: List[Dict[str, Any]], 
+    data_urls: List[Dict[str, Any]],
     update_cache: bool = True,
-    is_url_excluded_func: Optional[Any] = None
+    is_url_excluded_func: Optional[Any] = None,
 ) -> List[Dict[str, Any]]:
     """Check all URLs asynchronously"""
     ssl_context = get_ssl_context()
-    
+
     async with aiohttp.ClientSession(
         timeout=aiohttp.ClientTimeout(total=REQUEST_TIMEOUT),
-        connector=aiohttp.TCPConnector(ssl=ssl_context, limit=50)
+        connector=aiohttp.TCPConnector(ssl=ssl_context, limit=50),
     ) as session:
         sem = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
-        
+
         async def bounded_test(data):
             async with sem:
                 return await check_single_url(session, data)
-        
+
         # Filter excluded URLs before testing
         filtered_data_urls = data_urls
         if is_url_excluded_func:
             filtered_data_urls = [
-                data for data in data_urls
+                data
+                for data in data_urls
                 if not is_url_excluded_func(data.get("url", ""))
             ]
             excluded_count = len(data_urls) - len(filtered_data_urls)
@@ -327,45 +350,47 @@ async def check_urls_async(
                     f"🔍 {len(data_urls)} URLs à tester "
                     f"(exclusions déjà appliquées en amont)"
                 )
-        
+
         # Execute tests in parallel
         tasks = [bounded_test(data) for data in filtered_data_urls]
         results = await asyncio.gather(*tasks, return_exceptions=True)
-    
+
     final_results = [r for r in results if isinstance(r, dict)]
-    
+
     # Create summary
     status_counts = {
         "success": 0,
         "client_errors": 0,
         "server_errors": 0,
-        "total": len(final_results)
+        "total": len(final_results),
     }
-    
+
     error_summary = {}
-    
+
     for result in final_results:
-        status = result.get('status', 0)
+        status = result.get("status", 0)
         if 200 <= status < 300:
             status_counts["success"] += 1
         elif 400 <= status < 500:
             status_counts["client_errors"] += 1
         elif 500 <= status < 600:
             status_counts["server_errors"] += 1
-        
+
         if status >= 400:
             error_type = f"{status}"
             error_summary[error_type] = error_summary.get(error_type, 0) + 1
-    
+
     # Log summary
     logger.info(
         f"📊 Récapitulatif: ✅ {status_counts['success']} OK | "
         f"⚠️ {status_counts['client_errors']} 4xx | "
         f"❌ {status_counts['server_errors']} 5xx"
     )
-    
+
     if error_summary:
-        error_details = ", ".join([f"{code}: {count}" for code, count in sorted(error_summary.items())])
+        error_details = ", ".join(
+            [f"{code}: {count}" for code, count in sorted(error_summary.items())]
+        )
         logger.info(f"🔍 Détail erreurs: {error_details}")
-    
+
     return final_results

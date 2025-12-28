@@ -1,6 +1,7 @@
 """
 Kubernetes client for discovering and managing ingress/routes
 """
+
 import fnmatch
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Set, Tuple
@@ -29,20 +30,24 @@ def init_kubernetes() -> None:
             config.load_kube_config()
             logger.info("✅ Configuration Kubernetes locale chargée")
     except Exception as e:
-        logger.error(f"❌ Erreur lors du chargement de la configuration Kubernetes: {e}")
+        logger.error(
+            f"❌ Erreur lors du chargement de la configuration Kubernetes: {e}"
+        )
         raise
 
 
 def _load_excluded_patterns() -> List[str]:
     """Charge les patterns d'exclusion depuis le fichier YAML avec cache de 5 minutes"""
     global _excluded_patterns_cache, _excluded_patterns_last_loaded
-    
+
     # Vérifier si le cache est encore valide (5 minutes)
-    if (_excluded_patterns_cache is not None and 
-        _excluded_patterns_last_loaded is not None and 
-        datetime.now() - _excluded_patterns_last_loaded < timedelta(minutes=5)):
+    if (
+        _excluded_patterns_cache is not None
+        and _excluded_patterns_last_loaded is not None
+        and datetime.now() - _excluded_patterns_last_loaded < timedelta(minutes=5)
+    ):
         return _excluded_patterns_cache
-    
+
     patterns = []
     try:
         with open(EXCLUDED_URLS_FILE, "r") as f:
@@ -51,18 +56,20 @@ def _load_excluded_patterns() -> List[str]:
                 patterns = data["excluded_urls"]
             elif isinstance(data, list):
                 patterns = data
-            
+
             # Mettre à jour le cache
             _excluded_patterns_cache = patterns
             _excluded_patterns_last_loaded = datetime.now()
-            
-            logger.info(f"✅ {len(patterns)} patterns d'exclusion chargés depuis {EXCLUDED_URLS_FILE}")
+
+            logger.info(
+                f"✅ {len(patterns)} patterns d'exclusion chargés depuis {EXCLUDED_URLS_FILE}"
+            )
             logger.debug(f"Patterns d'exclusion: {patterns}")
     except FileNotFoundError:
         logger.warning(f"⚠️ Fichier d'exclusions non trouvé: {EXCLUDED_URLS_FILE}")
     except Exception as e:
         logger.error(f"❌ Erreur lors du chargement des exclusions: {e}")
-    
+
     return patterns
 
 
@@ -93,19 +100,21 @@ def _update_cache(data: List[Dict[str, Any]]) -> None:
     """Update Kubernetes cache"""
     now = datetime.now()
     expiry_time = now + timedelta(seconds=KUBERNETES_POLL_INTERVAL)
-    
+
     _kubernetes_cache["data"] = data
     _kubernetes_cache["last_updated"] = now
     _kubernetes_cache["expiry"] = expiry_time
-    
-    logger.info(f"💾 Cache Kubernetes mis à jour, expiration: {expiry_time.strftime('%H:%M:%S')}")
+
+    logger.info(
+        f"💾 Cache Kubernetes mis à jour, expiration: {expiry_time.strftime('%H:%M:%S')}"
+    )
 
 
 def _filter_annotations(annotations: Dict[str, str]) -> Dict[str, str]:
     """Filter and limit annotations to essential ones"""
     if not annotations:
         return {}
-    
+
     # Annotations essentielles à garder
     essential_annotations = {
         "cert-manager.io/cluster-issuer",
@@ -117,10 +126,10 @@ def _filter_annotations(annotations: Dict[str, str]) -> Dict[str, str]:
         "traefik.ingress.kubernetes.io/router.tls",
         "traefik.ingress.kubernetes.io/router.entrypoints",
     }
-    
+
     result = {}
     other_annotations = {}
-    
+
     for key, value in annotations.items():
         # Garder les annotations essentielles en priorité
         if key in essential_annotations:
@@ -128,13 +137,13 @@ def _filter_annotations(annotations: Dict[str, str]) -> Dict[str, str]:
         # Pour les autres, filtrer celles avec des valeurs trop longues
         elif len(str(value)) <= 50:
             other_annotations[key] = value
-    
+
     # Ajouter d'autres annotations jusqu'à la limite de 10
     remaining_slots = 10 - len(result)
     if remaining_slots > 0:
         for key, value in list(other_annotations.items())[:remaining_slots]:
             result[key] = value
-    
+
     return result
 
 
@@ -142,13 +151,13 @@ def _deduplicate_urls(urls_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Remove duplicate URLs based on (url, namespace, name) triplet"""
     seen: Set[Tuple[str, str, str]] = set()
     unique_urls = []
-    
+
     for data in urls_data:
         key = (data.get("url", ""), data.get("namespace", ""), data.get("name", ""))
         if key not in seen:
             seen.add(key)
             unique_urls.append(data)
-    
+
     return unique_urls
 
 
@@ -167,16 +176,18 @@ def get_all_urls_with_details(force_refresh: bool = False) -> List[Dict[str, Any
             return cached_data
 
     if force_refresh:
-        logger.info("🔄 Refresh forcé - récupération des données depuis l'API Kubernetes")
+        logger.info(
+            "🔄 Refresh forcé - récupération des données depuis l'API Kubernetes"
+        )
     else:
         logger.debug("🔄 Récupération des données depuis l'API Kubernetes")
-    
+
     v1 = client.NetworkingV1Api()
     v1_core = client.CoreV1Api()
     custom_api = client.CustomObjectsApi()
-    
+
     all_urls_data = []
-    
+
     # Get all namespaces
     try:
         namespaces = v1_core.list_namespace()
@@ -185,7 +196,7 @@ def get_all_urls_with_details(force_refresh: bool = False) -> List[Dict[str, Any
     except Exception as e:
         logger.error(f"❌ Erreur lors de la récupération des namespaces: {e}")
         return []
-    
+
     # Process Ingresses
     for namespace in namespace_names:
         try:
@@ -195,18 +206,26 @@ def get_all_urls_with_details(force_refresh: bool = False) -> List[Dict[str, Any
                 if ingress.spec.ingress_class_name:
                     ingress_class = ingress.spec.ingress_class_name
                 elif ingress.metadata.annotations:
-                    ingress_class = ingress.metadata.annotations.get("kubernetes.io/ingress.class", "nginx")
-                
+                    ingress_class = ingress.metadata.annotations.get(
+                        "kubernetes.io/ingress.class", "nginx"
+                    )
+
                 for rule in ingress.spec.rules or []:
                     host = rule.host
                     if not host:
                         continue
-                    
-                    for path in (rule.http.paths if rule.http else []):
-                        url = f"https://{host}{path.path}" if path.path != "/" else f"https://{host}"
-                        
-                        filtered_annotations = _filter_annotations(ingress.metadata.annotations or {})
-                        
+
+                    for path in rule.http.paths if rule.http else []:
+                        url = (
+                            f"https://{host}{path.path}"
+                            if path.path != "/"
+                            else f"https://{host}"
+                        )
+
+                        filtered_annotations = _filter_annotations(
+                            ingress.metadata.annotations or {}
+                        )
+
                         url_data = {
                             "url": url,
                             "namespace": namespace,
@@ -217,14 +236,18 @@ def get_all_urls_with_details(force_refresh: bool = False) -> List[Dict[str, Any
                             "labels": ingress.metadata.labels or {},
                             "path": path.path,
                             "backend": {
-                                "service": path.backend.service.name if path.backend.service else None,
-                                "port": path.backend.service.port.number if path.backend.service and path.backend.service.port else None,
+                                "service": path.backend.service.name
+                                if path.backend.service
+                                else None,
+                                "port": path.backend.service.port.number
+                                if path.backend.service and path.backend.service.port
+                                else None,
                             },
                         }
                         all_urls_data.append(url_data)
         except Exception as e:
             logger.debug(f"Pas d'Ingress dans {namespace}: {e}")
-    
+
     # Process HTTPRoutes (Gateway API)
     for namespace in namespace_names:
         try:
@@ -234,26 +257,36 @@ def get_all_urls_with_details(force_refresh: bool = False) -> List[Dict[str, Any
                 namespace=namespace,
                 plural="httproutes",
             )
-            
+
             for route in routes.get("items", []):
                 route_name = route["metadata"]["name"]
                 for hostname in route["spec"].get("hostnames", []):
                     for rule in route["spec"].get("rules", []):
                         for match in rule.get("matches", [{}]):
                             path = match.get("path", {}).get("value", "/")
-                            url = f"https://{hostname}{path}" if path != "/" else f"https://{hostname}"
-                            
-                            filtered_annotations = _filter_annotations(route["metadata"].get("annotations", {}))
-                            
+                            url = (
+                                f"https://{hostname}{path}"
+                                if path != "/"
+                                else f"https://{hostname}"
+                            )
+
+                            filtered_annotations = _filter_annotations(
+                                route["metadata"].get("annotations", {})
+                            )
+
                             backend_refs = rule.get("backendRefs", [])
                             backend_info = {
-                                "service": backend_refs[0].get("name") if backend_refs else None,
-                                "port": backend_refs[0].get("port") if backend_refs else None,
+                                "service": backend_refs[0].get("name")
+                                if backend_refs
+                                else None,
+                                "port": backend_refs[0].get("port")
+                                if backend_refs
+                                else None,
                             }
-                            
+
                             gateway_ref = route["spec"].get("parentRefs", [{}])[0]
                             gateway_name = gateway_ref.get("name", "unknown")
-                            
+
                             url_data = {
                                 "url": url,
                                 "namespace": namespace,
@@ -268,64 +301,71 @@ def get_all_urls_with_details(force_refresh: bool = False) -> List[Dict[str, Any
                             all_urls_data.append(url_data)
         except Exception as e:
             logger.debug(f"Pas de HTTPRoute dans {namespace}: {e}")
-    
+
     # Exclude URLs
     excluded_patterns = _load_excluded_patterns()
     filtered_urls = []
     excluded_count = 0
-    
+
     for data in all_urls_data:
         if is_url_excluded(data["url"], data.get("annotations", {}), excluded_patterns):
             excluded_count += 1
             logger.debug(f"🚫 URL exclue: {data['url']}")
         else:
             filtered_urls.append(data)
-    
-    logger.info(f"🔍 {len(all_urls_data)} URLs totales générées, {excluded_count} URLs exclues")
-    
+
+    logger.info(
+        f"🔍 {len(all_urls_data)} URLs totales générées, {excluded_count} URLs exclues"
+    )
+
     # Deduplicate URLs
     unique_urls = _deduplicate_urls(filtered_urls)
     logger.info(f"📋 {len(unique_urls)} URLs uniques après déduplication")
-    
+
     # Update cache
     _update_cache(unique_urls)
-    
+
     return unique_urls
 
 
-def is_url_excluded(url: str, annotations: Dict[str, str], excluded_patterns: Optional[List[str]] = None) -> bool:
+def is_url_excluded(
+    url: str, annotations: Dict[str, str], excluded_patterns: Optional[List[str]] = None
+) -> bool:
     """Check if URL should be excluded based on patterns or annotations"""
     # Check Kubernetes annotation
-    if annotations and annotations.get("portal-checker.io/exclude", "").lower() == "true":
+    if (
+        annotations
+        and annotations.get("portal-checker.io/exclude", "").lower() == "true"
+    ):
         return True
-    
+
     # Load patterns if not provided
     if excluded_patterns is None:
         excluded_patterns = _load_excluded_patterns()
-    
+
     # Normalize URL
     normalized_url = url.rstrip("/")
     if normalized_url.startswith("https://"):
         normalized_url = normalized_url[8:]
     elif normalized_url.startswith("http://"):
         normalized_url = normalized_url[7:]
-    
+
     # Check patterns
     for pattern in excluded_patterns:
         pattern = pattern.strip()
         if not pattern:
             continue
-        
+
         normalized_pattern = pattern.rstrip("/")
-        
+
         # Exact match
         if normalized_url == normalized_pattern:
             return True
-        
+
         # Pattern matching
         if fnmatch.fnmatch(normalized_url, normalized_pattern):
             return True
-    
+
     return False
 
 
@@ -349,10 +389,10 @@ def save_urls_to_file(urls_data: List[Dict[str, Any]], filepath: str) -> None:
                 for data in urls_data
             ]
         }
-        
+
         with open(filepath, "w") as f:
             yaml.dump(urls_dict, f, default_flow_style=False, sort_keys=False)
-        
+
         logger.info(f"✅ {len(urls_data)} URLs sauvegardées dans {filepath}")
     except Exception as e:
         logger.error(f"❌ Erreur lors de la sauvegarde des URLs: {e}")
