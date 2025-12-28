@@ -4,16 +4,19 @@ on:
   push:
     branches:
       - '**'
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
 
 permissions:
   contents: read
   packages: write
+  pull-requests: read
 
 jobs:
   docker-build-and-push:
     name: Build Docker Image and Push to Docker Hub
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout Repository Code
         uses: actions/checkout@v5
@@ -39,6 +42,13 @@ jobs:
           echo "sha=$SHA" >> $GITHUB_OUTPUT
           echo "branch=$BRANCH_CLEAN" >> $GITHUB_OUTPUT
 
+          # Generate PR tag if this is a pull request
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            PR_NUMBER=${{ github.event.pull_request.number }}
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+            echo "pr_tag=pr-${PR_NUMBER}-${SHA}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build Multi-Platform Docker Image and Push to Docker Hub
         uses: docker/build-push-action@v5
         with:
@@ -46,12 +56,13 @@ jobs:
           file: ./docker/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
- 
+
           sbom: true
           provenance: mode=max
- 
+
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/portal-checker:${{ steps.extract-metadata.outputs.branch }}-${{ steps.extract-metadata.outputs.sha }}
+            ${{ github.event_name == 'pull_request' && format('{0}/portal-checker:{1}', secrets.DOCKER_USERNAME, steps.extract-metadata.outputs.pr_tag) || '' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -65,3 +76,7 @@ jobs:
           echo "- 🔗 Git SHA: ${{ steps.extract-metadata.outputs.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "- 🐳 Docker Hub Repository: ${{ secrets.DOCKER_USERNAME }}/portal-checker" >> $GITHUB_STEP_SUMMARY
           echo "- 🏗️ Docker Tag: ${{ steps.extract-metadata.outputs.branch }}-${{ steps.extract-metadata.outputs.sha }}" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "- 🔖 PR Tag: ${{ steps.extract-metadata.outputs.pr_tag }}" >> $GITHUB_STEP_SUMMARY
+            echo "- 🔗 Preview URL: https://pc-pr-${{ steps.extract-metadata.outputs.pr_number }}.dc-tech.work" >> $GITHUB_STEP_SUMMARY
+          fi
