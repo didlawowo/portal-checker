@@ -223,26 +223,26 @@ async def check_single_url(session: aiohttp.ClientSession, data: Dict[str, Any])
             ok_warning_codes = {200, 301, 302, 401, 403, 405, 429}
 
             if status_code not in ok_warning_codes:
-                details = f"❌ {response.reason}"
+                details = response.reason or "Unknown error"
                 logger.debug(f"Erreur pour l'URL {full_url}: {status_code} {response.reason}")
                 if ENABLE_SLACK_NOTIFICATIONS:
                     await send_slack_alert_async(session, url, status_code, details)
 
             # Add specific messages for common status codes
             if status_code == 401:
-                details = "🔐 Authentification requise"
+                details = "Authentification requise"
             elif status_code == 403:
-                details = "🚫 Accès interdit"
+                details = "Accès interdit"
             elif status_code == 404:
-                details = "❓ Page non trouvée"
+                details = "Page non trouvée"
                 if ENABLE_SLACK_NOTIFICATIONS:
                     await send_slack_alert_async(session, url, status_code, details)
             elif status_code == 405:
-                details = "⚠️ Méthode non autorisée"
+                details = "Méthode non autorisée"
             elif status_code == 429:
-                details = "⏳ Trop de requêtes"
+                details = "Trop de requêtes"
             elif status_code in [301, 302]:
-                details = "↗️ Redirection"
+                details = "Redirection"
 
             # Get SSL certificate info for HTTPS URLs
             ssl_info = None
@@ -268,7 +268,7 @@ async def check_single_url(session: aiohttp.ClientSession, data: Dict[str, Any])
     
     except asyncio.TimeoutError:
         data["status"] = 408
-        data["details"] = "⏱️ Timeout"
+        data["details"] = "Timeout"
         data["response_time"] = int((time.time() - start_time) * 1000)
         return data
     
@@ -276,16 +276,16 @@ async def check_single_url(session: aiohttp.ClientSession, data: Dict[str, Any])
         error_msg = str(e)
         if "certificate" in error_msg.lower():
             data["status"] = 495
-            data["details"] = "🔒 SSL Certificate Error"
+            data["details"] = "SSL Certificate Error"
         else:
             data["status"] = 503
-            data["details"] = f"🔌 Connection Error: {error_msg[:50]}"
+            data["details"] = f"Connection Error: {error_msg[:150]}"
         data["response_time"] = int((time.time() - start_time) * 1000)
         return data
-    
+
     except Exception as e:
         data["status"] = 500
-        data["details"] = f"❌ Error: {str(e)[:50]}"
+        data["details"] = f"Error: {str(e)[:150]}"
         data["response_time"] = int((time.time() - start_time) * 1000)
         logger.error(f"Erreur inattendue pour {url}: {e}")
         return data
