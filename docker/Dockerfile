@@ -24,17 +24,17 @@ RUN addgroup -g 1000 appgroup && adduser -u 1000 -G appgroup -D appuser
 
 WORKDIR /app
 
-# Installation des dépendances Python
-COPY requirements.txt .
-RUN pip install --upgrade pip  && \
-    uv --native-tls pip install --system -r requirements.txt && \
-    rm -rf /root/.cache/pip /root/.cache/uv # 🧹 Nettoyage du cache
+# Copy pyproject.toml first for dependency caching
+COPY pyproject.toml ./
+
+# Installation des dépendances Python avec uv
+RUN uv --native-tls pip install --system . && \
+    rm -rf /root/.cache/uv
 
 # Copie des fichiers application
 COPY templates /app/templates
 COPY static /app/static
 COPY src /app/src
-COPY pyproject.toml ./
 
 # Create config directory and copy excluded-urls
 RUN mkdir -p /app/config
