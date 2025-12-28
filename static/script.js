@@ -1,5 +1,6 @@
 // Récupération des données depuis Flask
 window.initialData = window.initialData || [];
+window.autoswaggerEnabled = window.autoswaggerEnabled !== undefined ? window.autoswaggerEnabled : false;
 let currentData = [...initialData];
 let sortConfig = {
     field: 'url',
@@ -11,14 +12,12 @@ let swaggerData = null;
 
 // Fonction pour mettre à jour les flèches de tri
 function updateSortArrows() {
-    // Reset all arrows
-    document.getElementById('namespaceSort').textContent = '';
-    document.getElementById('nameSort').textContent = '';
-    document.getElementById('typeSort').textContent = '';
-    document.getElementById('urlSort').textContent = '';
-    document.getElementById('statusSort').textContent = '';
-    document.getElementById('response_timeSort').textContent = '';
-    document.getElementById('ssl_daysSort').textContent = '';
+    // Reset all arrows - use optional chaining for elements that may not exist
+    const sortElements = ['namespaceSort', 'nameSort', 'urlSort', 'statusSort', 'response_timeSort', 'ssl_daysSort'];
+    sortElements.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = '';
+    });
 
     // Set arrow for current sort field
     const arrow = sortConfig.direction === 'asc' ? '↑' : '↓';
@@ -84,23 +83,73 @@ function getStatusEmoji(status) {
     return '❌';
 }
 
-// Fonction pour obtenir l'ingress class ou la gateway
-function getIngressClassOrGateway(item) {
-    const itemType = (item.type || '').toLowerCase();
+// Fonction pour formater la colonne Info (Type + Class + Annotations)
+function formatInfoColumn(item) {
+    const parts = [];
 
-    if (itemType === 'ingress' && item.ingress_class) {
-        return `<span style="background: #e5f3ff; color: #0066cc; padding: 1px 4px; border-radius: 3px; font-size: 11px; white-space: nowrap;">${item.ingress_class}</span>`;
-    } else if (itemType === 'httproute' && item.ingress_class) {
-        // Pour HTTPRoute, ingress_class contient "gateway/{name}"
-        return `<span style="background: #f0f9ff; color: #0284c7; padding: 1px 4px; border-radius: 3px; font-size: 11px; white-space: nowrap;">${item.ingress_class}</span>`;
+    // Type badge
+    const itemType = (item.type || '').toLowerCase();
+    if (itemType === 'ingress') {
+        parts.push(`<span class="info-badge info-type-ingress" title="Ingress">ing</span>`);
+    } else if (itemType === 'httproute') {
+        parts.push(`<span class="info-badge info-type-httproute" title="HTTPRoute">http</span>`);
     }
-    return '-';
+
+    // Class/Gateway badge
+    if (item.ingress_class) {
+        const fullName = item.ingress_class;
+        // Pour les gateways, on extrait juste le nom court
+        let shortName = fullName;
+        if (fullName.includes('/')) {
+            const parts = fullName.split('/');
+            shortName = parts[parts.length - 1];
+        }
+        if (shortName.length > 10) {
+            shortName = shortName.slice(0, 10) + '…';
+        }
+        parts.push(`<span class="info-badge info-class" title="${fullName}">${shortName}</span>`);
+    }
+
+    // Annotations badge (si présent)
+    const annotationsHtml = formatAnnotationsCompact(item.annotations);
+    if (annotationsHtml !== '-') {
+        parts.push(annotationsHtml);
+    }
+
+    return parts.length > 0 ? `<div class="info-column">${parts.join('')}</div>` : '-';
+}
+
+// Fonction pour formater les annotations de manière compacte
+function formatAnnotationsCompact(annotations) {
+    if (!annotations) return '-';
+
+    try {
+        if (typeof annotations === 'string') {
+            try {
+                annotations = JSON.parse(annotations);
+            } catch (e) {
+                return annotations.trim() ? annotations : '-';
+            }
+        }
+
+        const annotationKeys = Object.keys(annotations || {});
+        if (annotationKeys.length === 0) {
+            return '-';
+        }
+
+        const dataId = 'data-' + Math.random().toString(36).slice(2, 11);
+        window.annotationsData = window.annotationsData || {};
+        window.annotationsData[dataId] = annotations;
+
+        return `<span class="info-badge info-annotations" onclick="showAnnotationsModal('${dataId}')" title="${annotationKeys.length} annotation${annotationKeys.length > 1 ? 's' : ''}">${annotationKeys.length}</span>`;
+    } catch (error) {
+        return '-';
+    }
 }
 
 // Fonction pour formater les informations SSL
 function formatSSLInfo(ssl_info) {
     if (!ssl_info) {
-        console.debug('No SSL info');
         return '<span style="color: #999; font-size: 10px;">N/A</span>';
     }
 
@@ -110,11 +159,8 @@ function formatSSLInfo(ssl_info) {
     }
 
     if (ssl_info.days_remaining === undefined) {
-        console.debug('SSL info exists but no days_remaining:', ssl_info);
         return '<span style="color: #ea580c; background: #ffedd5; padding: 2px 4px; border-radius: 3px; font-size: 10px; font-weight: 600;" title="⚠️ Certificat SSL non disponible">⚠️ N/A</span>';
     }
-
-    console.debug('Formatting SSL info:', ssl_info);
 
     const days = ssl_info.days_remaining;
     let color, bgColor;
@@ -185,10 +231,8 @@ function renderTable() {
         tr.innerHTML = `
             <td>${item.namespace}</td>
             <td>${item.name}</td>
-            <td>${item.type}</td>
-            <td>${getIngressClassOrGateway(item)}</td>
-            <td>${formatAnnotations(item.annotations)}</td>
-            <td>${getSwaggerButton(item.url)}</td>
+            <td>${formatInfoColumn(item)}</td>
+            ${window.autoswaggerEnabled ? `<td>${getSwaggerButton(item.url)}</td>` : ''}
             <td>${formatSSLInfo(item.ssl_info)}</td>
             <td><a href="${linkUrl}" target="_blank" title="${displayUrl}">${displayUrl}</a></td>
             <td>
@@ -424,7 +468,7 @@ async function loadSwaggerData() {
             renderTable();
         }
     } catch (error) {
-        console.log('Swagger data not available:', error);
+        // Swagger data not available - silent fail
     }
 }
 
@@ -438,18 +482,13 @@ async function showExcludedUrls() {
     modalBody.innerHTML = '<p class="loading-text">Chargement...</p>';
 
     try {
-        console.log('Fetching excluded URLs from /api/excluded-urls');
         const response = await fetch('/api/excluded-urls');
-        console.log('Response status:', response.status);
 
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Error response:', errorText);
-            throw new Error(`Erreur HTTP ${response.status}: ${errorText}`);
+            throw new Error(`Erreur HTTP ${response.status}`);
         }
 
         const data = await response.json();
-        console.log('Received data:', data);
         const excludedUrls = data.excluded_urls || [];
 
         if (excludedUrls.length === 0) {
@@ -467,7 +506,6 @@ async function showExcludedUrls() {
             modalBody.innerHTML = html;
         }
     } catch (error) {
-        console.error('Error fetching excluded URLs:', error);
         modalBody.innerHTML = '<p class="error-text">Erreur lors du chargement des URLs exclues</p>';
     }
 }
@@ -503,7 +541,6 @@ async function excludeUrl(url) {
             alert(`❌ Erreur: ${data.error || data.message}`);
         }
     } catch (error) {
-        console.error('Error excluding URL:', error);
         alert(`❌ Erreur lors de l'exclusion: ${error.message}`);
     }
 }
@@ -547,7 +584,6 @@ async function scanSwagger(url, event) {
         button.disabled = false;
 
     } catch (error) {
-        console.error('Error scanning Swagger:', error);
         alert(`❌ Erreur lors du scan Swagger: ${error.message}`);
 
         // Restore button on error
@@ -583,13 +619,6 @@ function handleSearch(event) {
 
 // Initialisation au chargement du DOM
 document.addEventListener('DOMContentLoaded', function() {
-    // Log des données initiales pour debug
-    console.log('Initial data loaded:', window.initialData.length, 'items');
-    if (window.initialData.length > 0) {
-        console.log('Sample item:', window.initialData[0]);
-        console.log('Sample SSL info:', window.initialData[0].ssl_info);
-    }
-
     // Écouteurs d'événements
     document.getElementById('searchInput').addEventListener('input', handleSearch);
 
@@ -638,8 +667,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Charger les données Swagger
-    loadSwaggerData();
+    // Charger les données Swagger seulement si activé
+    if (window.autoswaggerEnabled) {
+        loadSwaggerData();
+    }
 
     // Rendu initial
     updateSortArrows();

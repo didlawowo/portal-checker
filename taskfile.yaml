@@ -126,13 +126,12 @@ tasks:
   run-dev:
     desc: "🔧 Démarrer en mode développement"
     cmds:
-    - export FLASK_ENV=development && python -m src.main
+    - uv run python -m src.main
     env:
       FLASK_ENV: development
       LOG_LEVEL: DEBUG
       AUTO_REFRESH_ON_START: "false"
       PORT: "5001"
-      DISABLE_PRESIDIO: "true"
       ENABLE_AUTOSWAGGER: "true"
 
   logs:

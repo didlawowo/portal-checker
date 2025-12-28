@@ -5,28 +5,27 @@ import asyncio
 import os
 import ssl
 import time
+import tomllib
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 
 import aiohttp
-import tomllib
-
-# Disable SSL warnings for development environment
 import urllib3
 import yaml
 from loguru import logger
 
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
 from .config import (
     CUSTOM_CERT,
+    ENABLE_SLACK_NOTIFICATIONS,
     FLASK_ENV,
     MAX_CONCURRENT_REQUESTS,
     REQUEST_TIMEOUT,
     SLACK_WEBHOOK_URL,
-    ENABLE_SLACK_NOTIFICATIONS,
 )
+
+# Disable SSL warnings for development environment
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 def get_app_version() -> str:
@@ -183,7 +182,7 @@ async def send_slack_alert_async(session: aiohttp.ClientSession, url: str, statu
     
     try:
         message = {
-            "text": f"🚨 Portal Checker Alert",
+            "text": "🚨 Portal Checker Alert",
             "attachments": [
                 {
                     "color": "danger",

@@ -2,8 +2,6 @@
 Kubernetes client for discovering and managing ingress/routes
 """
 import fnmatch
-import hashlib
-import re
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Set, Tuple
 
@@ -11,8 +9,7 @@ import yaml
 from kubernetes import client, config
 from loguru import logger
 
-from .config import EXCLUDED_URLS_FILE, KUBERNETES_POLL_INTERVAL, KUBE_ENV
-
+from .config import EXCLUDED_URLS_FILE, KUBE_ENV, KUBERNETES_POLL_INTERVAL
 
 # Cache global pour les ressources Kubernetes
 _kubernetes_cache: Dict[str, Any] = {"data": None, "last_updated": None, "expiry": None}

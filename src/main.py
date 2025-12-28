@@ -4,16 +4,14 @@ Main entry point for Portal Checker application
 import asyncio
 import sys
 import threading
-from datetime import datetime
 
 import hypercorn.asyncio
 from hypercorn import Config as HypercornConfig
 from loguru import logger
 
-from .config import LOG_FORMAT, LOG_LEVEL, PORT, CHECK_INTERVAL, FLASK_ENV
-from .api import app, refresh_urls_if_needed, _run_url_tests
+from .api import _run_url_tests, app, refresh_urls_if_needed
+from .config import CHECK_INTERVAL, FLASK_ENV, LOG_FORMAT, LOG_LEVEL, PORT
 from .kubernetes_client import init_kubernetes
-from .utils import serialize_record
 
 
 def setup_logger(log_format: str = "text", log_level: str = "INFO") -> None:

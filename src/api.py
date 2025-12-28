@@ -9,7 +9,7 @@ from typing import Any, Dict, List
 from flask import Flask, jsonify, render_template, request, send_from_directory
 from loguru import logger
 
-from .config import AUTO_REFRESH_ON_START, ENABLE_AUTOSWAGGER, PORT, URLS_FILE
+from .config import AUTO_REFRESH_ON_START, ENABLE_AUTOSWAGGER, URLS_FILE
 from .kubernetes_client import (
     get_all_urls_with_details,
     is_url_excluded,
@@ -21,7 +21,10 @@ from .utils import check_urls_async, get_app_version, load_urls_from_file
 AUTOSWAGGER_AVAILABLE = False
 if ENABLE_AUTOSWAGGER:
     try:
-        from .autoswagger_integration import discover_swagger_for_portal_checker, get_autoswagger_config
+        from .autoswagger_integration import (
+            discover_swagger_for_portal_checker,
+            get_autoswagger_config,
+        )
         AUTOSWAGGER_AVAILABLE = True
         logger.debug("✅ Module autoswagger_integration chargé")
     except ImportError as e:
@@ -115,6 +118,7 @@ def _prepare_template_data(results: List[Dict[str, Any]]) -> Dict[str, Any]:
         "status_counts": status_counts,
         "swagger_counts": swagger_counts,
         "swagger_data": swagger_results,
+        "autoswagger_enabled": AUTOSWAGGER_AVAILABLE,
         "version": get_app_version(),
         "last_updated": _test_results_cache.get("last_updated"),
     }
@@ -311,6 +315,7 @@ def get_excluded_urls():
     """Get list of excluded URLs"""
     try:
         import yaml
+
         from .kubernetes_client import EXCLUDED_URLS_FILE
 
         try:

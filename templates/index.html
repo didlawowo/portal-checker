@@ -53,12 +53,12 @@
             <table>
                 <thead>
                     <tr>
-                        <th onclick="sortTable('namespace')" style="width: 150px; min-width: 150px;">Namespace<span id="namespaceSort"></span></th>
-                        <th onclick="sortTable('name')" style="width: 200px; min-width: 200px;">Name<span id="nameSort"></span></th>
-                        <th onclick="sortTable('type')" style="width: 80px; min-width: 80px;">Type<span id="typeSort"></span></th>
-                        <th style="width: 50px; min-width: 50px;" title="Ingress Class / Gateway">Class</th>
-                        <th style="width: 45px; min-width: 45px;" title="Annotations">Annot</th>
+                        <th onclick="sortTable('namespace')" style="width: 120px; min-width: 120px;">Namespace<span id="namespaceSort"></span></th>
+                        <th onclick="sortTable('name')" style="width: 180px; min-width: 180px;">Name<span id="nameSort"></span></th>
+                        <th style="width: 100px; min-width: 100px;" title="Type, Class, Annotations">Info</th>
+                        {% if autoswagger_enabled %}
                         <th style="width: 45px; min-width: 45px;" title="Swagger/OpenAPI">Swag</th>
+                        {% endif %}
                         <th onclick="sortTable('ssl_days')" style="width: 32px; min-width: 32px;" title="SSL Certificate Expiration">SSL<span id="ssl_daysSort"></span></th>
                         <!-- <th>Labels</th> -->
                         <th onclick="sortTable('url')" style="width: 180px; min-width: 150px;">URL<span id="urlSort"></span></th>
@@ -115,6 +115,7 @@
     <script>
         // Récupération des données depuis Flask
         window.initialData = {{ results | tojson | safe }};
+        window.autoswaggerEnabled = {{ autoswagger_enabled | tojson }};
     </script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>

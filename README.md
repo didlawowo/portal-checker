@@ -1,23 +1,86 @@
 # Portal Checker
 
-Monitor HTTP URLs by parsing ingress rules and httproute in your kubernetes cluster for availability and provide a little dashboard to show that.
+[![Version](https://img.shields.io/badge/version-3.0.9-blue.svg)](https://github.com/your-repo/portal-checker/releases)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Docker](https://img.shields.io/badge/docker-multi--arch-blue.svg)](https://hub.docker.com/r/fizzbuzz2/portal-checker)
 
-![alt text](assets/image.png)
+**Monitor your Kubernetes endpoints with a beautiful, real-time dashboard.** Portal Checker automatically discovers Ingress and HTTPRoute resources across your cluster and provides instant visibility into endpoint health.
 
-## Features
+## Dashboard
 
-- **Automatic Discovery**: Scans Kubernetes Ingress and HTTPRoute resources across all namespaces
-- **Real-time Monitoring**: Concurrent health checks with configurable timeout and parallelism
-- **Periodic Checking**: Automated background tests with configurable intervals
-- **Web Dashboard**: Clean, responsive interface with search, sorting, and auto-refresh
-- **Smart Exclusions**: Flexible URL filtering via YAML patterns, wildcards, and Kubernetes annotations
-- **Ingress Class Support**: Displays Ingress Class and Gateway information for better visibility
-- **Responsive Design**: Optimized for mobile, tablet, and desktop viewing
-- **Performance Optimized**: Smart caching and efficient resource usage
-- **Multi-architecture**: Supports AMD64 and ARM64 platforms
-- **Slack Integration**: Optional notifications for failed endpoints (beta)
+![Portal Checker Dashboard](assets/dashboard.png)
 
-## Getting Started
+The dashboard provides a clean overview of all your Kubernetes endpoints with:
+
+- **Namespace & Name**: Quick identification of resources
+- **Info Column**: Compact badges showing type (`ing`/`http`), ingress class, and annotation count
+- **Swagger Discovery**: Automatic API documentation detection with security analysis
+- **SSL Monitoring**: Certificate expiration tracking with color-coded warnings
+- **Status & Response Time**: Real-time health checks with latency metrics
+
+## Swagger/OpenAPI Discovery
+
+![Swagger Modal](assets/swagger-modal.png)
+
+Automatically discovers and analyzes API documentation:
+
+- Scans 13+ common Swagger endpoint paths
+- Displays all endpoints with methods (GET, POST, PUT, DELETE)
+- Shows security status for each endpoint (protected/unprotected)
+- Detects PII exposure and secrets in API schemas
+
+## Key Features
+
+### Automatic Discovery
+
+Scans all namespaces for **Ingress** and **HTTPRoute** resources, extracting URLs with full metadata including namespace, resource name, ingress class, and annotations.
+
+### Real-time Health Monitoring
+
+| Feature | Description |
+| ------- | ----------- |
+| **Concurrent Checks** | Parallel health checks with configurable concurrency (default: 10) |
+| **Smart Caching** | Reduces API calls with configurable TTL |
+| **Background Testing** | Periodic automated tests at configurable intervals |
+| **Response Times** | Track latency for each endpoint |
+
+### Interactive Dashboard
+
+- **Search & Filter**: Quickly find endpoints by namespace, name, or URL
+- **Sortable Columns**: Sort by any column including status, response time, or namespace
+- **Status Overview**: Quick stats showing healthy, warning, and failed counts
+- **Auto-refresh**: Configurable automatic refresh (default: 30 seconds)
+- **Mobile Responsive**: Works on desktop, tablet, and mobile devices
+
+### Smart URL Exclusions
+
+Exclude URLs using multiple methods:
+
+```yaml
+# YAML patterns with wildcards
+excludedUrls:
+  - "monitoring.*"           # Exclude all monitoring subdomains
+  - "*.internal/*"           # Exclude internal paths
+  - "grafana.*/api/health"   # Exclude specific health endpoints
+  - "*.dc-tech.work/api"     # Exclude API paths on specific domain
+```
+
+Or use Kubernetes annotations:
+
+```yaml
+metadata:
+  annotations:
+    portal-checker.io/exclude: "true"
+```
+
+### API Discovery (Autoswagger)
+
+- Scans 13+ common Swagger endpoint paths
+- Detects PII exposure in API schemas
+- Identifies exposed secrets (API keys, JWT tokens, AWS credentials)
+- Groups findings by security severity
+
+## Quick Start
 
 ### Prerequisites
 
@@ -25,217 +88,214 @@ Monitor HTTP URLs by parsing ingress rules and httproute in your kubernetes clus
 - Helm 3.x
 - kubectl configured for your cluster
 
-### Quick Start
+### Installation
 
-1. **Install with Helm**:
-   ```bash
-   helm install portal-checker helm/ \
-     --namespace monitoring \
-     --create-namespace
-   ```
+```bash
+# Install with default settings
+helm install portal-checker helm/ \
+  --namespace monitoring \
+  --create-namespace
+```
 
-2. **Access the dashboard**:
-   ```bash
-   kubectl port-forward svc/portal-checker 8080:80 -n monitoring
-   ```
-   Open http://localhost:8080 in your browser
+### Access the Dashboard
 
-3. **View logs**:
-   ```bash
-   kubectl logs -f deployment/portal-checker -n monitoring
-   ```
+```bash
+# Port forward to access locally
+kubectl port-forward svc/portal-checker 8080:80 -n monitoring
 
-### Configuration
+# Open in browser
+open http://localhost:8080
+```
 
-#### URL Exclusions
-Create or modify the exclusion patterns in your values file:
+## Configuration
+
+### Environment Variables
+
+| Variable | Default | Description |
+| -------- | ------- | ----------- |
+| `REQUEST_TIMEOUT` | `10` | HTTP request timeout in seconds |
+| `MAX_CONCURRENT_REQUESTS` | `10` | Number of concurrent health checks |
+| `CHECK_INTERVAL` | `30` | Interval between background checks (seconds) |
+| `CACHE_TTL_SECONDS` | `300` | Cache TTL for URL test results |
+| `KUBERNETES_POLL_INTERVAL` | `600` | K8s resource discovery interval |
+| `LOG_LEVEL` | `INFO` | Logging level |
+| `ENABLE_AUTOSWAGGER` | `true` | Enable API documentation discovery |
+
+### Helm Values
+
+```yaml
+# values.yaml
+resources:
+  limits:
+    cpu: 600m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 64Mi
+
+ingress:
+  enabled: true
+  domainName: portal-checker.example.com
+  tls:
+    enabled: true
+
+env:
+  - name: CHECK_INTERVAL
+    value: "60"
+  - name: MAX_CONCURRENT_REQUESTS
+    value: "5"
+```
+
+### URL Exclusions
+
+Configure exclusions in `values.yaml`:
 
 ```yaml
 excludedUrls:
-  - "monitoring.*"              # Exclude monitoring subdomains
-  - "*.internal/*"             # Exclude internal paths
-  - "grafana.*/api/health"     # Exclude specific endpoints
-```
-
-#### Environment Variables
-```yaml
-env:
-  - name: REQUEST_TIMEOUT
-    value: "5"                  # Request timeout in seconds
-  - name: MAX_CONCURRENT_REQUESTS
-    value: "3"                  # Number of concurrent checks
-  - name: LOG_LEVEL
-    value: "INFO"              # Log level (DEBUG, INFO, WARNING, ERROR)
-  - name: CHECK_INTERVAL
-    value: "300"               # Interval between checks in seconds (5 minutes)
-  - name: CACHE_TTL_SECONDS
-    value: "900"               # Cache TTL in seconds (15 minutes)
-  - name: KUBERNETES_POLL_INTERVAL
-    value: "1800"              # K8s resource polling interval (30 minutes)
-```
-
-#### Performance Tuning
-For large clusters, consider adjusting these values:
-
-```yaml
-# Reduce CPU usage
-env:
-  - name: CHECK_INTERVAL
-    value: "600"               # Check every 10 minutes
-  - name: MAX_CONCURRENT_REQUESTS
-    value: "2"                 # Reduce concurrent load
-  - name: CACHE_TTL_SECONDS
-    value: "1800"              # Cache for 30 minutes
-
-# Increase resource limits
-resources:
-  limits:
-    cpu: 500m
-    memory: 512Mi
-  requests:
-    cpu: 200m
-    memory: 128Mi
-```
-
-### Development
-
-#### Local Development
-```bash
-# Install dependencies
-pip install -r requirements.txt
-
-# Run in development mode
-export FLASK_ENV=development
-python app.py
-```
-
-#### Using Task Runner
-```bash
-# Install Task: https://taskfile.dev/#/installation
-# Then run common tasks:
-
-task run-dev              # Start development server
-task validate-yaml        # Validate configuration
-task test-exclusions      # Test URL exclusion logic
-task build                # Build Docker image
-task push                 # Push to registry
-task deploy-full          # Complete deployment workflow
-task logs                 # Stream application logs
-task status              # Show pod status
-task memory-check        # Check memory usage
-```
-
-#### Running Tests
-```bash
-# Run all tests
-python -m pytest tests/ -v
-
-# Run with coverage
-python -m pytest tests/ --cov=app --cov-report=html
-
-# Run specific test file
-python -m pytest tests/test_excluded_urls.py -v
+  - "argocd.*/api/*"
+  - "monitoring.*"
+  - "*.internal/*"
+  - "infisical.*/ss-webhook"
 ```
 
 ## Architecture
 
-### Components
-
-1. **Flask Application**: Main web server with async support via Hypercorn
-2. **Kubernetes Client**: Discovers Ingress and HTTPRoute resources
-3. **Async HTTP Client**: Performs concurrent health checks using aiohttp
-4. **Background Worker**: Periodic URL checking via threading
-5. **Cache Layer**: Reduces Kubernetes API calls and improves performance
-
-### Data Flow
-
+```text
+                    ┌─────────────────────────────────────────────┐
+                    │              Kubernetes Cluster             │
+                    │  ┌─────────┐  ┌─────────┐  ┌─────────────┐ │
+                    │  │ Ingress │  │ Ingress │  │  HTTPRoute  │ │
+                    │  └────┬────┘  └────┬────┘  └──────┬──────┘ │
+                    └───────┼────────────┼──────────────┼────────┘
+                            │            │              │
+                            └────────────┼──────────────┘
+                                         │
+                    ┌────────────────────▼────────────────────┐
+                    │           Portal Checker                 │
+                    │  ┌──────────────────────────────────┐   │
+                    │  │      Resource Discovery          │   │
+                    │  │   • Ingress (networking.k8s.io)  │   │
+                    │  │   • HTTPRoute (gateway API)      │   │
+                    │  └──────────────┬───────────────────┘   │
+                    │                 │                        │
+                    │  ┌──────────────▼───────────────────┐   │
+                    │  │      URL Extraction & Filtering  │   │
+                    │  │   • Exclusion patterns           │   │
+                    │  │   • Annotation checks            │   │
+                    │  └──────────────┬───────────────────┘   │
+                    │                 │                        │
+                    │  ┌──────────────▼───────────────────┐   │
+                    │  │      Concurrent Health Checks    │   │
+                    │  │   • aiohttp async client         │   │
+                    │  │   • Configurable parallelism     │   │
+                    │  └──────────────┬───────────────────┘   │
+                    │                 │                        │
+                    │  ┌──────────────▼───────────────────┐   │
+                    │  │      Web Dashboard (Flask)       │   │
+                    │  │   • Real-time status             │   │
+                    │  │   • Search & sorting             │   │
+                    │  └──────────────────────────────────┘   │
+                    └─────────────────────────────────────────┘
 ```
-Kubernetes API → Resource Discovery → URL Generation → Exclusion Filtering
-                                                           ↓
-Dashboard ← Results Aggregation ← Health Checks ← Concurrent Testing
+
+### Module Structure (v3.0.0+)
+
+```text
+src/
+├── main.py                    # Entry point, server configuration
+├── api.py                     # Flask routes and handlers
+├── config.py                  # Centralized configuration
+├── kubernetes_client.py       # K8s resource discovery
+├── utils.py                   # URL testing utilities
+└── autoswagger_integration.py # API documentation discovery
 ```
 
-## Deployment
+## Development
 
-### Production Deployment
+### Local Development
 
-1. **Update values for production**:
-   ```yaml
-   # values-prod.yaml
-   ingress:
-     enabled: true
-     domainName: portal-checker.example.com
-     tls:
-       enabled: true
-   
-   resources:
-     limits:
-       cpu: 500m
-       memory: 512Mi
-   
-   replicas: 2
-   ```
+```bash
+# Install dependencies with uv
+uv sync
 
-2. **Deploy with production values**:
-   ```bash
-   helm upgrade --install portal-checker helm/ \
-     -f values-prod.yaml \
-     --namespace monitoring
-   ```
+# Run development server
+task run-dev
 
-### CI/CD
+# Or manually
+FLASK_ENV=development PORT=5001 python -m src.main
+```
 
-The project includes automated CI/CD pipelines:
+### Task Commands
 
-- **Build Pipeline**: Runs on every push, builds multi-arch Docker images
-- **Release Pipeline**: Runs on main branch merges, creates releases with semantic versioning
-- **Helm Release**: Automatically packages and publishes Helm charts
+```bash
+task run-dev          # Start development server
+task test-coverage    # Run tests with coverage
+task validate-yaml    # Validate configuration files
+task build            # Build Docker image
+task push             # Push to registry
+task deploy-full      # Complete deployment workflow
+task logs             # Stream application logs
+task status           # Show pod status
+task memory-check     # Check memory usage
+```
 
-## Monitoring
+### Running Tests
 
-### Health Endpoints
+```bash
+# Run all tests
+uv run pytest tests/ -v
 
-- `/health` - Application health check
-- `/ready` - Readiness check (includes K8s connectivity)
-- `/memory` - Memory usage statistics
-- `/cache` - Cache status and statistics
+# Run with coverage
+task test-coverage
 
-### Metrics
+# Run specific test
+pytest tests/test_excluded_urls.py -v
+```
 
-Key metrics to monitor:
-- URL check success rate
-- Response times per endpoint
-- Cache hit ratio
-- Memory usage
-- CPU utilization
+## API Endpoints
+
+| Endpoint | Method | Description |
+| -------- | ------ | ----------- |
+| `/` | GET | Main dashboard |
+| `/api/test` | GET | Run health checks |
+| `/api/refresh` | POST | Force URL rediscovery |
+| `/api/swagger` | GET | Get Swagger discovery results |
+| `/health` | GET | Application health |
+| `/ready` | GET | Readiness check |
+| `/memory` | GET | Memory statistics |
 
 ## Troubleshooting
 
-### Common Issues
+### High CPU Usage
 
-1. **High CPU Usage**
-   - Increase `CHECK_INTERVAL` to reduce frequency
-   - Reduce `MAX_CONCURRENT_REQUESTS`
-   - Check for large number of URLs being monitored
+- Increase `CHECK_INTERVAL` to reduce frequency
+- Reduce `MAX_CONCURRENT_REQUESTS`
+- Review number of monitored URLs
 
-2. **403 Forbidden Errors**
-   - Verify RBAC permissions for ServiceAccount
-   - Check ClusterRole and ClusterRoleBinding
+### URLs Not Discovered
 
-3. **URLs Not Discovered**
-   - Check namespace permissions
-   - Verify Ingress/HTTPRoute resources have proper annotations
-   - Review exclusion patterns
+- Verify RBAC permissions (ClusterRole needs list/watch on Ingress and HTTPRoute)
+- Check namespace permissions
+- Review exclusion patterns
 
-4. **Memory Issues**
-   - Enable memory profiling: `task memory-profile`
-   - Reduce cache size or TTL
-   - Check for memory leaks in long-running deployments
+### Memory Issues
+
+- Check with `task memory-check`
+- Reduce cache TTL if needed
+- Consider disabling Autoswagger if not needed
+
+### SSL Certificate Errors
+
+```yaml
+env:
+  - name: CUSTOM_CERT
+    value: "/path/to/ca-bundle.crt"
+```
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE) for details.
