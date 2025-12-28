@@ -12,8 +12,8 @@ ENV SSL_CERT_DIR=/etc/ssl/certs
 COPY  *.crt /etc/ssl/certs/
 RUN update-ca-certificates
 
-# Add certificates and tools needed
-RUN apk update && apk add --no-cache ca-certificates uv  
+# Add certificates and build tools needed
+RUN apk update && apk add --no-cache ca-certificates uv gcc python3-dev musl-dev linux-headers  
 
 # Créer un utilisateur non-root
 RUN addgroup -g 1000 appgroup && adduser -u 1000 -G appgroup -D appuser
