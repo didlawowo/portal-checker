@@ -54,7 +54,7 @@ jobs:
           fi
 
       - name: Build Multi-Platform Docker Image and Push to Docker Hub
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./docker/Dockerfile
