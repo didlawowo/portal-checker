@@ -10,7 +10,15 @@ import yaml
 from kubernetes import client, config
 from loguru import logger
 
-from .config import EXCLUDED_URLS_FILE, KUBE_ENV, KUBERNETES_POLL_INTERVAL
+from .config import (
+    EXCLUDE_SELF,
+    EXCLUDED_URLS_FILE,
+    KUBE_ENV,
+    KUBERNETES_POLL_INTERVAL,
+    SELF_APP_NAME,
+    SELF_POD_NAME,
+    SELF_POD_NAMESPACE,
+)
 
 # Cache global pour les ressources Kubernetes
 _kubernetes_cache: Dict[str, Any] = {"data": None, "last_updated": None, "expiry": None}
@@ -147,6 +155,31 @@ def _filter_annotations(annotations: Dict[str, str]) -> Dict[str, str]:
     return result
 
 
+def _is_self_resource(name: str, namespace: str, labels: Dict[str, str]) -> bool:
+    """Detect whether the given Ingress/HTTPRoute belongs to the portal-checker
+    deployment itself, so that it can be excluded from the URL list by default.
+
+    Detection order:
+      1. Match against POD_NAME/POD_NAMESPACE injected via the K8s downward API
+         (the resource name typically equals the Helm release fullname, which is
+         a prefix of the pod name).
+      2. Fallback to a substring match on SELF_APP_NAME ("portal-checker").
+    """
+    if not EXCLUDE_SELF:
+        return False
+
+    if SELF_POD_NAMESPACE and namespace == SELF_POD_NAMESPACE:
+        if SELF_POD_NAME and SELF_POD_NAME.startswith(name):
+            return True
+        if (
+            labels.get("app.kubernetes.io/name") == SELF_APP_NAME
+            or labels.get("app.kubernetes.io/part-of") == SELF_APP_NAME
+        ):
+            return True
+
+    return SELF_APP_NAME in name
+
+
 def _deduplicate_urls(urls_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Remove duplicate URLs based on (url, namespace, name) triplet"""
     seen: Set[Tuple[str, str, str]] = set()
@@ -198,10 +231,22 @@ def get_all_urls_with_details(force_refresh: bool = False) -> List[Dict[str, Any
         return []
 
     # Process Ingresses
+    self_excluded_count = 0
     for namespace in namespace_names:
         try:
             ingresses = v1.list_namespaced_ingress(namespace)
             for ingress in ingresses.items:
+                if _is_self_resource(
+                    ingress.metadata.name,
+                    namespace,
+                    ingress.metadata.labels or {},
+                ):
+                    self_excluded_count += 1
+                    logger.debug(
+                        f"🚫 Auto-exclusion de l'Ingress portal-checker: "
+                        f"{namespace}/{ingress.metadata.name}"
+                    )
+                    continue
                 ingress_class = None
                 if ingress.spec.ingress_class_name:
                     ingress_class = ingress.spec.ingress_class_name
@@ -260,6 +305,17 @@ def get_all_urls_with_details(force_refresh: bool = False) -> List[Dict[str, Any
 
             for route in routes.get("items", []):
                 route_name = route["metadata"]["name"]
+                if _is_self_resource(
+                    route_name,
+                    namespace,
+                    route["metadata"].get("labels", {}),
+                ):
+                    self_excluded_count += 1
+                    logger.debug(
+                        f"🚫 Auto-exclusion de l'HTTPRoute portal-checker: "
+                        f"{namespace}/{route_name}"
+                    )
+                    continue
                 for hostname in route["spec"].get("hostnames", []):
                     for rule in route["spec"].get("rules", []):
                         for match in rule.get("matches", [{}]):
@@ -313,6 +369,11 @@ def get_all_urls_with_details(force_refresh: bool = False) -> List[Dict[str, Any
             logger.debug(f"🚫 URL exclue: {data['url']}")
         else:
             filtered_urls.append(data)
+
+    if self_excluded_count:
+        logger.info(
+            f"🚫 {self_excluded_count} ressource(s) portal-checker auto-exclue(s)"
+        )
 
     logger.info(
         f"🔍 {len(all_urls_data)} URLs totales générées, {excluded_count} URLs exclues"

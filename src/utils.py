@@ -23,6 +23,7 @@ from .config import (
     MAX_CONCURRENT_REQUESTS,
     REQUEST_TIMEOUT,
     SLACK_WEBHOOK_URL,
+    SSL_CACHE_TTL_SECONDS,
 )
 
 # Disable SSL warnings for development environment
@@ -64,8 +65,29 @@ def get_ssl_context() -> ssl.SSLContext:
     return ssl_context
 
 
+# SSL cert info cache: {(host, port): (timestamp, info)}.
+# Certs change rarely (typically every 60-90 days), so we don't need to
+# re-establish a TLS connection on every URL test cycle.
+_ssl_info_cache: Dict[tuple, tuple] = {}
+
+
+def _ssl_cache_get(key: tuple) -> Optional[Dict[str, Any]]:
+    entry = _ssl_info_cache.get(key)
+    if entry is None:
+        return None
+    cached_at, info = entry
+    if time.time() - cached_at > SSL_CACHE_TTL_SECONDS:
+        _ssl_info_cache.pop(key, None)
+        return None
+    return info
+
+
+def _ssl_cache_set(key: tuple, info: Optional[Dict[str, Any]]) -> None:
+    _ssl_info_cache[key] = (time.time(), info)
+
+
 async def get_ssl_cert_info(url: str) -> Optional[Dict[str, Any]]:
-    """Get SSL certificate information for a URL"""
+    """Get SSL certificate information for a URL (cached)."""
     try:
         parsed = urlparse(url if url.startswith("http") else f"https://{url}")
         hostname = parsed.hostname
@@ -73,6 +95,11 @@ async def get_ssl_cert_info(url: str) -> Optional[Dict[str, Any]]:
 
         if not hostname or parsed.scheme != "https":
             return None
+
+        cache_key = (hostname, port)
+        cached = _ssl_cache_get(cache_key)
+        if cached is not None:
+            return cached
 
         # Create SSL context for certificate retrieval
         # IMPORTANT: We need to verify SSL to get certificate info, even in dev mode
@@ -95,6 +122,7 @@ async def get_ssl_cert_info(url: str) -> Optional[Dict[str, Any]]:
         if not ssl_object:
             writer.close()
             await writer.wait_closed()
+            _ssl_cache_set(cache_key, None)
             return None
 
         # Get certificate
@@ -103,23 +131,27 @@ async def get_ssl_cert_info(url: str) -> Optional[Dict[str, Any]]:
         await writer.wait_closed()
 
         if not cert:
+            _ssl_cache_set(cache_key, None)
             return None
 
         # Parse expiration date
         not_after = cert.get("notAfter")
         if not not_after:
+            _ssl_cache_set(cache_key, None)
             return None
 
         # Parse date format: 'Jan 1 00:00:00 2025 GMT'
         expiry_date = datetime.strptime(not_after, "%b %d %H:%M:%S %Y %Z")
         days_remaining = (expiry_date - datetime.now()).days
 
-        return {
+        info = {
             "expiry_date": expiry_date.isoformat(),
             "days_remaining": days_remaining,
             "issuer": cert.get("issuer", []),
             "subject": cert.get("subject", []),
         }
+        _ssl_cache_set(cache_key, info)
+        return info
 
     except asyncio.TimeoutError:
         logger.debug(f"Timeout lors de la récupération du certificat SSL pour {url}")
@@ -229,6 +261,12 @@ async def check_single_url(
 
     start_time = time.time()
 
+    # Kick off the SSL cert fetch concurrently with the HTTP request so the
+    # extra TLS round trip doesn't add latency on top of the HTTP request.
+    ssl_task: Optional[asyncio.Task] = None
+    if full_url.startswith("https://"):
+        ssl_task = asyncio.create_task(get_ssl_cert_info(full_url))
+
     try:
         async with session.get(full_url, allow_redirects=True) as response:
             response_time = int((time.time() - start_time) * 1000)  # ms
@@ -262,16 +300,15 @@ async def check_single_url(
             elif status_code in [301, 302]:
                 details = "Redirection"
 
-            # Get SSL certificate info for HTTPS URLs
-            ssl_info = None
-            if full_url.startswith("https://"):
-                ssl_info = await get_ssl_cert_info(full_url)
-                if ssl_info:
-                    logger.debug(
-                        f"✅ SSL info récupérée pour {url}: {ssl_info.get('days_remaining')} jours restants"
-                    )
-                else:
-                    logger.debug(f"⚠️ Pas d'info SSL pour {url}")
+            # Collect SSL certificate info from the parallel task started
+            # before the HTTP request.
+            ssl_info: Optional[Dict[str, Any]] = None
+            if ssl_task is not None:
+                try:
+                    ssl_info = await ssl_task
+                except Exception as exc:
+                    logger.debug(f"⚠️ SSL fetch a échoué pour {url}: {exc}")
+                    ssl_info = None
             else:
                 # HTTP URL - mark explicitly as no SSL
                 ssl_info = {"http_only": True}
@@ -289,12 +326,16 @@ async def check_single_url(
             return data
 
     except asyncio.TimeoutError:
+        if ssl_task is not None:
+            ssl_task.cancel()
         data["status"] = 408
         data["details"] = "Timeout"
         data["response_time"] = int((time.time() - start_time) * 1000)
         return data
 
     except aiohttp.ClientError as e:
+        if ssl_task is not None:
+            ssl_task.cancel()
         error_msg = str(e)
         if "certificate" in error_msg.lower():
             data["status"] = 495
@@ -306,6 +347,8 @@ async def check_single_url(
         return data
 
     except Exception as e:
+        if ssl_task is not None:
+            ssl_task.cancel()
         data["status"] = 500
         data["details"] = f"Error: {str(e)[:150]}"
         data["response_time"] = int((time.time() - start_time) * 1000)

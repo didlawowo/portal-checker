@@ -4,7 +4,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="120">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <title>Portal Urls Checker</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -52,7 +51,7 @@
 
         <div class="search-bar">
             <input type="search" id="searchInput" placeholder="Rechercher...">
-            <button onclick="window.location.href='/refresh'">Refresh</button>
+            <button id="refreshBtn" onclick="triggerRefresh()">Refresh</button>
             <button onclick="showExcludedUrls()">Exclusions</button>
         </div>
 

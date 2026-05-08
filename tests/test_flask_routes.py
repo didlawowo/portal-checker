@@ -90,34 +90,23 @@ class TestFlaskRoutes:
         # Should return HTML
         assert b'<!DOCTYPE html>' in response.data or b'<html' in response.data
 
-    @patch('src.api.get_all_urls_with_details')
-    @patch('src.api.save_urls_to_file')
-    @patch('src.api.asyncio.run')
-    def test_refresh_endpoint_redirect(self, mock_run, mock_save, mock_get_urls, client):
-        """Test /refresh endpoint redirects to home"""
-        mock_get_urls.return_value = []
-        mock_run.return_value = None
+    @patch('src.api._trigger_async_refresh')
+    def test_refresh_endpoint_redirect(self, mock_trigger, client):
+        """Test /refresh endpoint redirects to home without blocking."""
+        mock_trigger.return_value = True
 
         response = client.get('/refresh', follow_redirects=False)
-        # Should redirect to home page
-        assert response.status_code in [302, 200]  # 302 redirect or 200 if followed
+        # Should redirect to home page (the work runs in a worker thread)
+        assert response.status_code in [302, 200]
+        mock_trigger.assert_called_once()
 
-    @patch('src.api.get_all_urls_with_details')
-    @patch('src.api.save_urls_to_file')
-    def test_refresh_endpoint_discovers_urls(self, mock_save, mock_get_urls, client):
-        """Test /refresh endpoint discovers URLs from Kubernetes"""
-        mock_get_urls.return_value = [
-            {
-                "url": "example.com",
-                "namespace": "default",
-                "name": "test-service",
-                "type": "Ingress"
-            }
-        ]
+    @patch('src.api._trigger_async_refresh')
+    def test_refresh_endpoint_triggers_async_refresh(self, mock_trigger, client):
+        """Test /refresh delegates to the non-blocking refresh trigger."""
+        mock_trigger.return_value = True
 
-        response = client.get('/refresh', follow_redirects=False)
-        # Should call discovery functions
-        mock_get_urls.assert_called_once()
+        client.get('/refresh', follow_redirects=False)
+        mock_trigger.assert_called_once()
 
     def test_exclude_url_endpoint(self, client):
         """Test /api/exclude endpoint adds URL to exclusion list"""
@@ -156,10 +145,25 @@ class TestFlaskRoutes:
         assert data['status'] == 'error'
         assert 'URL required' in data['error']
 
-    def test_refresh_async_endpoint(self, client):
-        """Test /api/refresh-async endpoint"""
+    @patch('src.api._trigger_async_refresh')
+    def test_refresh_async_endpoint(self, mock_trigger, client):
+        """Test /api/refresh-async endpoint kicks off a background refresh."""
+        mock_trigger.return_value = True
         response = client.post('/api/refresh-async')
+
+        assert response.status_code == 202
+        data = response.get_json()
+        assert data['status'] == 'ok'
+        assert data['started'] is True
+        mock_trigger.assert_called_once()
+
+    def test_refresh_status_endpoint(self, client):
+        """Test /api/refresh-status returns the current refresh state."""
+        response = client.get('/api/refresh-status')
 
         assert response.status_code == 200
         data = response.get_json()
-        assert data['status'] == 'ok'
+        assert 'running' in data
+        assert 'started_at' in data
+        assert 'finished_at' in data
+        assert 'last_error' in data

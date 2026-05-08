@@ -44,12 +44,12 @@ class TestConfig:
             assert config.LOG_FORMAT == "text"
 
     def test_default_request_timeout(self):
-        """Test default request timeout is 10 seconds"""
+        """Test default request timeout is 5 seconds"""
         with patch.dict(os.environ, {}, clear=True):
             import importlib
             import src.config as config
             importlib.reload(config)
-            assert config.REQUEST_TIMEOUT == 10
+            assert config.REQUEST_TIMEOUT == 5
 
     def test_custom_request_timeout(self):
         """Test request timeout can be customized"""
@@ -60,12 +60,12 @@ class TestConfig:
             assert config.REQUEST_TIMEOUT == 30
 
     def test_default_max_concurrent_requests(self):
-        """Test default max concurrent requests is 10"""
+        """Test default max concurrent requests is 20"""
         with patch.dict(os.environ, {}, clear=True):
             import importlib
             import src.config as config
             importlib.reload(config)
-            assert config.MAX_CONCURRENT_REQUESTS == 10
+            assert config.MAX_CONCURRENT_REQUESTS == 20
 
     def test_default_cache_ttl(self):
         """Test default cache TTL is 300 seconds (5 minutes)"""

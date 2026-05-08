@@ -4,6 +4,7 @@ Flask API routes for Portal Checker
 
 import asyncio
 import os
+import threading
 from datetime import datetime
 from typing import Any, Dict, List
 
@@ -41,6 +42,55 @@ _test_results_cache: Dict[str, Any] = {"results": [], "last_updated": None}
 
 # Cache for swagger results
 _swagger_cache: Dict[str, Any] = {"results": [], "last_updated": None}
+
+# State for the asynchronous /refresh endpoint so that the UI can poll it
+# without blocking on a synchronous Kubernetes discovery + URL test pass.
+_refresh_state: Dict[str, Any] = {
+    "running": False,
+    "started_at": None,
+    "finished_at": None,
+    "last_error": None,
+}
+_refresh_lock = threading.Lock()
+
+
+def _run_full_refresh_sync() -> None:
+    """Re-discover URLs from Kubernetes and run a full URL test pass.
+
+    Runs in a worker thread spawned by the API endpoints so the HTTP request
+    can return immediately. State is exposed via /api/refresh-status.
+    """
+    global _refresh_state
+    try:
+        urls_data = get_all_urls_with_details(force_refresh=True)
+        save_urls_to_file(urls_data, URLS_FILE)
+        asyncio.run(_run_url_tests(update_cache=True))
+        logger.info(f"✅ Refresh asynchrone terminé: {len(urls_data)} URLs")
+        _refresh_state["last_error"] = None
+    except Exception as exc:
+        logger.error(f"❌ Erreur lors du refresh asynchrone: {exc}")
+        _refresh_state["last_error"] = str(exc)
+    finally:
+        _refresh_state["running"] = False
+        _refresh_state["finished_at"] = datetime.now()
+
+
+def _trigger_async_refresh() -> bool:
+    """Start a refresh in a background thread if one isn't already running.
+
+    Returns True if a new refresh was kicked off, False if one was already
+    in progress (the caller is told to wait/poll instead of stacking calls).
+    """
+    with _refresh_lock:
+        if _refresh_state["running"]:
+            return False
+        _refresh_state["running"] = True
+        _refresh_state["started_at"] = datetime.now()
+        _refresh_state["finished_at"] = None
+
+    thread = threading.Thread(target=_run_full_refresh_sync, daemon=True)
+    thread.start()
+    return True
 
 
 def _is_url_excluded_wrapper(url: str) -> bool:
@@ -224,38 +274,64 @@ def scan_swagger_url(url: str):
 
 @app.route("/refresh")
 def refresh():
-    """Force refresh of URL discovery and checks"""
+    """Trigger a non-blocking refresh and redirect back to the home page.
+
+    The actual Kubernetes discovery + URL test pass runs in a worker thread,
+    so the user is redirected immediately and sees the previous (cached)
+    results while the new ones are being computed.
+    """
     from flask import redirect
 
-    try:
-        # Discover URLs from Kubernetes (force refresh to bypass cache)
-        urls_data = get_all_urls_with_details(force_refresh=True)
-        save_urls_to_file(urls_data, URLS_FILE)
-
-        # Run tests
-        asyncio.run(_run_url_tests())
-
-        logger.info(f"✅ Refresh terminé: {len(urls_data)} URLs")
-
-        # Redirect to home page
-        return redirect("/")
-
-    except Exception as e:
-        logger.error(f"❌ Erreur lors du refresh: {e}")
-        return jsonify({"error": str(e), "status": "error"}), 500
+    started = _trigger_async_refresh()
+    if started:
+        logger.info("🔄 Refresh asynchrone déclenché via /refresh")
+    else:
+        logger.info("🔄 Refresh déjà en cours, redirection sans relance")
+    return redirect("/")
 
 
 @app.route("/api/refresh-async", methods=["POST"])
 def refresh_async():
-    """Trigger async refresh in background and return immediately"""
-    # Simply return - the background task will handle periodic refreshes
-    # Or the user can click the main Refresh button
-    logger.info("🔄 Refresh asynchrone demandé - utilisez le bouton Refresh principal")
+    """Trigger a refresh in the background and return immediately.
 
+    Returns 202 Accepted with the current refresh state so that the UI can
+    poll /api/refresh-status to know when fresh data is available.
+    """
+    started = _trigger_async_refresh()
+    return (
+        jsonify(
+            {
+                "status": "ok",
+                "started": started,
+                "message": "Refresh démarré"
+                if started
+                else "Refresh déjà en cours",
+                "running": _refresh_state["running"],
+                "started_at": _refresh_state["started_at"].isoformat()
+                if _refresh_state["started_at"]
+                else None,
+            }
+        ),
+        202,
+    )
+
+
+@app.route("/api/refresh-status")
+def refresh_status():
+    """Expose the current state of the background refresh task."""
     return jsonify(
         {
-            "message": "Utilisez le bouton Refresh pour mettre à jour les données",
-            "status": "ok",
+            "running": _refresh_state["running"],
+            "started_at": _refresh_state["started_at"].isoformat()
+            if _refresh_state["started_at"]
+            else None,
+            "finished_at": _refresh_state["finished_at"].isoformat()
+            if _refresh_state["finished_at"]
+            else None,
+            "last_error": _refresh_state["last_error"],
+            "last_results_updated": _test_results_cache["last_updated"].isoformat()
+            if _test_results_cache["last_updated"]
+            else None,
         }
     )
 
