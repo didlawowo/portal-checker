@@ -261,47 +261,6 @@ function renderTable() {
     });
 }
 
-// Fonction pour formater les annotations - bouton compact avec nombre
-function formatAnnotations(annotations) {
-    if (!annotations) return '-';
-
-    try {
-        // Si c'est déjà une chaîne, essayez de l'analyser comme JSON
-        if (typeof annotations === 'string') {
-            try {
-                annotations = JSON.parse(annotations);
-            } catch (e) {
-                // Si ce n'est pas du JSON valide, retournez tel quel si non vide
-                return annotations.trim() ? annotations : '-';
-            }
-        }
-
-        // Vérifier si l'objet annotations a des propriétés
-        const annotationKeys = Object.keys(annotations || {});
-        if (annotationKeys.length === 0) {
-            return '-';
-        }
-
-        // Générer un ID unique pour ce bloc d'annotations
-        const dataId = 'data-' + Math.random().toString(36).substr(2, 9);
-
-        // Stocker les données d'annotations pour la modale
-        window.annotationsData = window.annotationsData || {};
-        window.annotationsData[dataId] = annotations;
-
-        // Créer un bouton compact avec le nombre
-        return `
-            <button class="annotations-btn" onclick="showAnnotationsModal('${dataId}')" title="${annotationKeys.length} annotation${annotationKeys.length > 1 ? 's' : ''}">
-                ${annotationKeys.length}
-            </button>
-        `;
-    } catch (error) {
-        // En cas d'erreur, retourner un tiret si vide ou le texte brut
-        const stringValue = String(annotations);
-        return stringValue.trim() ? stringValue : '-';
-    }
-}
-
 // Fonction pour afficher la modale avec les annotations
 function showAnnotationsModal(dataId) {
     const annotations = window.annotationsData[dataId];
@@ -468,6 +427,77 @@ function toggleSwaggerEndpoint(endpointId) {
 function closeSwaggerModal() {
     const modal = document.getElementById('swaggerModal');
     modal.style.display = 'none';
+}
+
+// Polling périodique des résultats sans recharger la page entière.
+// Remplace l'ancien <meta http-equiv="refresh"> qui forçait un full reload toutes les 2 min.
+const URL_POLL_INTERVAL_MS = 60_000;
+const REFRESH_STATUS_INTERVAL_MS = 2_000;
+let lastUpdatedISO = null;
+
+async function fetchUrlsAndRender() {
+    try {
+        const response = await fetch('/api/urls');
+        if (!response.ok) return;
+        const payload = await response.json();
+        if (!payload || !Array.isArray(payload.results)) return;
+
+        // Skip the re-render if the cache hasn't moved.
+        if (payload.last_updated && payload.last_updated === lastUpdatedISO) {
+            return;
+        }
+        lastUpdatedISO = payload.last_updated;
+
+        window.initialData = payload.results;
+        currentData = [...payload.results];
+        renderTable();
+    } catch (error) {
+        // Silent fail - keep showing the previous data
+    }
+}
+
+async function triggerRefresh() {
+    const btn = document.getElementById('refreshBtn');
+    if (btn) {
+        btn.disabled = true;
+        btn.dataset.originalText = btn.dataset.originalText || btn.textContent;
+        btn.textContent = 'Refreshing...';
+    }
+    try {
+        await fetch('/api/refresh-async', { method: 'POST' });
+        pollRefreshStatus();
+    } catch (error) {
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = btn.dataset.originalText || 'Refresh';
+        }
+    }
+}
+
+async function pollRefreshStatus() {
+    try {
+        const response = await fetch('/api/refresh-status');
+        if (!response.ok) return;
+        const status = await response.json();
+
+        if (status.running) {
+            setTimeout(pollRefreshStatus, REFRESH_STATUS_INTERVAL_MS);
+            return;
+        }
+
+        await fetchUrlsAndRender();
+        const btn = document.getElementById('refreshBtn');
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = btn.dataset.originalText || 'Refresh';
+        }
+    } catch (error) {
+        const btn = document.getElementById('refreshBtn');
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = btn.dataset.originalText || 'Refresh';
+        }
+    }
 }
 
 // Fonction pour charger les données Swagger
@@ -687,4 +717,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Rendu initial
     updateSortArrows();
     renderTable();
+
+    // Si la page a été ouverte avant que le cache n'ait été rempli, charger
+    // les résultats via /api/urls. Puis polling périodique pour rester à jour.
+    if (!Array.isArray(window.initialData) || window.initialData.length === 0) {
+        fetchUrlsAndRender();
+    }
+    setInterval(fetchUrlsAndRender, URL_POLL_INTERVAL_MS);
 });

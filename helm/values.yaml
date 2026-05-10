@@ -54,15 +54,30 @@ env:
 - name: PORT
   value: "5000"
 - name: MAX_CONCURRENT_REQUESTS
-  value: "3"
+  value: "20" # 🚀 plus de parallélisme = refresh plus rapide
 - name: REQUEST_TIMEOUT
   value: "5"
 - name: CACHE_TTL_SECONDS
   value: "900"
 - name: KUBERNETES_POLL_INTERVAL
   value: "600" # 🔍 10 minutes pour la découverte K8s normale
+- name: DISCOVERY_INTERVAL
+  value: "600" # ⏱️ re-découverte K8s par la tâche de fond
 - name: CHECK_INTERVAL
   value: "300" # 🔄 Fréquence de test des URLs en secondes
+- name: SSL_CACHE_TTL_SECONDS
+  value: "3600" # 🔐 cache des infos SSL (les certs changent rarement)
+# Auto-exclude portal-checker from its own URL list (downward API below)
+- name: EXCLUDE_SELF
+  value: "true"
+- name: POD_NAME
+  valueFrom:
+    fieldRef:
+      fieldPath: metadata.name
+- name: POD_NAMESPACE
+  valueFrom:
+    fieldRef:
+      fieldPath: metadata.namespace
 - name: URLS_FILE
   value: "/app/data/urls.yaml" # 🔧 Use writable data directory
 - name: EXCLUDED_URLS_FILE

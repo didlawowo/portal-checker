@@ -11,8 +11,20 @@ from hypercorn import Config as HypercornConfig
 from loguru import logger
 
 from .api import _run_url_tests, app, refresh_urls_if_needed
-from .config import CHECK_INTERVAL, FLASK_ENV, LOG_FORMAT, LOG_LEVEL, PORT
-from .kubernetes_client import init_kubernetes
+from .config import (
+    CHECK_INTERVAL,
+    DISCOVERY_INTERVAL,
+    FLASK_ENV,
+    LOG_FORMAT,
+    LOG_LEVEL,
+    PORT,
+    URLS_FILE,
+)
+from .kubernetes_client import (
+    get_all_urls_with_details,
+    init_kubernetes,
+    save_urls_to_file,
+)
 
 
 def setup_logger(log_format: str = "text", log_level: str = "INFO") -> None:
@@ -72,16 +84,30 @@ def setup_logger(log_format: str = "text", log_level: str = "INFO") -> None:
 
 
 async def periodic_url_tests():
-    """Background task to periodically test URLs"""
+    """Background task to periodically re-discover and test URLs.
+
+    Re-runs the Kubernetes discovery on its own cadence (DISCOVERY_INTERVAL)
+    so newly-created Ingresses/HTTPRoutes are picked up automatically without
+    requiring a manual /refresh.
+    """
     global _stop_background_task
+    last_discovery_at = 0.0
 
     while not _stop_background_task:
         try:
+            now = asyncio.get_event_loop().time()
+            if now - last_discovery_at >= DISCOVERY_INTERVAL:
+                logger.debug("🔄 Re-découverte Kubernetes périodique")
+                try:
+                    urls_data = get_all_urls_with_details(force_refresh=True)
+                    save_urls_to_file(urls_data, URLS_FILE)
+                except Exception as exc:
+                    logger.error(f"❌ Erreur de re-découverte K8s: {exc}")
+                last_discovery_at = now
+
             logger.debug(
                 f"🔄 Démarrage du test périodique (intervalle: {CHECK_INTERVAL}s)"
             )
-
-            # Run tests with cache update
             await _run_url_tests(update_cache=True)
 
             if not _stop_background_task:
