@@ -208,22 +208,75 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@v4
 
-      - name: Package and release Helm chart
+      - name: Package Helm chart
+        id: helm_package
         run: |
           # Mettre à jour la version du chart
           NEW_VERSION="${{ steps.bump_version.outputs.new_version }}"
           sed -i "s/^version: .*/version: $NEW_VERSION/" helm/Chart.yaml
           sed -i "s/^appVersion: .*/appVersion: $NEW_VERSION/" helm/Chart.yaml
-          
+
           # Packager le chart
           helm package helm/ --destination .
-          
+
+          echo "chart_file=portal-checker-${NEW_VERSION}.tgz" >> $GITHUB_OUTPUT
+
           # Créer ou mettre à jour l'index Helm si nécessaire
           if [ -f index.yaml ]; then
             helm repo index . --merge index.yaml
           else
             helm repo index .
           fi
+
+      - name: Authenticate Helm with GHCR (OCI)
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io \
+            -u ${{ github.actor }} --password-stdin
+
+      - name: Push Helm chart to GHCR (OCI)
+        run: |
+          helm push "${{ steps.helm_package.outputs.chart_file }}" \
+            oci://ghcr.io/${{ github.repository_owner }}/charts
+
+      - name: Authenticate Helm with Docker Hub (OCI)
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | helm registry login registry-1.docker.io \
+            -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+
+      - name: Push Helm chart to Docker Hub (OCI)
+        run: |
+          # Repo séparé de l'image pour éviter la confusion docker pull / helm pull
+          # Rename tgz to push to repo named portal-checker-chart
+          NEW_VERSION="${{ steps.bump_version.outputs.new_version }}"
+          cp "${{ steps.helm_package.outputs.chart_file }}" "portal-checker-chart-${NEW_VERSION}.tgz"
+          helm push "portal-checker-chart-${NEW_VERSION}.tgz" \
+            oci://registry-1.docker.io/${{ secrets.DOCKER_USERNAME }}
+
+      - name: Push artifacthub-repo.yml metadata to OCI registries
+        run: |
+          # Push artifacthub-repo.yml as OCI artifact for ownership verification on ArtifactHub
+          # See: https://artifacthub.io/docs/topics/repositories/helm-charts/#oci
+          if ! command -v oras >/dev/null 2>&1; then
+            curl -LO https://github.com/oras-project/oras/releases/download/v1.2.0/oras_1.2.0_linux_amd64.tar.gz
+            mkdir -p oras-install/
+            tar -zxf oras_1.2.0_linux_amd64.tar.gz -C oras-install/
+            sudo mv oras-install/oras /usr/local/bin/
+            rm -rf oras_1.2.0_linux_amd64.tar.gz oras-install/
+          fi
+
+          # GHCR
+          echo "${{ secrets.GITHUB_TOKEN }}" | oras login ghcr.io \
+            -u ${{ github.actor }} --password-stdin
+          oras push ghcr.io/${{ github.repository_owner }}/charts/portal-checker:artifacthub.io \
+            --config /dev/null:application/vnd.cncf.artifacthub.config.v1+yaml \
+            helm/artifacthub-repo.yml:application/vnd.cncf.artifacthub.repository-metadata.layer.v1.yaml
+
+          # Docker Hub
+          echo "${{ secrets.DOCKER_PASSWORD }}" | oras login registry-1.docker.io \
+            -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+          oras push registry-1.docker.io/${{ secrets.DOCKER_USERNAME }}/portal-checker-chart:artifacthub.io \
+            --config /dev/null:application/vnd.cncf.artifacthub.config.v1+yaml \
+            helm/artifacthub-repo.yml:application/vnd.cncf.artifacthub.repository-metadata.layer.v1.yaml
 
       - name: Summary
         run: |
@@ -234,8 +287,10 @@ jobs:
           echo "- 🐳 Docker image built and pushed" >> $GITHUB_STEP_SUMMARY
           echo "- 🏷️ Git tag created and pushed" >> $GITHUB_STEP_SUMMARY
           echo "- 📖 GitHub release created with changelog" >> $GITHUB_STEP_SUMMARY
-          echo "- ⚙️ Helm chart version updated" >> $GITHUB_STEP_SUMMARY
+          echo "- ⚙️ Helm chart version updated and pushed to OCI registries" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🔗 Links:" >> $GITHUB_STEP_SUMMARY
           echo "- [GitHub Release](https://github.com/${{ github.repository }}/releases/tag/${{ steps.bump_version.outputs.tag_name }})" >> $GITHUB_STEP_SUMMARY
-          echo "- [Docker Image](https://ghcr.io/${{ github.repository }}:${{ steps.bump_version.outputs.new_version }})" >> $GITHUB_STEP_SUMMARY
+          echo "- [Docker Image (Docker Hub)](https://hub.docker.com/r/${{ secrets.DOCKER_USERNAME }}/portal-checker)" >> $GITHUB_STEP_SUMMARY
+          echo "- Helm chart (GHCR): \`oci://ghcr.io/${{ github.repository_owner }}/charts/portal-checker:${{ steps.bump_version.outputs.new_version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Helm chart (Docker Hub): \`oci://registry-1.docker.io/${{ secrets.DOCKER_USERNAME }}/portal-checker-chart:${{ steps.bump_version.outputs.new_version }}\`" >> $GITHUB_STEP_SUMMARY
