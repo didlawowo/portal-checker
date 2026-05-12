@@ -2,11 +2,37 @@ apiVersion: "v2"
 name: "portal-checker"
 version: 1.4.1
 appVersion: "3.0.0"
-description: A Helm chart for portal checker
+description: A Helm chart for portal checker - Kubernetes Ingress/HTTPRoute portal monitoring with Swagger/OpenAPI discovery
 type: application
-
+home: https://github.com/didlawowo/portal-checker
+sources:
+  - https://github.com/didlawowo/portal-checker
+keywords:
+  - portal
+  - monitoring
+  - kubernetes
+  - ingress
+  - httproute
+  - swagger
+  - openapi
+  - api-discovery
 icon: https://avatars.githubusercontent.com/u/12622760?v=4
 
 maintainers:
 - name: didlawowo
   email: chris@dc-consulting.pro
+
+annotations:
+  artifacthub.io/license: MIT
+  artifacthub.io/category: monitoring-logging
+  artifacthub.io/containsSecurityUpdates: "false"
+  artifacthub.io/links: |
+    - name: GitHub
+      url: https://github.com/didlawowo/portal-checker
+    - name: Docker Image
+      url: https://hub.docker.com/r/fizzbuzz2/portal-checker
+    - name: Issues
+      url: https://github.com/didlawowo/portal-checker/issues
+  artifacthub.io/images: |
+    - name: portal-checker
+      image: docker.io/fizzbuzz2/portal-checker:3.0.0

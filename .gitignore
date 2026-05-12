@@ -7,3 +7,5 @@ __pycache__/
 .eggs/
 dist/
 build/
+.scannerwork/report-task.txt
+.scannerwork/.sonar_lock
