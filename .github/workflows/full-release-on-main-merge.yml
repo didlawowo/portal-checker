@@ -206,7 +206,7 @@ jobs:
           generate_release_notes: false
 
       - name: Install Helm
-        uses: azure/setup-helm@v4
+        uses: azure/setup-helm@v5
 
       - name: Package Helm chart
         id: helm_package
