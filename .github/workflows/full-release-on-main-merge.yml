@@ -243,12 +243,18 @@ jobs:
           echo "${{ secrets.DOCKER_PASSWORD }}" | helm registry login registry-1.docker.io \
             -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
 
-      - name: Push Helm chart to Docker Hub (OCI)
+      - name: Package and push Helm chart to Docker Hub (OCI)
+        id: helm_package_dh
         run: |
-          # Repo séparé de l'image pour éviter la confusion docker pull / helm pull
-          # Rename tgz to push to repo named portal-checker-chart
+          # IMPORTANT: helm push uses the chart name from Chart.yaml, not the .tgz file name.
+          # Pushing chart "portal-checker" to oci://.../fizzbuzz2 would overwrite the Docker image
+          # at fizzbuzz2/portal-checker. We package a renamed copy "portal-checker-chart" so it
+          # lands at fizzbuzz2/portal-checker-chart, separate from the image repo.
           NEW_VERSION="${{ steps.bump_version.outputs.new_version }}"
-          cp "${{ steps.helm_package.outputs.chart_file }}" "portal-checker-chart-${NEW_VERSION}.tgz"
+          rm -rf /tmp/helm-dh
+          cp -r helm /tmp/helm-dh
+          sed -i 's/^name: .*/name: "portal-checker-chart"/' /tmp/helm-dh/Chart.yaml
+          helm package /tmp/helm-dh --destination .
           helm push "portal-checker-chart-${NEW_VERSION}.tgz" \
             oci://registry-1.docker.io/${{ secrets.DOCKER_USERNAME }}
 
