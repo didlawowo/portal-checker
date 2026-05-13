@@ -62,7 +62,7 @@ excludedUrls:
   - "monitoring.*"           # Exclude all monitoring subdomains
   - "*.internal/*"           # Exclude internal paths
   - "grafana.*/api/health"   # Exclude specific health endpoints
-  - "*.dc-tech.work/api"     # Exclude API paths on specific domain
+  - "*.example.com/api"      # Exclude API paths on specific domain
 ```
 
 Or use Kubernetes annotations:

@@ -169,13 +169,15 @@ initContainers:
     readOnly: true
   - name: data-volume
     mountPath: /app/data
-# 🎯 Excluded URLs for the application - SOLUTION 1: Format liste YAML
-excludedUrls:
-- "monitoring.*"
-- "*.internal/*"
-- "infisical.dc-tech.work/ss-webhook"
-- "grafana.dc-tech.work/metrics"
-- "prometheus.dc-tech.work/*"
+# Excluded URLs for the application (fnmatch patterns)
+# Override these with your own list at install time.
+excludedUrls: []
+# Examples (uncomment / replace with your domains):
+# excludedUrls:
+#   - "monitoring.*"
+#   - "*.internal/*"
+#   - "grafana.example.com/metrics"
+#   - "prometheus.example.com/*"
 # Certificate configuration
 certificate:
   enabled: false
