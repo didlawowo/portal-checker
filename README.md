@@ -1,8 +1,9 @@
 # Portal Checker
 
-[![Version](https://img.shields.io/badge/version-3.0.9-blue.svg)](https://github.com/your-repo/portal-checker/releases)
+[![Version](https://img.shields.io/badge/version-3.0.17-blue.svg)](https://github.com/didlawowo/portal-checker/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/docker-multi--arch-blue.svg)](https://hub.docker.com/r/fizzbuzz2/portal-checker)
+[![Helm](https://img.shields.io/badge/helm-OCI-blue.svg)](https://github.com/didlawowo/portal-checker/pkgs/container/charts%2Fportal-checker)
 
 **Monitor your Kubernetes endpoints with a beautiful, real-time dashboard.** Portal Checker automatically discovers Ingress and HTTPRoute resources across your cluster and provides instant visibility into endpoint health.
 
@@ -90,12 +91,48 @@ metadata:
 
 ### Installation
 
+The Helm chart is published as an OCI artifact on two registries. Pick whichever you prefer:
+
+**From GHCR (recommended)**
+
 ```bash
-# Install with default settings
+helm install portal-checker \
+  oci://ghcr.io/didlawowo/charts/portal-checker \
+  --version 3.0.17 \
+  --namespace monitoring \
+  --create-namespace
+```
+
+**From Docker Hub**
+
+```bash
+helm install portal-checker \
+  oci://registry-1.docker.io/fizzbuzz2/portal-checker-chart \
+  --version 3.0.17 \
+  --namespace monitoring \
+  --create-namespace
+```
+
+**From local source (for development)**
+
+```bash
+git clone https://github.com/didlawowo/portal-checker.git
+cd portal-checker
 helm install portal-checker helm/ \
   --namespace monitoring \
   --create-namespace
 ```
+
+### Container Image
+
+Multi-arch (`linux/amd64`, `linux/arm64`) images are published to Docker Hub:
+
+```bash
+docker pull fizzbuzz2/portal-checker:3.0.17
+docker pull fizzbuzz2/portal-checker:latest
+```
+
+👉 https://hub.docker.com/r/fizzbuzz2/portal-checker
 
 ### Access the Dashboard
 
