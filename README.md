@@ -81,17 +81,25 @@ metadata:
 - Identifies exposed secrets (API keys, JWT tokens, AWS credentials)
 - Groups findings by security severity
 
-## Quick Start
+## Getting Started
+
+### Published Artifacts
+
+| Artifact | Registry | Address |
+| -------- | -------- | ------- |
+| Container image (multi-arch `amd64`/`arm64`) | Docker Hub | [`fizzbuzz2/portal-checker`](https://hub.docker.com/r/fizzbuzz2/portal-checker) |
+| Helm chart (OCI) | GHCR | `oci://ghcr.io/didlawowo/charts/portal-checker` |
+| Helm chart (OCI) | Docker Hub | `oci://registry-1.docker.io/fizzbuzz2/portal-checker-chart` |
+
+Latest version: **3.0.17**
 
 ### Prerequisites
 
 - Kubernetes cluster with RBAC enabled
-- Helm 3.x
+- Helm 3.8+ (for OCI registry support)
 - kubectl configured for your cluster
 
-### Installation
-
-The Helm chart is published as an OCI artifact on two registries. Pick whichever you prefer:
+### Install the Helm Chart
 
 **From GHCR (recommended)**
 
@@ -123,16 +131,12 @@ helm install portal-checker helm/ \
   --create-namespace
 ```
 
-### Container Image
-
-Multi-arch (`linux/amd64`, `linux/arm64`) images are published to Docker Hub:
+### Pull the Container Image
 
 ```bash
 docker pull fizzbuzz2/portal-checker:3.0.17
 docker pull fizzbuzz2/portal-checker:latest
 ```
-
-👉 https://hub.docker.com/r/fizzbuzz2/portal-checker
 
 ### Access the Dashboard
 
