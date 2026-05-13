@@ -148,6 +148,92 @@ kubectl port-forward svc/portal-checker 8080:80 -n monitoring
 open http://localhost:8080
 ```
 
+## Discovered Resources
+
+Portal Checker watches all namespaces and extracts URLs from two Kubernetes resource types.
+
+### Ingress (`networking.k8s.io/v1`)
+
+For each `Ingress` rule, one URL is generated per `host` / `path` combination. The chosen ingress class is read from `spec.ingressClassName` (preferred) or the legacy `kubernetes.io/ingress.class` annotation (fallback to `nginx`).
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-app
+  namespace: apps
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: my-app.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: my-app
+                port:
+                  number: 80
+```
+
+→ produces `https://my-app.example.com`
+
+### HTTPRoute (`gateway.networking.k8s.io/v1beta1`)
+
+For each `HTTPRoute`, one URL is generated per `hostname` × `rules[].matches[].path.value`. The ingress class is reported as `gateway/<parentRef.name>` in the dashboard.
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: my-app
+  namespace: apps
+spec:
+  parentRefs:
+    - name: external-gateway
+  hostnames:
+    - my-app.example.com
+  rules:
+    - matches:
+        - path:
+            value: /api
+      backendRefs:
+        - name: my-app
+          port: 80
+```
+
+→ produces `https://my-app.example.com/api`
+
+### Excluding a resource from discovery
+
+Add the annotation directly on the `Ingress` or `HTTPRoute` (no chart change required):
+
+```yaml
+metadata:
+  annotations:
+    portal-checker.io/exclude: "true"
+```
+
+Or define URL patterns in `values.yaml` (`excludedUrls`) — see [URL Exclusions](#url-exclusions).
+
+### Required RBAC
+
+The chart ships a `ClusterRole` granting read-only access to the resources it discovers:
+
+```yaml
+rules:
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "list"]
+  - apiGroups: ["gateway.networking.k8s.io"]
+    resources: ["httproutes", "gateways"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "list"]
+```
+
 ## Configuration
 
 ### Environment Variables
