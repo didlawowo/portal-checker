@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: Checkout Repository Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           # For PRs, checkout the actual head commit (not the merge commit)
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
