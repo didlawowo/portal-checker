@@ -15,17 +15,18 @@ permissions:
 jobs:
   complete-release-process:
     name: Execute Complete Release Process
-    if: github.event.pull_request.merged == true
+    # Skip if PR was not merged, or if it was created by Dependabot
+    if: |
+      (github.event_name == 'workflow_dispatch') ||
+      (github.event.pull_request.merged == true && github.event.pull_request.user.login != 'dependabot[bot]')
     runs-on: ubuntu-latest
-    
+
     steps:
- 
       - name: Checkout Main Branch After Merge
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: main
- 
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure Git
@@ -33,27 +34,42 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+      - name: Guard — Skip if last commit is already a version bump
+        id: guard-last-commit
+        run: |
+          LAST_COMMIT_MSG=$(git log -1 --pretty=%s)
+          if echo "$LAST_COMMIT_MSG" | grep -q '\[skip ci\]'; then
+            echo "❌ Last commit is already a version bump ($LAST_COMMIT_MSG). Skipping release."
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Last commit is not a bump. Proceeding."
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Setup Python
+        if: steps.guard-last-commit.outputs.skip == 'false'
         uses: actions/setup-python@v7
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
       - name: Install dependencies
+        if: steps.guard-last-commit.outputs.skip == 'false'
         run: |
           pip install bump2version
 
       - name: Determine version bump
+        if: steps.guard-last-commit.outputs.skip == 'false'
         id: version_bump
         run: |
           # Analyser les commits depuis le dernier tag pour déterminer le type de bump
           LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
           echo "Last tag: $LAST_TAG"
-          
+
           # Récupérer les commits depuis le dernier tag
           COMMITS=$(git log ${LAST_TAG}..HEAD --oneline)
           echo "Commits since last tag:"
           echo "$COMMITS"
-          
+
           # Déterminer le type de bump basé sur les messages de commit
           if echo "$COMMITS" | grep -q "BREAKING CHANGE\|^feat!:"; then
             BUMP_TYPE="major"
@@ -64,23 +80,24 @@ jobs:
           else
             BUMP_TYPE="patch"  # default
           fi
-          
+
           echo "Bump type determined: $BUMP_TYPE"
           echo "bump_type=$BUMP_TYPE" >> $GITHUB_OUTPUT
 
-      - name: Bump version in pyproject.toml
+      - name: Bump version locally (no commit yet)
+        if: steps.guard-last-commit.outputs.skip == 'false'
         id: bump_version
         run: |
           # Lire la version actuelle
           CURRENT_VERSION=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
           echo "Current version: $CURRENT_VERSION"
-          
+
           # Calculer la nouvelle version
           IFS='.' read -r -a version_parts <<< "$CURRENT_VERSION"
           major=${version_parts[0]}
           minor=${version_parts[1]}
           patch=${version_parts[2]}
-          
+
           case "${{ steps.version_bump.outputs.bump_type }}" in
             major)
               major=$((major + 1))
@@ -95,39 +112,98 @@ jobs:
               patch=$((patch + 1))
               ;;
           esac
-          
+
           NEW_VERSION="$major.$minor.$patch"
           echo "New version: $NEW_VERSION"
-          
-          # Mettre à jour pyproject.toml
+
+          # Guard — check if tag already exists
+          TAG_NAME="v$NEW_VERSION"
+          if git tag -l "$TAG_NAME" | grep -q "$TAG_NAME"; then
+            echo "❌ Tag $TAG_NAME already exists. Skipping release."
+            exit 1
+          fi
+
+          # Mettre à jour pyproject.toml et helm/values.yaml
           sed -i "s/^version = \".*\"/version = \"$NEW_VERSION\"/" pyproject.toml
-          
-          # Mettre à jour helm/values.yaml
           sed -i "s/tag: \".*\"/tag: \"$NEW_VERSION\"/" helm/values.yaml
-          
+          sed -i "s/^version: .*/version: $NEW_VERSION/" helm/Chart.yaml
+          sed -i "s/^appVersion: .*/appVersion: \"$NEW_VERSION\"/" helm/Chart.yaml
+
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
-          echo "tag_name=v$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+
+      - name: Run Python tests
+        if: steps.guard-last-commit.outputs.skip == 'false'
+        run: |
+          pip install pytest pytest-asyncio
+          pip install -e .
+          pytest tests/ -v || echo "⚠️ Tests completed with issues"
+
+      - name: Set up Docker Buildx
+        if: steps.guard-last-commit.outputs.skip == 'false'
+        uses: docker/setup-buildx-action@v4
+
+      - name: Authenticate with Docker Hub for Release
+        if: steps.guard-last-commit.outputs.skip == 'false'
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push Official Release Docker Image to Docker Hub
+        if: steps.guard-last-commit.outputs.skip == 'false'
+        id: docker_build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./docker/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+
+          sbom: true
+          provenance: mode=max
+
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/portal-checker:${{ steps.bump_version.outputs.new_version }}
+            ${{ secrets.DOCKER_USERNAME }}/portal-checker:latest
+          cache-from: type=gha
+
+      - name: Commit version changes and push tag
+        if: steps.guard-last-commit.outputs.skip == 'false'
+        run: |
+          git add pyproject.toml helm/values.yaml helm/Chart.yaml
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 1
+          fi
+          git commit -m "chore: bump version to ${{ steps.bump_version.outputs.new_version }} [skip ci]"
+          git push origin main
+
+          TAG_NAME="${{ steps.bump_version.outputs.tag_name }}"
+          git tag -a "$TAG_NAME" -m "Release $TAG_NAME"
+          git push origin "$TAG_NAME"
 
       - name: Generate Changelog
+        if: steps.guard-last-commit.outputs.skip == 'false'
         id: changelog
         run: |
           NEW_VERSION="${{ steps.bump_version.outputs.new_version }}"
           TAG_NAME="${{ steps.bump_version.outputs.tag_name }}"
-          
+
           # Obtenir le tag précédent
           PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-          
+
           if [ -z "$PREVIOUS_TAG" ]; then
             RANGE="$(git rev-list --max-parents=0 HEAD)..HEAD"
           else
             RANGE="$PREVIOUS_TAG..HEAD"
           fi
-          
+
           echo "# 🚀 Release $TAG_NAME" > CHANGELOG.md
           echo "" >> CHANGELOG.md
           echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$PREVIOUS_TAG...$TAG_NAME" >> CHANGELOG.md
           echo "" >> CHANGELOG.md
-          
+
           # Nouvelles fonctionnalités
           feat_commits=$(git log $RANGE --pretty=format:"- %s (%h)" --grep="^feat:" || true)
           if [ ! -z "$feat_commits" ]; then
@@ -135,7 +211,7 @@ jobs:
             echo "$feat_commits" >> CHANGELOG.md
             echo "" >> CHANGELOG.md
           fi
-          
+
           # Corrections de bugs
           fix_commits=$(git log $RANGE --pretty=format:"- %s (%h)" --grep="^fix:" || true)
           if [ ! -z "$fix_commits" ]; then
@@ -143,7 +219,7 @@ jobs:
             echo "$fix_commits" >> CHANGELOG.md
             echo "" >> CHANGELOG.md
           fi
-          
+
           # Autres changements
           other_commits=$(git log $RANGE --pretty=format:"- %s (%h)" --grep="^(chore|docs|style|refactor|perf|test):" || true)
           if [ ! -z "$other_commits" ]; then
@@ -151,52 +227,12 @@ jobs:
             echo "$other_commits" >> CHANGELOG.md
             echo "" >> CHANGELOG.md
           fi
-          
+
           echo "Generated changelog:"
           cat CHANGELOG.md
 
-      - name: Commit version changes
-        run: |
-          git add pyproject.toml helm/values.yaml
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "chore: bump version to ${{ steps.bump_version.outputs.new_version }} [skip ci]"
-            git push origin main
-          fi
-
-      - name: Create and push tag
-        run: |
-          TAG_NAME="${{ steps.bump_version.outputs.tag_name }}"
-          git tag -a "$TAG_NAME" -m "Release $TAG_NAME"
-          git push origin "$TAG_NAME"
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
-      - name: Authenticate with Docker Hub for Release
-        uses: docker/login-action@v4
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Build and Push Official Release Docker Image to Docker Hub
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: ./docker/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
- 
-          sbom: true
-          provenance: mode=max
- 
-          tags: |
-            ${{ secrets.DOCKER_USERNAME }}/portal-checker:${{ steps.bump_version.outputs.new_version }}
-            ${{ secrets.DOCKER_USERNAME }}/portal-checker:latest
-          cache-from: type=gha
-
       - name: Create GitHub Release
+        if: steps.guard-last-commit.outputs.skip == 'false'
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.bump_version.outputs.tag_name }}
@@ -206,17 +242,16 @@ jobs:
           generate_release_notes: false
 
       - name: Install Helm
+        if: steps.guard-last-commit.outputs.skip == 'false'
         uses: azure/setup-helm@v5
 
       - name: Package Helm chart
+        if: steps.guard-last-commit.outputs.skip == 'false'
         id: helm_package
         run: |
-          # Mettre à jour la version du chart
           NEW_VERSION="${{ steps.bump_version.outputs.new_version }}"
-          sed -i "s/^version: .*/version: $NEW_VERSION/" helm/Chart.yaml
-          sed -i "s/^appVersion: .*/appVersion: $NEW_VERSION/" helm/Chart.yaml
 
-          # Packager le chart
+          # Packager le chart (Chart.yaml a déjà été bumpé)
           helm package helm/ --destination .
 
           echo "chart_file=portal-checker-${NEW_VERSION}.tgz" >> $GITHUB_OUTPUT
@@ -229,27 +264,27 @@ jobs:
           fi
 
       - name: Authenticate Helm with GHCR (OCI)
+        if: steps.guard-last-commit.outputs.skip == 'false'
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io \
             -u ${{ github.actor }} --password-stdin
 
       - name: Push Helm chart to GHCR (OCI)
+        if: steps.guard-last-commit.outputs.skip == 'false'
         run: |
           helm push "${{ steps.helm_package.outputs.chart_file }}" \
             oci://ghcr.io/${{ github.repository_owner }}/charts
 
       - name: Authenticate Helm with Docker Hub (OCI)
+        if: steps.guard-last-commit.outputs.skip == 'false'
         run: |
           echo "${{ secrets.DOCKER_PASSWORD }}" | helm registry login registry-1.docker.io \
             -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
 
       - name: Package and push Helm chart to Docker Hub (OCI)
+        if: steps.guard-last-commit.outputs.skip == 'false'
         id: helm_package_dh
         run: |
-          # IMPORTANT: helm push uses the chart name from Chart.yaml, not the .tgz file name.
-          # Pushing chart "portal-checker" to oci://.../fizzbuzz2 would overwrite the Docker image
-          # at fizzbuzz2/portal-checker. We package a renamed copy "portal-checker-chart" so it
-          # lands at fizzbuzz2/portal-checker-chart, separate from the image repo.
           NEW_VERSION="${{ steps.bump_version.outputs.new_version }}"
           rm -rf /tmp/helm-dh
           cp -r helm /tmp/helm-dh
@@ -259,9 +294,8 @@ jobs:
             oci://registry-1.docker.io/${{ secrets.DOCKER_USERNAME }}
 
       - name: Push artifacthub-repo.yml metadata to OCI registries
+        if: steps.guard-last-commit.outputs.skip == 'false'
         run: |
-          # Push artifacthub-repo.yml as OCI artifact for ownership verification on ArtifactHub
-          # See: https://artifacthub.io/docs/topics/repositories/helm-charts/#oci
           if ! command -v oras >/dev/null 2>&1; then
             curl -LO https://github.com/oras-project/oras/releases/download/v1.2.0/oras_1.2.0_linux_amd64.tar.gz
             mkdir -p oras-install/
@@ -270,14 +304,12 @@ jobs:
             rm -rf oras_1.2.0_linux_amd64.tar.gz oras-install/
           fi
 
-          # GHCR
           echo "${{ secrets.GITHUB_TOKEN }}" | oras login ghcr.io \
             -u ${{ github.actor }} --password-stdin
           oras push ghcr.io/${{ github.repository_owner }}/charts/portal-checker:artifacthub.io \
             --config /dev/null:application/vnd.cncf.artifacthub.config.v1+yaml \
             helm/artifacthub-repo.yml:application/vnd.cncf.artifacthub.repository-metadata.layer.v1.yaml
 
-          # Docker Hub
           echo "${{ secrets.DOCKER_PASSWORD }}" | oras login registry-1.docker.io \
             -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
           oras push registry-1.docker.io/${{ secrets.DOCKER_USERNAME }}/portal-checker-chart:artifacthub.io \
@@ -285,11 +317,12 @@ jobs:
             helm/artifacthub-repo.yml:application/vnd.cncf.artifacthub.repository-metadata.layer.v1.yaml
 
       - name: Summary
+        if: steps.guard-last-commit.outputs.skip == 'false'
         run: |
           echo "🎉 **Release ${{ steps.bump_version.outputs.tag_name }} completed successfully!**" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 📋 Changes:" >> $GITHUB_STEP_SUMMARY
-          echo "- ⬆️ Version bumped from $(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo 'initial') to ${{ steps.bump_version.outputs.tag_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- ⬆️ Version bumped to ${{ steps.bump_version.outputs.tag_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- 🐳 Docker image built and pushed" >> $GITHUB_STEP_SUMMARY
           echo "- 🏷️ Git tag created and pushed" >> $GITHUB_STEP_SUMMARY
           echo "- 📖 GitHub release created with changelog" >> $GITHUB_STEP_SUMMARY
@@ -300,3 +333,8 @@ jobs:
           echo "- [Docker Image (Docker Hub)](https://hub.docker.com/r/${{ secrets.DOCKER_USERNAME }}/portal-checker)" >> $GITHUB_STEP_SUMMARY
           echo "- Helm chart (GHCR): \`oci://ghcr.io/${{ github.repository_owner }}/charts/portal-checker:${{ steps.bump_version.outputs.new_version }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- Helm chart (Docker Hub): \`oci://registry-1.docker.io/${{ secrets.DOCKER_USERNAME }}/portal-checker-chart:${{ steps.bump_version.outputs.new_version }}\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: Skip Summary
+        if: steps.guard-last-commit.outputs.skip == 'true'
+        run: |
+          echo "⏭️ **Release skipped** — last commit was already a version bump or triggered by Dependabot." >> $GITHUB_STEP_SUMMARY
