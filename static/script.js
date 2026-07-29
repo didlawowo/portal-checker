@@ -10,6 +10,10 @@ let sortConfig = {
 // Cache pour les données Swagger
 let swaggerData = null;
 
+// Auto-refresh interval state
+let _autoRefreshIntervalId = null;
+const AUTO_REFRESH_INTERVAL_MS = 60_000; // 1 minute
+
 // Fonction pour mettre à jour les flèches de tri
 function updateSortArrows() {
     // Reset all arrows - use optional chaining for elements that may not exist
@@ -450,7 +454,14 @@ async function fetchUrlsAndRender() {
 
         window.initialData = payload.results;
         currentData = [...payload.results];
-        renderTable();
+
+        // Re-apply active search filter after data refresh
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput && searchInput.value) {
+            applySearchFilter(searchInput.value);
+        } else {
+            renderTable();
+        }
     } catch (error) {
         // Silent fail - keep showing the previous data
     }
@@ -587,6 +598,58 @@ async function excludeUrl(url) {
     }
 }
 
+// Auto-refresh toggle handler
+async function toggleAutoRefresh(checkbox) {
+    const enabled = checkbox.checked;
+    try {
+        const response = await fetch('/api/auto-refresh', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ enabled })
+        });
+        const data = await response.json();
+        if (response.ok) {
+            _manageAutoRefreshInterval(enabled);
+        } else {
+            checkbox.checked = !enabled;
+            alert(`Erreur: ${data.error || data.message}`);
+        }
+    } catch (error) {
+        checkbox.checked = !enabled;
+        alert(`Erreur lors du changement d'état: ${error.message}`);
+    }
+}
+
+function _manageAutoRefreshInterval(enabled) {
+    if (enabled) {
+        if (_autoRefreshIntervalId) clearInterval(_autoRefreshIntervalId);
+        _autoRefreshIntervalId = setInterval(() => {
+            triggerRefresh();
+        }, AUTO_REFRESH_INTERVAL_MS);
+    } else {
+        if (_autoRefreshIntervalId) {
+            clearInterval(_autoRefreshIntervalId);
+            _autoRefreshIntervalId = null;
+        }
+    }
+}
+
+async function fetchAutoRefreshState() {
+    try {
+        const response = await fetch('/api/auto-refresh');
+        if (response.ok) {
+            const data = await response.json();
+            const checkbox = document.getElementById('autoRefreshToggle');
+            if (checkbox && data.enabled) {
+                checkbox.checked = true;
+                _manageAutoRefreshInterval(true);
+            }
+        }
+    } catch (error) {
+        // silent fail
+    }
+}
+
 // Fonction pour scanner une URL pour Swagger/OpenAPI
 async function scanSwagger(url, event) {
     try {
@@ -636,9 +699,12 @@ async function scanSwagger(url, event) {
     }
 }
 
-// Fonction de recherche
-function handleSearch(event) {
-    const searchTerm = event.target.value.toLowerCase();
+// Search term persistence key
+const SEARCH_STORAGE_KEY = 'portal-checker:search';
+
+// Apply current search filter to the data and re-render
+function applySearchFilter(term) {
+    const searchTerm = term.toLowerCase();
     currentData = initialData.filter(item => {
         const searchableFields = [
             item.url || '',
@@ -657,6 +723,43 @@ function handleSearch(event) {
         );
     });
     renderTable();
+}
+
+// Persist search term to URL + localStorage
+function persistSearchTerm(term) {
+    try {
+        localStorage.setItem(SEARCH_STORAGE_KEY, term);
+        const url = new URL(window.location.href);
+        if (term) {
+            url.searchParams.set('search', term);
+        } else {
+            url.searchParams.delete('search');
+        }
+        window.history.replaceState({}, '', url.toString());
+    } catch (e) {
+        // silent fail (private mode, etc.)
+    }
+}
+
+// Restore search term from URL or localStorage
+function restoreSearchTerm() {
+    const url = new URL(window.location.href);
+    let term = url.searchParams.get('search') || '';
+    if (!term) {
+        try {
+            term = localStorage.getItem(SEARCH_STORAGE_KEY) || '';
+        } catch (e) {
+            term = '';
+        }
+    }
+    return term;
+}
+
+// Fonction de recherche
+function handleSearch(event) {
+    const term = event.target.value;
+    persistSearchTerm(term);
+    applySearchFilter(term);
 }
 
 // Initialisation au chargement du DOM
@@ -718,10 +821,21 @@ document.addEventListener('DOMContentLoaded', function() {
     updateSortArrows();
     renderTable();
 
+    // Restore and apply persisted search term
+    const savedSearch = restoreSearchTerm();
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput && savedSearch) {
+        searchInput.value = savedSearch;
+        applySearchFilter(savedSearch);
+    }
+
     // Si la page a été ouverte avant que le cache n'ait été rempli, charger
     // les résultats via /api/urls. Puis polling périodique pour rester à jour.
     if (!Array.isArray(window.initialData) || window.initialData.length === 0) {
         fetchUrlsAndRender();
     }
     setInterval(fetchUrlsAndRender, URL_POLL_INTERVAL_MS);
+
+    // Fetch auto-refresh state on page load
+    fetchAutoRefreshState();
 });

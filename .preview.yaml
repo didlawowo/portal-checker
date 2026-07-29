@@ -1,0 +1,14 @@
+# Preview environment overrides for portal-checker
+# Merged with helm/values.yaml by ArgoCD ApplicationSet
+
+# Resources tuned down for ephemeral preview
+resources:
+  limits:
+    cpu: 300m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 32Mi
+
+# Note: env vars are injected by the ApplicationSet (BRANCH, ENVIRONMENT, PR_NUMBER).
+# Do NOT define 'env:' here to avoid type mismatch (array vs object).

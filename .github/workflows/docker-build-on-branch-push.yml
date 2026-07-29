@@ -27,7 +27,19 @@ jobs:
       - name: Setup Docker Buildx for Multi-Platform Builds
         uses: docker/setup-buildx-action@v4
 
+      - name: Check Docker Hub secrets availability
+        id: check-secrets
+        run: |
+          if [ -n "${{ secrets.DOCKER_USERNAME }}" ] && [ -n "${{ secrets.DOCKER_PASSWORD }}" ]; then
+            echo "available=true" >> $GITHUB_OUTPUT
+            echo "✅ Docker Hub secrets are available"
+          else
+            echo "available=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Docker Hub secrets are missing — build will run without push"
+          fi
+
       - name: Authenticate with Docker Hub
+        if: steps.check-secrets.outputs.available == 'true'
         uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
@@ -51,24 +63,26 @@ jobs:
             PR_NUMBER=${{ github.event.pull_request.number }}
             echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
             echo "pr_tag=pr-${PR_NUMBER}-${SHA}" >> $GITHUB_OUTPUT
+            echo "pr_tag_simple=pr-${PR_NUMBER}" >> $GITHUB_OUTPUT
           fi
 
-      - name: Build Multi-Platform Docker Image and Push to Docker Hub
+      - name: Build Multi-Platform Docker Image (with optional push)
         uses: docker/build-push-action@v7
         with:
           context: .
           file: ./docker/Dockerfile
           platforms: linux/amd64,linux/arm64
-          push: true
+          push: ${{ steps.check-secrets.outputs.available == 'true' }}
+          load: false
 
-          sbom: true
-          provenance: mode=max
+          sbom: ${{ steps.check-secrets.outputs.available == 'true' }}
+          provenance: ${{ steps.check-secrets.outputs.available == 'true' && 'mode=max' || false }}
 
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/portal-checker:${{ steps.extract-metadata.outputs.branch }}-${{ steps.extract-metadata.outputs.sha }}
-            ${{ github.event_name == 'pull_request' && format('{0}/portal-checker:{1}', secrets.DOCKER_USERNAME, steps.extract-metadata.outputs.pr_tag) || '' }}
+            ${{ steps.check-secrets.outputs.available == 'true' && format('{0}/portal-checker:{1}', secrets.DOCKER_USERNAME, steps.extract-metadata.outputs.branch) || 'portal-checker:local' }}-${{ steps.extract-metadata.outputs.sha }}
+            ${{ steps.check-secrets.outputs.available == 'true' && github.event_name == 'pull_request' && format('{0}/portal-checker:{1}', secrets.DOCKER_USERNAME, steps.extract-metadata.outputs.pr_tag) || '' }}
+            ${{ steps.check-secrets.outputs.available == 'true' && github.event_name == 'pull_request' && format('{0}/portal-checker:{1}', secrets.DOCKER_USERNAME, steps.extract-metadata.outputs.pr_tag_simple) || '' }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max
 
       - name: Generate Build Summary Report
         run: |
@@ -81,6 +95,7 @@ jobs:
           echo "- 🐳 Docker Hub Repository: ${{ secrets.DOCKER_USERNAME }}/portal-checker" >> $GITHUB_STEP_SUMMARY
           echo "- 🏗️ Docker Tag: ${{ steps.extract-metadata.outputs.branch }}-${{ steps.extract-metadata.outputs.sha }}" >> $GITHUB_STEP_SUMMARY
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "- 🔖 PR Tag: ${{ steps.extract-metadata.outputs.pr_tag }}" >> $GITHUB_STEP_SUMMARY
+            echo "- 🔖 PR Tag (SHA): ${{ steps.extract-metadata.outputs.pr_tag }}" >> $GITHUB_STEP_SUMMARY
+            echo "- 🔖 PR Tag (ArgoCD): ${{ steps.extract-metadata.outputs.pr_tag_simple }}" >> $GITHUB_STEP_SUMMARY
             echo "- 🔗 Preview URL: https://pc-pr-${{ steps.extract-metadata.outputs.pr_number }}.dc-tech.work" >> $GITHUB_STEP_SUMMARY
           fi

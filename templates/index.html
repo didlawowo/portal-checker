@@ -52,6 +52,11 @@
         <div class="search-bar">
             <input type="search" id="searchInput" placeholder="Rechercher...">
             <button id="refreshBtn" onclick="triggerRefresh()">Refresh</button>
+            <label class="auto-refresh-toggle" title="Auto-refresh toutes les minutes">
+                <input type="checkbox" id="autoRefreshToggle" onchange="toggleAutoRefresh(this)">
+                <span class="toggle-slider"></span>
+                <span class="toggle-label">Auto</span>
+            </label>
             <button onclick="showExcludedUrls()">Exclusions</button>
         </div>
 

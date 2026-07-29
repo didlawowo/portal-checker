@@ -44,7 +44,15 @@ spec:
           resources: {{- toYaml . | nindent 12 }}
           {{- end }}
           {{- with .Values.env }}
+          {{- if kindIs "map" . }}
+          env:
+            {{- range $k, $v := . }}
+            - name: {{ $k }}
+              value: {{ $v | quote }}
+            {{- end }}
+          {{- else }}
           env: {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- end }}
           {{- with .Values.envFrom }}
           envFrom: {{- toYaml . | nindent 12 }}
