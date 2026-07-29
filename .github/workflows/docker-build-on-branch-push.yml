@@ -63,6 +63,7 @@ jobs:
             PR_NUMBER=${{ github.event.pull_request.number }}
             echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
             echo "pr_tag=pr-${PR_NUMBER}-${SHA}" >> $GITHUB_OUTPUT
+            echo "pr_tag_simple=pr-${PR_NUMBER}" >> $GITHUB_OUTPUT
           fi
 
       - name: Build Multi-Platform Docker Image (with optional push)
@@ -80,6 +81,7 @@ jobs:
           tags: |
             ${{ steps.check-secrets.outputs.available == 'true' && format('{0}/portal-checker:{1}', secrets.DOCKER_USERNAME, steps.extract-metadata.outputs.branch) || 'portal-checker:local' }}-${{ steps.extract-metadata.outputs.sha }}
             ${{ steps.check-secrets.outputs.available == 'true' && github.event_name == 'pull_request' && format('{0}/portal-checker:{1}', secrets.DOCKER_USERNAME, steps.extract-metadata.outputs.pr_tag) || '' }}
+            ${{ steps.check-secrets.outputs.available == 'true' && github.event_name == 'pull_request' && format('{0}/portal-checker:{1}', secrets.DOCKER_USERNAME, steps.extract-metadata.outputs.pr_tag_simple) || '' }}
           cache-from: type=gha
 
       - name: Generate Build Summary Report
@@ -93,6 +95,7 @@ jobs:
           echo "- 🐳 Docker Hub Repository: ${{ secrets.DOCKER_USERNAME }}/portal-checker" >> $GITHUB_STEP_SUMMARY
           echo "- 🏗️ Docker Tag: ${{ steps.extract-metadata.outputs.branch }}-${{ steps.extract-metadata.outputs.sha }}" >> $GITHUB_STEP_SUMMARY
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "- 🔖 PR Tag: ${{ steps.extract-metadata.outputs.pr_tag }}" >> $GITHUB_STEP_SUMMARY
+            echo "- 🔖 PR Tag (SHA): ${{ steps.extract-metadata.outputs.pr_tag }}" >> $GITHUB_STEP_SUMMARY
+            echo "- 🔖 PR Tag (ArgoCD): ${{ steps.extract-metadata.outputs.pr_tag_simple }}" >> $GITHUB_STEP_SUMMARY
             echo "- 🔗 Preview URL: https://pc-pr-${{ steps.extract-metadata.outputs.pr_number }}.dc-tech.work" >> $GITHUB_STEP_SUMMARY
           fi
