@@ -10,11 +10,5 @@ resources:
     cpu: 50m
     memory: 32Mi
 
-# Disable autoswagger in preview to reduce noise
-env:
-- name: FLASK_ENV
-  value: production
-- name: PORT
-  value: "5000"
-- name: ENABLE_AUTOSWAGGER
-  value: "false"
+# Note: env vars are injected by the ApplicationSet (BRANCH, ENVIRONMENT, PR_NUMBER).
+# Do NOT define 'env:' here to avoid type mismatch (array vs object).
