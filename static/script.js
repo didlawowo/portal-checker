@@ -454,7 +454,14 @@ async function fetchUrlsAndRender() {
 
         window.initialData = payload.results;
         currentData = [...payload.results];
-        renderTable();
+
+        // Re-apply active search filter after data refresh
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput && searchInput.value) {
+            applySearchFilter(searchInput.value);
+        } else {
+            renderTable();
+        }
     } catch (error) {
         // Silent fail - keep showing the previous data
     }
@@ -692,9 +699,12 @@ async function scanSwagger(url, event) {
     }
 }
 
-// Fonction de recherche
-function handleSearch(event) {
-    const searchTerm = event.target.value.toLowerCase();
+// Search term persistence key
+const SEARCH_STORAGE_KEY = 'portal-checker:search';
+
+// Apply current search filter to the data and re-render
+function applySearchFilter(term) {
+    const searchTerm = term.toLowerCase();
     currentData = initialData.filter(item => {
         const searchableFields = [
             item.url || '',
@@ -713,6 +723,43 @@ function handleSearch(event) {
         );
     });
     renderTable();
+}
+
+// Persist search term to URL + localStorage
+function persistSearchTerm(term) {
+    try {
+        localStorage.setItem(SEARCH_STORAGE_KEY, term);
+        const url = new URL(window.location.href);
+        if (term) {
+            url.searchParams.set('search', term);
+        } else {
+            url.searchParams.delete('search');
+        }
+        window.history.replaceState({}, '', url.toString());
+    } catch (e) {
+        // silent fail (private mode, etc.)
+    }
+}
+
+// Restore search term from URL or localStorage
+function restoreSearchTerm() {
+    const url = new URL(window.location.href);
+    let term = url.searchParams.get('search') || '';
+    if (!term) {
+        try {
+            term = localStorage.getItem(SEARCH_STORAGE_KEY) || '';
+        } catch (e) {
+            term = '';
+        }
+    }
+    return term;
+}
+
+// Fonction de recherche
+function handleSearch(event) {
+    const term = event.target.value;
+    persistSearchTerm(term);
+    applySearchFilter(term);
 }
 
 // Initialisation au chargement du DOM
@@ -773,6 +820,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Rendu initial
     updateSortArrows();
     renderTable();
+
+    // Restore and apply persisted search term
+    const savedSearch = restoreSearchTerm();
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput && savedSearch) {
+        searchInput.value = savedSearch;
+        applySearchFilter(savedSearch);
+    }
 
     // Si la page a été ouverte avant que le cache n'ait été rempli, charger
     // les résultats via /api/urls. Puis polling périodique pour rester à jour.
