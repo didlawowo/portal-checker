@@ -68,7 +68,6 @@ jobs:
             ${{ secrets.DOCKER_USERNAME }}/portal-checker:${{ steps.extract-metadata.outputs.branch }}-${{ steps.extract-metadata.outputs.sha }}
             ${{ github.event_name == 'pull_request' && format('{0}/portal-checker:{1}', secrets.DOCKER_USERNAME, steps.extract-metadata.outputs.pr_tag) || '' }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max
 
       - name: Generate Build Summary Report
         run: |

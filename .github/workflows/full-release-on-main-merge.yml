@@ -5,6 +5,7 @@ on:
     types: [closed]
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -194,7 +195,6 @@ jobs:
             ${{ secrets.DOCKER_USERNAME }}/portal-checker:${{ steps.bump_version.outputs.new_version }}
             ${{ secrets.DOCKER_USERNAME }}/portal-checker:latest
           cache-from: type=gha
-          cache-to: type=gha,mode=max
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
