@@ -10,6 +10,10 @@ let sortConfig = {
 // Cache pour les données Swagger
 let swaggerData = null;
 
+// Auto-refresh interval state
+let _autoRefreshIntervalId = null;
+const AUTO_REFRESH_INTERVAL_MS = 60_000; // 1 minute
+
 // Fonction pour mettre à jour les flèches de tri
 function updateSortArrows() {
     // Reset all arrows - use optional chaining for elements that may not exist
@@ -587,6 +591,58 @@ async function excludeUrl(url) {
     }
 }
 
+// Auto-refresh toggle handler
+async function toggleAutoRefresh(checkbox) {
+    const enabled = checkbox.checked;
+    try {
+        const response = await fetch('/api/auto-refresh', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ enabled })
+        });
+        const data = await response.json();
+        if (response.ok) {
+            _manageAutoRefreshInterval(enabled);
+        } else {
+            checkbox.checked = !enabled;
+            alert(`Erreur: ${data.error || data.message}`);
+        }
+    } catch (error) {
+        checkbox.checked = !enabled;
+        alert(`Erreur lors du changement d'état: ${error.message}`);
+    }
+}
+
+function _manageAutoRefreshInterval(enabled) {
+    if (enabled) {
+        if (_autoRefreshIntervalId) clearInterval(_autoRefreshIntervalId);
+        _autoRefreshIntervalId = setInterval(() => {
+            triggerRefresh();
+        }, AUTO_REFRESH_INTERVAL_MS);
+    } else {
+        if (_autoRefreshIntervalId) {
+            clearInterval(_autoRefreshIntervalId);
+            _autoRefreshIntervalId = null;
+        }
+    }
+}
+
+async function fetchAutoRefreshState() {
+    try {
+        const response = await fetch('/api/auto-refresh');
+        if (response.ok) {
+            const data = await response.json();
+            const checkbox = document.getElementById('autoRefreshToggle');
+            if (checkbox && data.enabled) {
+                checkbox.checked = true;
+                _manageAutoRefreshInterval(true);
+            }
+        }
+    } catch (error) {
+        // silent fail
+    }
+}
+
 // Fonction pour scanner une URL pour Swagger/OpenAPI
 async function scanSwagger(url, event) {
     try {
@@ -724,4 +780,7 @@ document.addEventListener('DOMContentLoaded', function() {
         fetchUrlsAndRender();
     }
     setInterval(fetchUrlsAndRender, URL_POLL_INTERVAL_MS);
+
+    // Fetch auto-refresh state on page load
+    fetchAutoRefreshState();
 });

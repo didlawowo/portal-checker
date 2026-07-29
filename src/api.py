@@ -53,6 +53,23 @@ _refresh_state: Dict[str, Any] = {
 }
 _refresh_lock = threading.Lock()
 
+# Auto-refresh toggle state (runtime, off by default)
+_auto_refresh_enabled: bool = False
+_auto_refresh_lock = threading.Lock()
+
+
+def _get_auto_refresh_state() -> Dict[str, Any]:
+    """Return current auto-refresh state."""
+    return {"enabled": _auto_refresh_enabled}
+
+
+def _set_auto_refresh_state(enabled: bool) -> None:
+    """Set auto-refresh state thread-safely."""
+    global _auto_refresh_enabled
+    with _auto_refresh_lock:
+        _auto_refresh_enabled = enabled
+        logger.info(f"🔄 Auto-refresh {'activé' if enabled else 'désactivé'}")
+
 
 def _run_full_refresh_sync() -> None:
     """Re-discover URLs from Kubernetes and run a full URL test pass.
@@ -334,6 +351,39 @@ def refresh_status():
             else None,
         }
     )
+
+
+@app.route("/api/auto-refresh", methods=["GET"])
+def auto_refresh_status():
+    """Return the current auto-refresh toggle state."""
+    return jsonify(_get_auto_refresh_state())
+
+
+@app.route("/api/auto-refresh", methods=["POST"])
+def auto_refresh_toggle():
+    """Toggle the auto-refresh feature on/off.
+
+    Expects JSON body: {"enabled": true} or {"enabled": false}.
+    If no body, toggles the current state.
+    """
+    global _auto_refresh_enabled
+    try:
+        data = request.get_json(silent=True) or {}
+        if "enabled" in data:
+            _set_auto_refresh_state(bool(data["enabled"]))
+        else:
+            # Toggle current state if no explicit value provided
+            _set_auto_refresh_state(not _auto_refresh_enabled)
+        return jsonify(
+            {
+                "status": "ok",
+                "enabled": _auto_refresh_enabled,
+                "message": f"Auto-refresh {'activé' if _auto_refresh_enabled else 'désactivé'}",
+            }
+        )
+    except Exception as e:
+        logger.error(f"❌ Erreur lors du toggle auto-refresh: {e}")
+        return jsonify({"error": str(e), "status": "error"}), 500
 
 
 @app.route("/api/exclude", methods=["POST"])
