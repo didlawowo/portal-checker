@@ -1,7 +1,7 @@
 apiVersion: "v2"
 name: "portal-checker"
-version: 1.4.2
-appVersion: "3.0.24"
+version: 3.0.26
+appVersion: "3.0.26"
 description: A Helm chart for portal checker - Kubernetes Ingress/HTTPRoute portal monitoring with Swagger/OpenAPI discovery
 type: application
 home: https://github.com/didlawowo/portal-checker
