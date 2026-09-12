@@ -209,7 +209,9 @@ function createMobileCard(item) {
 
     const cardHeader = document.createElement('div');
     cardHeader.className = 'mobile-card-header';
-    appendMobileText(cardHeader, 'h3', 'mobile-card-name', item.name);
+    const name = appendMobileText(cardHeader, 'h3', 'mobile-card-name', item.name);
+    name.title = item.name || '';
+    name.setAttribute('aria-label', item.name || 'Service sans nom');
     const status = appendMobileText(cardHeader, 'span', `status-badge ${getStatusClass(item.status)}`, item.status);
     status.setAttribute('aria-label', `Statut ${item.status}`);
     card.appendChild(cardHeader);
@@ -221,19 +223,33 @@ function createMobileCard(item) {
     link.target = '_blank';
     link.rel = 'noopener';
     link.title = displayUrl;
-    link.textContent = displayUrl;
+    link.textContent = displayUrl.replace(/^https?:\/\//, '');
     card.appendChild(link);
 
     const context = [item.namespace, item.type, item.ingress_class || item.gateway]
         .filter(Boolean)
         .map(value => String(value));
-    appendMobileText(card, 'p', 'mobile-card-context', context.join(' · '));
 
     const details = document.createElement('details');
     details.className = 'mobile-card-details';
     const summary = document.createElement('summary');
-    summary.textContent = 'Détails';
+    appendMobileText(summary, 'span', 'mobile-card-summary-context', context.join(' · ') || 'Informations');
+    appendMobileText(summary, 'span', 'mobile-card-summary-label', 'Détails');
     details.appendChild(summary);
+
+    const expanded = document.createElement('div');
+    expanded.className = 'mobile-card-expanded';
+    appendMobileText(expanded, 'p', 'mobile-card-expanded-name', `Nom complet : ${item.name || '—'}`);
+    const expandedUrl = document.createElement('a');
+    expandedUrl.className = 'mobile-card-expanded-url';
+    expandedUrl.href = displayUrl;
+    expandedUrl.target = '_blank';
+    expandedUrl.rel = 'noopener';
+    expandedUrl.textContent = displayUrl;
+    expandedUrl.title = displayUrl;
+    expanded.appendChild(expandedUrl);
+    appendMobileText(expanded, 'p', 'mobile-card-expanded-context', context.join(' · ') || 'Informations indisponibles');
+    details.appendChild(expanded);
 
     const metrics = document.createElement('div');
     metrics.className = 'mobile-card-metrics';

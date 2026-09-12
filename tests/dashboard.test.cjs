@@ -489,13 +489,23 @@ test('createMobileCard utilise textContent et conserve URL dans les actions', ()
   const card = env.sandbox.createMobileCard(item);
   const header = card.children[0];
   const link = card.children[1];
-  const details = card.children[3];
-  const actions = details.children[3];
+  const details = card.children[2];
+  const summary = details.children[0];
+  const expanded = details.children[1];
+  const actions = details.children[4];
 
   assert.equal(header.children[0].textContent, item.name);
-  assert.equal(link.textContent, url);
+  assert.equal(link.textContent, url.replace(/^https?:\/\//, ''));
   assert.equal(link.href, url);
-  assert.equal(details.children[2].textContent, item.details);
+  assert.equal(link.title, url);
+  assert.equal(summary.children[0].textContent, 'ns · ingress');
+  assert.equal(summary.children[1].textContent, 'Détails');
+  assert.equal(expanded.children[0].textContent, `Nom complet : ${item.name}`);
+  assert.equal(expanded.children[1].textContent, url);
+  assert.equal(expanded.children[1].href, url);
+  assert.equal(expanded.children[1].title, url);
+  assert.equal(expanded.children[2].textContent, 'ns · ingress');
+  assert.equal(details.children[3].textContent, item.details);
   assert.deepEqual(actions.children.map((button) => button.textContent), [
     'Annotations', 'Scanner API', 'Exclure'
   ]);
