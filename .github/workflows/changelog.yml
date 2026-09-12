@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   changelog:
-    runs-on: ubuntu-latest
+    runs-on: arc-runner-portal-checker
     
     steps:
       - uses: actions/checkout@v7

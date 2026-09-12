@@ -1,15 +1,17 @@
-import sys
 import os
+import sys
+
 # Add the project path to PYTHONPATH
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import pytest
 import tempfile
-import yaml
-from unittest.mock import patch, MagicMock, AsyncMock
-import aiohttp
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.utils import get_app_version, load_urls_from_file, check_urls_async
+import aiohttp
+import pytest
+import yaml
+
+from src.utils import check_urls_async, get_app_version, load_urls_from_file
 
 
 class TestUtils:
@@ -21,9 +23,9 @@ class TestUtils:
         assert isinstance(version, str)
         assert version != "unknown"
         # Version should be in semver format (e.g., "3.0.7")
-        assert len(version.split('.')) >= 2
+        assert len(version.split(".")) >= 2
 
-    @patch('builtins.open', side_effect=FileNotFoundError())
+    @patch("builtins.open", side_effect=FileNotFoundError())
     def test_get_app_version_file_not_found(self, mock_open):
         """Test version returns 'unknown' when pyproject.toml not found"""
         version = get_app_version()
@@ -32,23 +34,26 @@ class TestUtils:
     def test_load_urls_from_file_success(self):
         """Test loading URLs from valid YAML file"""
         # Create temp YAML file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
-            yaml.dump({
-                "urls": [
-                    {
-                        "url": "example.com",
-                        "namespace": "default",
-                        "name": "test-service",
-                        "type": "Ingress"
-                    },
-                    {
-                        "url": "api.example.com",
-                        "namespace": "production",
-                        "name": "api-service",
-                        "type": "HTTPRoute"
-                    }
-                ]
-            }, f)
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            yaml.dump(
+                {
+                    "urls": [
+                        {
+                            "url": "example.com",
+                            "namespace": "default",
+                            "name": "test-service",
+                            "type": "Ingress",
+                        },
+                        {
+                            "url": "api.example.com",
+                            "namespace": "production",
+                            "name": "api-service",
+                            "type": "HTTPRoute",
+                        },
+                    ]
+                },
+                f,
+            )
             temp_file = f.name
 
         try:
@@ -63,11 +68,14 @@ class TestUtils:
     def test_load_urls_from_file_list_format(self):
         """Test loading URLs from YAML file with list format"""
         # Create temp YAML file with list format (old format)
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
-            yaml.dump([
-                {"url": "example.com", "name": "test"},
-                {"url": "api.com", "name": "api"}
-            ], f)
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            yaml.dump(
+                [
+                    {"url": "example.com", "name": "test"},
+                    {"url": "api.com", "name": "api"},
+                ],
+                f,
+            )
             temp_file = f.name
 
         try:
@@ -85,7 +93,7 @@ class TestUtils:
     def test_load_urls_from_file_invalid_yaml(self):
         """Test loading URLs from invalid YAML returns empty list"""
         # Create temp file with invalid YAML
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             f.write("invalid: yaml: content: [")
             temp_file = f.name
 
@@ -97,7 +105,7 @@ class TestUtils:
 
     def test_load_urls_from_file_empty(self):
         """Test loading URLs from empty file returns empty list"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             temp_file = f.name
 
         try:
@@ -115,12 +123,12 @@ class TestUtils:
                 "namespace": "default",
                 "name": "test-service",
                 "type": "Ingress",
-                "annotations": {}
+                "annotations": {},
             }
         ]
 
         # Mock aiohttp ClientSession with proper async context manager
-        with patch('src.utils.aiohttp.ClientSession') as mock_session_class:
+        with patch("src.utils.aiohttp.ClientSession") as mock_session_class:
             # Mock response
             mock_response = AsyncMock()
             mock_response.status = 200
@@ -152,7 +160,7 @@ class TestUtils:
                 "namespace": "default",
                 "name": "test-service",
                 "type": "Ingress",
-                "annotations": {}
+                "annotations": {},
             }
         ]
 
@@ -160,7 +168,9 @@ class TestUtils:
         def mock_is_excluded(url):
             return True
 
-        results = await check_urls_async(test_urls, update_cache=False, is_url_excluded_func=mock_is_excluded)
+        results = await check_urls_async(
+            test_urls, update_cache=False, is_url_excluded_func=mock_is_excluded
+        )
 
         # Excluded URLs are filtered out, so results should be empty
         assert len(results) == 0
@@ -174,15 +184,17 @@ class TestUtils:
                 "namespace": "default",
                 "name": "error-service",
                 "type": "Ingress",
-                "annotations": {}
+                "annotations": {},
             }
         ]
 
         # Mock aiohttp to raise error
-        with patch('src.utils.aiohttp.ClientSession') as mock_session_class:
+        with patch("src.utils.aiohttp.ClientSession") as mock_session_class:
             mock_session = AsyncMock()
             # Make session.get() raise an error
-            mock_session.get = MagicMock(side_effect=aiohttp.ClientError("Connection error"))
+            mock_session.get = MagicMock(
+                side_effect=aiohttp.ClientError("Connection error")
+            )
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session.__aexit__ = AsyncMock(return_value=None)
             mock_session_class.return_value = mock_session
@@ -203,14 +215,16 @@ class TestUtils:
                 "namespace": "default",
                 "name": "timeout-service",
                 "type": "Ingress",
-                "annotations": {}
+                "annotations": {},
             }
         ]
 
         # Mock aiohttp to raise timeout
-        with patch('src.utils.aiohttp.ClientSession') as mock_session_class:
+        with patch("src.utils.aiohttp.ClientSession") as mock_session_class:
             mock_session = AsyncMock()
-            mock_session.get = MagicMock(side_effect=aiohttp.ServerTimeoutError("Timeout"))
+            mock_session.get = MagicMock(
+                side_effect=aiohttp.ServerTimeoutError("Timeout")
+            )
             mock_session.__aenter__ = AsyncMock(return_value=mock_session)
             mock_session.__aexit__ = AsyncMock(return_value=None)
             mock_session_class.return_value = mock_session
@@ -237,11 +251,11 @@ class TestUtils:
                 "namespace": "default",
                 "name": "fast-service",
                 "type": "Ingress",
-                "annotations": {}
+                "annotations": {},
             }
         ]
 
-        with patch('src.utils.aiohttp.ClientSession') as mock_session_class:
+        with patch("src.utils.aiohttp.ClientSession") as mock_session_class:
             # Mock response
             mock_response = AsyncMock()
             mock_response.status = 200

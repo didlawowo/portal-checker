@@ -29,7 +29,7 @@ dependencies = [
     "Flask==3.1.1",
     "frozenlist==1.8.0",
     "h11==0.16.0",
-    "h2==4.3.0",
+    "h2==4.4.1",
     "hpack>=4.1.0",
     "Hypercorn==0.17.3",
     "hyperframe>=6.1.0",

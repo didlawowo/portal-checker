@@ -1,13 +1,15 @@
-import sys
 import os
+import sys
+
 # Add the project path to PYTHONPATH
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import pytest
 import tempfile
+
+import pytest
 import yaml
 
-from src.kubernetes_client import is_url_excluded, invalidate_excluded_patterns_cache
+from src.kubernetes_client import invalidate_excluded_patterns_cache, is_url_excluded
 
 
 class TestExclude:
@@ -17,16 +19,12 @@ class TestExclude:
     def setup_excluded_urls(self, monkeypatch):
         """Setup fixture with temporary YAML file"""
         # Create temporary YAML file with test patterns
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
-            yaml.dump([
-                "example.com/admin",
-                "api.example.com/private/*",
-                "test.com"
-            ], f)
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            yaml.dump(["example.com/admin", "api.example.com/private/*", "test.com"], f)
             temp_file = f.name
 
         # Patch EXCLUDED_URLS_FILE to use temp file
-        monkeypatch.setattr('src.kubernetes_client.EXCLUDED_URLS_FILE', temp_file)
+        monkeypatch.setattr("src.kubernetes_client.EXCLUDED_URLS_FILE", temp_file)
 
         # Invalidate cache to force reload
         invalidate_excluded_patterns_cache()
@@ -58,12 +56,12 @@ class TestExclude:
     def test_trailing_slash(self, monkeypatch):
         """Test URL normalization with trailing slashes"""
         # Create YAML with trailing slash pattern
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             yaml.dump(["service.example.com/"], f)
             temp_file = f.name
 
         try:
-            monkeypatch.setattr('src.kubernetes_client.EXCLUDED_URLS_FILE', temp_file)
+            monkeypatch.setattr("src.kubernetes_client.EXCLUDED_URLS_FILE", temp_file)
             invalidate_excluded_patterns_cache()
 
             assert is_url_excluded("service.example.com", {}) is True

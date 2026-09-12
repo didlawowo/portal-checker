@@ -53,8 +53,8 @@ _refresh_state: Dict[str, Any] = {
 }
 _refresh_lock = threading.Lock()
 
-# Auto-refresh toggle state (runtime, off by default)
-_auto_refresh_enabled: bool = False
+# Auto-refresh toggle state (runtime, enabled by default)
+_auto_refresh_enabled: bool = True
 _auto_refresh_lock = threading.Lock()
 
 
@@ -320,9 +320,7 @@ def refresh_async():
             {
                 "status": "ok",
                 "started": started,
-                "message": "Refresh démarré"
-                if started
-                else "Refresh déjà en cours",
+                "message": "Refresh démarré" if started else "Refresh déjà en cours",
                 "running": _refresh_state["running"],
                 "started_at": _refresh_state["started_at"].isoformat()
                 if _refresh_state["started_at"]

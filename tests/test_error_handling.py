@@ -1,13 +1,15 @@
-import sys
 import os
+import sys
+
 # Add the project path to PYTHONPATH
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import pytest
 import tempfile
+
+import pytest
 import yaml
 
-from src.kubernetes_client import is_url_excluded, invalidate_excluded_patterns_cache
+from src.kubernetes_client import invalidate_excluded_patterns_cache, is_url_excluded
 
 
 class TestErrorHandling:
@@ -26,19 +28,19 @@ class TestErrorHandling:
     def test_is_url_excluded_with_annotations(self):
         """Test URL exclusion with annotations"""
         # Test with exclusion annotation
-        annotations = {'portal-checker.io/exclude': 'true'}
-        assert is_url_excluded("example.com", annotations) == True
+        annotations = {"portal-checker.io/exclude": "true"}
+        assert is_url_excluded("example.com", annotations)
 
         # Test with case variation
-        annotations = {'portal-checker.io/exclude': 'True'}
-        assert is_url_excluded("example.com", annotations) == True
+        annotations = {"portal-checker.io/exclude": "True"}
+        assert is_url_excluded("example.com", annotations)
 
         # Test with false annotation
-        annotations = {'portal-checker.io/exclude': 'false'}
-        assert is_url_excluded("example.com", annotations) == False
+        annotations = {"portal-checker.io/exclude": "false"}
+        assert not is_url_excluded("example.com", annotations)
 
         # Test without exclusion annotation
-        annotations = {'other.annotation': 'value'}
+        annotations = {"other.annotation": "value"}
         # This will check against loaded excluded URLs patterns
         result = is_url_excluded("example.com", annotations)
         assert isinstance(result, bool)
@@ -52,12 +54,12 @@ class TestErrorHandling:
     def test_is_url_excluded_with_patterns(self, monkeypatch):
         """Test URL exclusion with different patterns"""
         # Create test YAML with monitoring pattern
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             yaml.dump(["monitoring.*"], f)
             temp_file = f.name
 
         try:
-            monkeypatch.setattr('src.kubernetes_client.EXCLUDED_URLS_FILE', temp_file)
+            monkeypatch.setattr("src.kubernetes_client.EXCLUDED_URLS_FILE", temp_file)
             invalidate_excluded_patterns_cache()
 
             # Test with URLs that might match existing patterns
@@ -77,7 +79,7 @@ class TestErrorHandling:
             "any.example.com",
             "test.internal/api",
             "service.external.com",
-            "app.test.com/admin"
+            "app.test.com/admin",
         ]
 
         for url in test_urls:
@@ -87,12 +89,12 @@ class TestErrorHandling:
     def test_is_url_excluded_pattern_matching_error(self, monkeypatch):
         """Test URL exclusion when pattern matching fails"""
         # Create YAML with potentially problematic pattern
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
-            yaml.dump(['[invalid-regex'], f)
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            yaml.dump(["[invalid-regex"], f)
             temp_file = f.name
 
         try:
-            monkeypatch.setattr('src.kubernetes_client.EXCLUDED_URLS_FILE', temp_file)
+            monkeypatch.setattr("src.kubernetes_client.EXCLUDED_URLS_FILE", temp_file)
             invalidate_excluded_patterns_cache()
 
             # Should handle pattern matching errors gracefully
@@ -127,7 +129,7 @@ class TestErrorHandling:
             "test_service.example.com",
             "api.example.com:8080",
             "service.example.com/api-v1",
-            "app.example.com/user_profile"
+            "app.example.com/user_profile",
         ]
 
         for url in urls_to_test:
