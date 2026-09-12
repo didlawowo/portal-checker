@@ -407,6 +407,21 @@ td:nth-child(6) {
     padding: 8px;
 }
 
+.table-container th.ssl-column {
+    min-width: 72px;
+    width: 72px;
+}
+
+.table-container td[data-label="SSL"] {
+    padding-left: 8px;
+    padding-right: 8px;
+    white-space: nowrap;
+}
+
+.table-container td[data-label="SSL"] span {
+    white-space: nowrap;
+}
+
 @media (max-width: 768px) {
     td {
         padding: 8px 6px;
