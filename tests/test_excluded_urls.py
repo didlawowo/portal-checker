@@ -19,22 +19,26 @@ class TestExcludedUrls:
     def setup_excluded_urls(self, monkeypatch):
         """Setup fixture with temporary YAML file"""
         # Create temporary YAML file with test patterns
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
-            yaml.dump([
-                "monitoring.*",  # Wildcard at end
-                "*.internal/*",  # Wildcard pattern
-                "infisical.dc-tech.work/ss-webhook",  # Exact match
-                "admin.example.com",  # Domain exact match
-                "api.test.com/private/*",  # Path with wildcard
-                "service.local/",  # With trailing slash
-            ], f)
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            yaml.dump(
+                [
+                    "monitoring.*",  # Wildcard at end
+                    "*.internal/*",  # Wildcard pattern
+                    "infisical.dc-tech.work/ss-webhook",  # Exact match
+                    "admin.example.com",  # Domain exact match
+                    "api.test.com/private/*",  # Path with wildcard
+                    "service.local/",  # With trailing slash
+                ],
+                f,
+            )
             temp_file = f.name
 
         # Patch EXCLUDED_URLS_FILE to use temp file
-        monkeypatch.setattr('src.kubernetes_client.EXCLUDED_URLS_FILE', temp_file)
+        monkeypatch.setattr("src.kubernetes_client.EXCLUDED_URLS_FILE", temp_file)
 
         # Invalidate cache to force reload
         from src.kubernetes_client import invalidate_excluded_patterns_cache
+
         invalidate_excluded_patterns_cache()
 
         yield temp_file
@@ -56,7 +60,7 @@ class TestExcludedUrls:
         assert is_url_excluded("monitoring.test.local", {}) is True
         assert is_url_excluded("monitoring.", {}) is True
         assert is_url_excluded("notmonitoring.example.com", {}) is False
-        
+
         # *.internal/* pattern - now supported with fnmatch
         assert is_url_excluded("test.internal/api", {}) is True
         assert is_url_excluded("service.internal/admin", {}) is True
@@ -82,13 +86,14 @@ class TestExcludedUrls:
     def test_url_normalization_edge_cases(self, monkeypatch):
         """Test edge cases in URL normalization"""
         # Create YAML with test pattern
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             yaml.dump(["test.com/path"], f)
             temp_file = f.name
 
         try:
-            monkeypatch.setattr('src.kubernetes_client.EXCLUDED_URLS_FILE', temp_file)
+            monkeypatch.setattr("src.kubernetes_client.EXCLUDED_URLS_FILE", temp_file)
             from src.kubernetes_client import invalidate_excluded_patterns_cache
+
             invalidate_excluded_patterns_cache()
 
             assert is_url_excluded("test.com/path", {}) is True
@@ -100,16 +105,17 @@ class TestExcludedUrls:
     def test_empty_excluded_urls(self, monkeypatch):
         """Test behavior when no URLs are excluded"""
         # Create empty YAML file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             yaml.dump([], f)
             temp_file = f.name
 
         try:
             # Patch EXCLUDED_URLS_FILE
-            monkeypatch.setattr('src.kubernetes_client.EXCLUDED_URLS_FILE', temp_file)
+            monkeypatch.setattr("src.kubernetes_client.EXCLUDED_URLS_FILE", temp_file)
 
             # Invalidate cache
             from src.kubernetes_client import invalidate_excluded_patterns_cache
+
             invalidate_excluded_patterns_cache()
 
             assert is_url_excluded("any.domain.com", {}) is False
@@ -120,13 +126,14 @@ class TestExcludedUrls:
     def test_wildcard_only_at_end(self, monkeypatch):
         """Test that wildcards only work at the end of patterns"""
         # Create YAML with wildcard pattern
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             yaml.dump(["test.example.com/api/*"], f)
             temp_file = f.name
 
         try:
-            monkeypatch.setattr('src.kubernetes_client.EXCLUDED_URLS_FILE', temp_file)
+            monkeypatch.setattr("src.kubernetes_client.EXCLUDED_URLS_FILE", temp_file)
             from src.kubernetes_client import invalidate_excluded_patterns_cache
+
             invalidate_excluded_patterns_cache()
 
             # Should match paths starting with the prefix
@@ -139,16 +146,20 @@ class TestExcludedUrls:
     def test_fnmatch_complex_patterns(self, monkeypatch):
         """Test complex patterns using fnmatch functionality"""
         # Create YAML with complex patterns
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
-            yaml.dump([
-                "*.test.com/admin",  # wildcard at start
-                "api-*.example.com",  # wildcard in middle
-            ], f)
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            yaml.dump(
+                [
+                    "*.test.com/admin",  # wildcard at start
+                    "api-*.example.com",  # wildcard in middle
+                ],
+                f,
+            )
             temp_file = f.name
 
         try:
-            monkeypatch.setattr('src.kubernetes_client.EXCLUDED_URLS_FILE', temp_file)
+            monkeypatch.setattr("src.kubernetes_client.EXCLUDED_URLS_FILE", temp_file)
             from src.kubernetes_client import invalidate_excluded_patterns_cache
+
             invalidate_excluded_patterns_cache()
 
             # Test wildcard at start
@@ -166,22 +177,22 @@ class TestExcludedUrls:
     def test_load_excluded_urls_from_yaml(self, monkeypatch):
         """Test loading excluded URLs from YAML file"""
         # Create temporary YAML file
-        test_exclusions = [
-            "test.example.com",
-            "*.internal/*",
-            "monitoring.*"
-        ]
+        test_exclusions = ["test.example.com", "*.internal/*", "monitoring.*"]
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             yaml.safe_dump(test_exclusions, f)
             temp_file = f.name
 
         try:
             # Patch EXCLUDED_URLS_FILE
-            monkeypatch.setattr('src.kubernetes_client.EXCLUDED_URLS_FILE', temp_file)
+            monkeypatch.setattr("src.kubernetes_client.EXCLUDED_URLS_FILE", temp_file)
 
             # Invalidate cache and load
-            from src.kubernetes_client import invalidate_excluded_patterns_cache, _load_excluded_patterns
+            from src.kubernetes_client import (
+                _load_excluded_patterns,
+                invalidate_excluded_patterns_cache,
+            )
+
             invalidate_excluded_patterns_cache()
             loaded_exclusions = _load_excluded_patterns()
 
@@ -195,18 +206,21 @@ class TestExcludedUrls:
             os.unlink(temp_file)
             invalidate_excluded_patterns_cache()
 
-
-    @pytest.mark.parametrize("url,expected", [
-        ("monitoring.example.com", True),  # matches monitoring.*
-        ("test.internal/api", True),  # matches *.internal/* pattern
-        ("service.internal/admin", True),  # matches *.internal/* pattern
-        ("normal.website.com", False),  # no match
-        ("external.example.com", False),  # no match
-        ("external.example.com/api", False),  # doesn't match internal pattern
-    ])
+    @pytest.mark.parametrize(
+        "url,expected",
+        [
+            ("monitoring.example.com", True),  # matches monitoring.*
+            ("test.internal/api", True),  # matches *.internal/* pattern
+            ("service.internal/admin", True),  # matches *.internal/* pattern
+            ("normal.website.com", False),  # no match
+            ("external.example.com", False),  # no match
+            ("external.example.com/api", False),  # doesn't match internal pattern
+        ],
+    )
     def test_parametrized_exclusions(self, setup_excluded_urls, url, expected):
         """Parametrized test for various URL exclusion scenarios"""
         assert is_url_excluded(url, {}) is expected
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

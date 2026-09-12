@@ -1,9 +1,9 @@
-import sys
 import os
+import sys
+
 # Add the project path to PYTHONPATH
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import pytest
 from unittest.mock import patch
 
 
@@ -15,7 +15,9 @@ class TestConfig:
         with patch.dict(os.environ, {}, clear=True):
             # Reimport to get fresh config
             import importlib
+
             import src.config as config
+
             importlib.reload(config)
             assert config.FLASK_ENV == "production"
 
@@ -23,7 +25,9 @@ class TestConfig:
         """Test default port is 5000"""
         with patch.dict(os.environ, {}, clear=True):
             import importlib
+
             import src.config as config
+
             importlib.reload(config)
             assert config.PORT == 5000
 
@@ -31,7 +35,9 @@ class TestConfig:
         """Test port can be set from environment"""
         with patch.dict(os.environ, {"PORT": "8080"}):
             import importlib
+
             import src.config as config
+
             importlib.reload(config)
             assert config.PORT == 8080
 
@@ -39,7 +45,9 @@ class TestConfig:
         """Test default log format is text"""
         with patch.dict(os.environ, {}, clear=True):
             import importlib
+
             import src.config as config
+
             importlib.reload(config)
             assert config.LOG_FORMAT == "text"
 
@@ -47,7 +55,9 @@ class TestConfig:
         """Test default request timeout is 5 seconds"""
         with patch.dict(os.environ, {}, clear=True):
             import importlib
+
             import src.config as config
+
             importlib.reload(config)
             assert config.REQUEST_TIMEOUT == 5
 
@@ -55,7 +65,9 @@ class TestConfig:
         """Test request timeout can be customized"""
         with patch.dict(os.environ, {"REQUEST_TIMEOUT": "30"}):
             import importlib
+
             import src.config as config
+
             importlib.reload(config)
             assert config.REQUEST_TIMEOUT == 30
 
@@ -63,7 +75,9 @@ class TestConfig:
         """Test default max concurrent requests is 20"""
         with patch.dict(os.environ, {}, clear=True):
             import importlib
+
             import src.config as config
+
             importlib.reload(config)
             assert config.MAX_CONCURRENT_REQUESTS == 20
 
@@ -71,7 +85,9 @@ class TestConfig:
         """Test default cache TTL is 300 seconds (5 minutes)"""
         with patch.dict(os.environ, {}, clear=True):
             import importlib
+
             import src.config as config
+
             importlib.reload(config)
             assert config.CACHE_TTL_SECONDS == 300
 
@@ -79,7 +95,9 @@ class TestConfig:
         """Test default Kubernetes poll interval is 600 seconds"""
         with patch.dict(os.environ, {}, clear=True):
             import importlib
+
             import src.config as config
+
             importlib.reload(config)
             assert config.KUBERNETES_POLL_INTERVAL == 600
 
@@ -87,7 +105,9 @@ class TestConfig:
         """Test default check interval is 30 seconds"""
         with patch.dict(os.environ, {}, clear=True):
             import importlib
+
             import src.config as config
+
             importlib.reload(config)
             assert config.CHECK_INTERVAL == 30
 
@@ -95,7 +115,9 @@ class TestConfig:
         """Test default Swagger discovery interval is 3600 seconds (1 hour)"""
         with patch.dict(os.environ, {}, clear=True):
             import importlib
+
             import src.config as config
+
             importlib.reload(config)
             assert config.SWAGGER_DISCOVERY_INTERVAL == 3600
 
@@ -103,7 +125,9 @@ class TestConfig:
         """Test URLs file path in development mode"""
         with patch.dict(os.environ, {"FLASK_ENV": "development"}):
             import importlib
+
             import src.config as config
+
             importlib.reload(config)
             assert config.URLS_FILE == "config/urls.yaml"
 
@@ -111,7 +135,9 @@ class TestConfig:
         """Test URLs file path in production mode"""
         with patch.dict(os.environ, {"FLASK_ENV": "production"}):
             import importlib
+
             import src.config as config
+
             importlib.reload(config)
             assert config.URLS_FILE == "/app/data/urls.yaml"
 
@@ -119,7 +145,9 @@ class TestConfig:
         """Test excluded URLs file path in development mode"""
         with patch.dict(os.environ, {"FLASK_ENV": "development"}):
             import importlib
+
             import src.config as config
+
             importlib.reload(config)
             assert config.EXCLUDED_URLS_FILE == "config/excluded-urls.yaml"
 
@@ -127,7 +155,9 @@ class TestConfig:
         """Test excluded URLs file path in production mode"""
         with patch.dict(os.environ, {"FLASK_ENV": "production"}):
             import importlib
+
             import src.config as config
+
             importlib.reload(config)
             assert config.EXCLUDED_URLS_FILE == "/app/config/excluded-urls.yaml"
 
@@ -135,7 +165,9 @@ class TestConfig:
         """Test custom cert is None by default"""
         with patch.dict(os.environ, {}, clear=True):
             import importlib
+
             import src.config as config
+
             importlib.reload(config)
             assert config.CUSTOM_CERT is None
 
@@ -143,7 +175,9 @@ class TestConfig:
         """Test custom cert can be set from environment"""
         with patch.dict(os.environ, {"CUSTOM_CERT": "/path/to/cert.pem"}):
             import importlib
+
             import src.config as config
+
             importlib.reload(config)
             assert config.CUSTOM_CERT == "/path/to/cert.pem"
 
@@ -151,7 +185,9 @@ class TestConfig:
         """Test auto refresh is enabled by default"""
         with patch.dict(os.environ, {}, clear=True):
             import importlib
+
             import src.config as config
+
             importlib.reload(config)
             assert config.AUTO_REFRESH_ON_START is True
 
@@ -159,7 +195,9 @@ class TestConfig:
         """Test auto refresh can be disabled"""
         with patch.dict(os.environ, {"AUTO_REFRESH_ON_START": "false"}):
             import importlib
+
             import src.config as config
+
             importlib.reload(config)
             assert config.AUTO_REFRESH_ON_START is False
 
@@ -167,7 +205,9 @@ class TestConfig:
         """Test Slack notifications are disabled by default"""
         with patch.dict(os.environ, {}, clear=True):
             import importlib
+
             import src.config as config
+
             importlib.reload(config)
             assert config.ENABLE_SLACK_NOTIFICATIONS is False
 
@@ -175,7 +215,9 @@ class TestConfig:
         """Test Slack notifications can be enabled"""
         with patch.dict(os.environ, {"ENABLE_SLACK_NOTIFICATIONS": "true"}):
             import importlib
+
             import src.config as config
+
             importlib.reload(config)
             assert config.ENABLE_SLACK_NOTIFICATIONS is True
 
@@ -183,7 +225,9 @@ class TestConfig:
         """Test autoswagger is enabled by default"""
         with patch.dict(os.environ, {}, clear=True):
             import importlib
+
             import src.config as config
+
             importlib.reload(config)
             assert config.ENABLE_AUTOSWAGGER is True
 
@@ -191,7 +235,9 @@ class TestConfig:
         """Test autoswagger can be disabled"""
         with patch.dict(os.environ, {"ENABLE_AUTOSWAGGER": "false"}):
             import importlib
+
             import src.config as config
+
             importlib.reload(config)
             assert config.ENABLE_AUTOSWAGGER is False
 
@@ -199,7 +245,9 @@ class TestConfig:
         """Test DEBUG is True in development mode"""
         with patch.dict(os.environ, {"FLASK_ENV": "development"}):
             import importlib
+
             import src.config as config
+
             importlib.reload(config)
             assert config.DEBUG is True
 
@@ -207,7 +255,9 @@ class TestConfig:
         """Test DEBUG is False in production mode"""
         with patch.dict(os.environ, {"FLASK_ENV": "production"}):
             import importlib
+
             import src.config as config
+
             importlib.reload(config)
             assert config.DEBUG is False
 
@@ -215,7 +265,9 @@ class TestConfig:
         """Test default Kubernetes environment is production"""
         with patch.dict(os.environ, {}, clear=True):
             import importlib
+
             import src.config as config
+
             importlib.reload(config)
             assert config.KUBE_ENV == "production"
 
@@ -223,6 +275,8 @@ class TestConfig:
         """Test Slack webhook URL is empty by default"""
         with patch.dict(os.environ, {}, clear=True):
             import importlib
+
             import src.config as config
+
             importlib.reload(config)
             assert config.SLACK_WEBHOOK_URL == ""

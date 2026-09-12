@@ -1,7 +1,7 @@
 // Récupération des données depuis Flask
 window.initialData = window.initialData || [];
 window.autoswaggerEnabled = window.autoswaggerEnabled !== undefined ? window.autoswaggerEnabled : false;
-let currentData = [...initialData];
+let currentData = [...window.initialData];
 let sortConfig = {
     field: 'url',
     direction: 'asc'
@@ -9,6 +9,10 @@ let sortConfig = {
 
 // Cache pour les données Swagger
 let swaggerData = null;
+let activeStatusFilter = 'all';
+let refreshInProgress = false;
+let refreshPollTimeoutId = null;
+let autoRefreshUserChangeVersion = 0;
 
 // Auto-refresh interval state
 let _autoRefreshIntervalId = null;
@@ -30,6 +34,14 @@ function updateSortArrows() {
     if (element) {
         element.textContent = arrow;
     }
+
+    const mobileSort = document.getElementById('mobileSort');
+    if (mobileSort) {
+        const value = `${sortConfig.field}:${sortConfig.direction}`;
+        if ([...mobileSort.options].some(option => option.value === value)) {
+            mobileSort.value = value;
+        }
+    }
 }
 
 // Fonction pour trier les données
@@ -41,27 +53,26 @@ function sortTable(field) {
         sortConfig.direction = 'asc';
     }
 
+    applySearchFilter(document.getElementById('searchInput')?.value || '');
+    updateSortArrows();
+}
+
+function sortCurrentData() {
+    const field = sortConfig.field;
+    const value = item => field === 'ssl_days'
+        ? (item.ssl_info?.days_remaining ?? 9999) : (item[field] ?? '');
     currentData.sort((a, b) => {
-        let aVal = a[field] || '';
-        let bVal = b[field] || '';
-        
-        // Convert to string for consistent comparison
-        aVal = String(aVal).toLowerCase();
-        bVal = String(bVal).toLowerCase();
-        
-        let comparison = 0;
-        if (aVal < bVal) comparison = -1;
-        if (aVal > bVal) comparison = 1;
+        const numeric = ['status', 'response_time', 'ssl_days'].includes(field);
+        const comparison = numeric ? Number(value(a)) - Number(value(b))
+            : String(value(a)).toLowerCase().localeCompare(String(value(b)).toLowerCase());
         return sortConfig.direction === 'asc' ? comparison : -comparison;
     });
-
-    updateSortArrows();
-    renderTable();
 }
 
 // Fonction pour obtenir la classe CSS du status
 function getStatusClass(status) {
-    if (status === 200) return 'status-200';
+    status = Number(status);
+    if (status >= 200 && status < 300) return 'status-200';
     if (status === 301 || status === 302) return 'status-301';
     if (status === 401) return 'status-401';
     if (status === 403) return 'status-403';
@@ -87,7 +98,8 @@ const statusIcons = {
 
 // Fonction pour obtenir l'icône du status
 function getStatusIcon(status) {
-    if (status === 200) return statusIcons.success;
+    status = Number(status);
+    if (status >= 200 && status < 300) return statusIcons.success;
     if (status === 301 || status === 302) return statusIcons.redirect;
     if (status === 401) return statusIcons.warning;
     if (status === 403) return statusIcons.forbidden;
@@ -135,32 +147,138 @@ function formatInfoColumn(item) {
     return parts.length > 0 ? `<div class="info-column">${parts.join('')}</div>` : '-';
 }
 
+function normalizeAnnotations(annotations) {
+    if (!annotations) return null;
+    if (typeof annotations === 'string') {
+        try {
+            annotations = JSON.parse(annotations);
+        } catch (error) {
+            return null;
+        }
+    }
+    return typeof annotations === 'object' && !Array.isArray(annotations) ? annotations : null;
+}
+
+function registerAnnotationsData(annotations) {
+    const normalized = normalizeAnnotations(annotations);
+    if (!normalized || Object.keys(normalized).length === 0) return null;
+    const dataId = 'data-' + Math.random().toString(36).slice(2, 11);
+    window.annotationsData = window.annotationsData || {};
+    window.annotationsData[dataId] = normalized;
+    return dataId;
+}
+
 // Fonction pour formater les annotations de manière compacte
 function formatAnnotationsCompact(annotations) {
     if (!annotations) return '-';
 
     try {
-        if (typeof annotations === 'string') {
-            try {
-                annotations = JSON.parse(annotations);
-            } catch (e) {
-                return annotations.trim() ? annotations : '-';
-            }
-        }
-
-        const annotationKeys = Object.keys(annotations || {});
-        if (annotationKeys.length === 0) {
-            return '-';
-        }
-
-        const dataId = 'data-' + Math.random().toString(36).slice(2, 11);
-        window.annotationsData = window.annotationsData || {};
-        window.annotationsData[dataId] = annotations;
+        const normalized = normalizeAnnotations(annotations);
+        if (!normalized) return typeof annotations === 'string' && annotations.trim() ? annotations : '-';
+        const annotationKeys = Object.keys(normalized);
+        const dataId = registerAnnotationsData(normalized);
+        if (!dataId) return '-';
 
         return `<span class="info-badge info-annotations" onclick="showAnnotationsModal('${dataId}')" title="${annotationKeys.length} annotation${annotationKeys.length > 1 ? 's' : ''}">${annotationKeys.length}</span>`;
     } catch (error) {
         return '-';
     }
+}
+
+function appendMobileText(parent, tagName, className, text) {
+    const element = document.createElement(tagName);
+    if (className) element.className = className;
+    element.textContent = text == null || text === '' ? '-' : String(text);
+    parent.appendChild(element);
+    return element;
+}
+
+function createMobileAction(label, className, handler, ariaLabel) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = className;
+    button.textContent = label;
+    if (ariaLabel) button.setAttribute('aria-label', ariaLabel);
+    button.addEventListener('click', handler);
+    return button;
+}
+
+function createMobileCard(item) {
+    const card = document.createElement('article');
+    card.className = 'mobile-card';
+
+    const cardHeader = document.createElement('div');
+    cardHeader.className = 'mobile-card-header';
+    appendMobileText(cardHeader, 'h3', 'mobile-card-name', item.name);
+    const status = appendMobileText(cardHeader, 'span', `status-badge ${getStatusClass(item.status)}`, item.status);
+    status.setAttribute('aria-label', `Statut ${item.status}`);
+    card.appendChild(cardHeader);
+
+    const displayUrl = item.url?.startsWith('http') ? item.url : `https://${item.url || ''}`;
+    const link = document.createElement('a');
+    link.className = 'mobile-card-url';
+    link.href = displayUrl;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.title = displayUrl;
+    link.textContent = displayUrl;
+    card.appendChild(link);
+
+    const context = [item.namespace, item.type, item.ingress_class || item.gateway]
+        .filter(Boolean)
+        .map(value => String(value));
+    appendMobileText(card, 'p', 'mobile-card-context', context.join(' · '));
+
+    const details = document.createElement('details');
+    details.className = 'mobile-card-details';
+    const summary = document.createElement('summary');
+    summary.textContent = 'Détails';
+    details.appendChild(summary);
+
+    const metrics = document.createElement('div');
+    metrics.className = 'mobile-card-metrics';
+    appendMobileText(metrics, 'span', '', `Temps ${item.response_time ? Math.round(item.response_time) + ' ms' : '—'}`);
+    const ssl = item.ssl_info?.http_only
+        ? 'SSL HTTP'
+        : item.ssl_info?.days_remaining !== undefined
+            ? `SSL ${item.ssl_info.days_remaining}j`
+            : 'SSL N/A';
+    appendMobileText(metrics, 'span', '', ssl);
+    details.appendChild(metrics);
+
+    if (item.details) appendMobileText(details, 'p', 'mobile-card-error', item.details);
+
+    const actions = document.createElement('div');
+    actions.className = 'mobile-card-actions';
+    const annotationId = registerAnnotationsData(item.annotations);
+    if (annotationId) {
+        actions.appendChild(createMobileAction(
+            'Annotations',
+            'mobile-card-action',
+            () => showAnnotationsModal(annotationId),
+            'Afficher les annotations'
+        ));
+    }
+
+    if (window.autoswaggerEnabled) {
+        const normalizedUrl = (item.url || '').replace(/^https?:\/\//, '');
+        const api = swaggerData?.results?.find(candidate => {
+            const host = candidate.host.replace(/^https?:\/\//, '');
+            return host === normalizedUrl || normalizedUrl.startsWith(host);
+        });
+        if (api) {
+            actions.appendChild(createMobileAction('API', 'mobile-card-action', () => showSwaggerModal(api.host), 'Afficher les détails API'));
+        } else {
+            actions.appendChild(createMobileAction('Scanner API', 'mobile-card-action', event => scanSwagger(item.url, event), 'Scanner cette URL pour une API'));
+        }
+    }
+
+    if (Number(item.status) >= 400) {
+        actions.appendChild(createMobileAction('Exclure', 'mobile-card-action mobile-card-action-danger', () => excludeUrl(item.url), 'Exclure cette URL'));
+    }
+    if (actions.childElementCount) details.appendChild(actions);
+    card.appendChild(details);
+    return card;
 }
 
 // Fonction pour formater les informations SSL
@@ -229,6 +347,7 @@ function formatSSLInfo(ssl_info) {
 function renderTable() {
     const tbody = document.getElementById('resultsTable');
     tbody.innerHTML = '';
+    window.annotationsData = {};
 
     currentData.forEach(item => {
         // Stocker les jours SSL pour le tri
@@ -245,24 +364,33 @@ function renderTable() {
         const linkUrl = displayUrl;
 
         tr.innerHTML = `
-            <td>${item.namespace}</td>
-            <td>${item.name}</td>
-            <td>${formatInfoColumn(item)}</td>
-            ${window.autoswaggerEnabled ? `<td>${getSwaggerButton(item.url)}</td>` : ''}
-            <td>${formatSSLInfo(item.ssl_info)}</td>
-            <td><a href="${linkUrl}" target="_blank" title="${displayUrl}">${displayUrl}</a></td>
-            <td>
+            <td data-label="Namespace">${item.namespace}</td>
+            <td data-label="Nom">${item.name}</td>
+            <td data-label="Info">${formatInfoColumn(item)}</td>
+            ${window.autoswaggerEnabled ? `<td data-label="API">${getSwaggerButton(item.url)}</td>` : ''}
+            <td data-label="SSL">${formatSSLInfo(item.ssl_info)}</td>
+            <td data-label="URL" class="url-cell"><a href="${linkUrl}" target="_blank" rel="noopener" title="${displayUrl}">${displayUrl}</a></td>
+            <td data-label="Statut">
                 <span class="status-badge ${getStatusClass(item.status)}">
                     ${getStatusIcon(item.status)} ${item.status}
                 </span>
             </td>
-            <td>${item.response_time ? Math.round(item.response_time) + ' ms' : '-'}</td>
-            <td style="text-align: center;">
-                ${item.status >= 400 ? `<button class="exclude-btn" onclick="excludeUrl('${item.url}')" title="Exclure cette URL">×</button>` : '-'}
+            <td data-label="Temps">${item.response_time ? Math.round(item.response_time) + ' ms' : '-'}</td>
+            <td data-label="Exclusion">
+                ${item.status >= 400 ? `<button class="exclude-btn" onclick="excludeUrl('${item.url}')" aria-label="Exclure cette URL" title="Exclure cette URL">×</button>` : '-'}
             </td>
-            <td>${item.details || ''}</td>`;
+            <td data-label="Détails" class="details-cell">${item.details ? `<details><summary>Voir les détails</summary>${item.details}</details>` : '-'}</td>`;
         tbody.appendChild(tr);
     });
+    const mobileResults = document.getElementById('mobileResults');
+    if (mobileResults) {
+        mobileResults.innerHTML = '';
+        currentData.forEach(item => mobileResults.appendChild(createMobileCard(item)));
+    }
+    const summary = document.getElementById('resultsSummary');
+    if (summary) summary.textContent = `${currentData.length} / ${window.initialData.length} requêtes affichées`;
+    const empty = document.getElementById('emptyResults');
+    if (empty) empty.hidden = currentData.length !== 0;
 }
 
 // Fonction pour afficher la modale avec les annotations
@@ -439,75 +567,97 @@ const URL_POLL_INTERVAL_MS = 60_000;
 const REFRESH_STATUS_INTERVAL_MS = 2_000;
 let lastUpdatedISO = null;
 
+function setRefreshUi(state, message = '') {
+    const btn = document.getElementById('refreshBtn');
+    const status = document.getElementById('refreshStatus');
+
+    if (btn) {
+        btn.disabled = state === 'loading';
+        btn.setAttribute('aria-busy', String(state === 'loading'));
+        if (state === 'loading') {
+            btn.dataset.originalText = btn.dataset.originalText || btn.textContent;
+            btn.textContent = 'Vérification…';
+        } else {
+            btn.textContent = btn.dataset.originalText || 'Vérifier maintenant';
+        }
+    }
+    if (status) {
+        status.textContent = message;
+        status.className = `refresh-status refresh-status-${state}`;
+    }
+}
+
 async function fetchUrlsAndRender() {
     try {
         const response = await fetch('/api/urls');
-        if (!response.ok) return;
+        if (!response.ok) return false;
         const payload = await response.json();
-        if (!payload || !Array.isArray(payload.results)) return;
+        if (!payload || !Array.isArray(payload.results)) return false;
 
         // Skip the re-render if the cache hasn't moved.
         if (payload.last_updated && payload.last_updated === lastUpdatedISO) {
-            return;
+            return true;
         }
-        lastUpdatedISO = payload.last_updated;
-
         window.initialData = payload.results;
-        currentData = [...payload.results];
-
-        // Re-apply active search filter after data refresh
+        updateDashboardCounts();
         const searchInput = document.getElementById('searchInput');
-        if (searchInput && searchInput.value) {
-            applySearchFilter(searchInput.value);
-        } else {
-            renderTable();
-        }
+        applySearchFilter(searchInput?.value || '');
+        lastUpdatedISO = payload.last_updated;
+        return true;
     } catch (error) {
         // Silent fail - keep showing the previous data
+        return false;
     }
 }
 
 async function triggerRefresh() {
-    const btn = document.getElementById('refreshBtn');
-    if (btn) {
-        btn.disabled = true;
-        btn.dataset.originalText = btn.dataset.originalText || btn.textContent;
-        btn.textContent = 'Refreshing...';
-    }
+    if (refreshInProgress) return;
+    refreshInProgress = true;
+    setRefreshUi('loading', 'Actualisation en cours…');
     try {
-        await fetch('/api/refresh-async', { method: 'POST' });
-        pollRefreshStatus();
+        const response = await fetch('/api/refresh-async', { method: 'POST' });
+        if (!response.ok) throw new Error('Refresh failed');
+        await pollRefreshStatus();
     } catch (error) {
-        if (btn) {
-            btn.disabled = false;
-            btn.textContent = btn.dataset.originalText || 'Refresh';
+        if (refreshPollTimeoutId) {
+            clearTimeout(refreshPollTimeoutId);
+            refreshPollTimeoutId = null;
         }
+        refreshInProgress = false;
+        setRefreshUi('error', 'Échec de l’actualisation. Réessayez.');
     }
 }
 
 async function pollRefreshStatus() {
     try {
         const response = await fetch('/api/refresh-status');
-        if (!response.ok) return;
+        if (!response.ok) throw new Error('Refresh status unavailable');
         const status = await response.json();
 
         if (status.running) {
-            setTimeout(pollRefreshStatus, REFRESH_STATUS_INTERVAL_MS);
+            refreshPollTimeoutId = setTimeout(() => {
+                refreshPollTimeoutId = null;
+                pollRefreshStatus();
+            }, REFRESH_STATUS_INTERVAL_MS);
             return;
         }
 
-        await fetchUrlsAndRender();
-        const btn = document.getElementById('refreshBtn');
-        if (btn) {
-            btn.disabled = false;
-            btn.textContent = btn.dataset.originalText || 'Refresh';
+        if (status.last_error) {
+            throw new Error(status.last_error);
         }
+        const rendered = await fetchUrlsAndRender();
+        if (!rendered) {
+            throw new Error('Refresh results unavailable');
+        }
+        refreshInProgress = false;
+        setRefreshUi('success', 'Actualisation terminée.');
     } catch (error) {
-        const btn = document.getElementById('refreshBtn');
-        if (btn) {
-            btn.disabled = false;
-            btn.textContent = btn.dataset.originalText || 'Refresh';
+        if (refreshPollTimeoutId) {
+            clearTimeout(refreshPollTimeoutId);
+            refreshPollTimeoutId = null;
         }
+        refreshInProgress = false;
+        setRefreshUi('error', 'Échec de l’actualisation. Réessayez.');
     }
 }
 
@@ -600,7 +750,10 @@ async function excludeUrl(url) {
 
 // Auto-refresh toggle handler
 async function toggleAutoRefresh(checkbox) {
+    if (!checkbox || checkbox.disabled) return;
     const enabled = checkbox.checked;
+    checkbox.disabled = true;
+    autoRefreshUserChangeVersion += 1;
     try {
         const response = await fetch('/api/auto-refresh', {
             method: 'POST',
@@ -617,6 +770,8 @@ async function toggleAutoRefresh(checkbox) {
     } catch (error) {
         checkbox.checked = !enabled;
         alert(`Erreur lors du changement d'état: ${error.message}`);
+    } finally {
+        checkbox.disabled = false;
     }
 }
 
@@ -635,14 +790,16 @@ function _manageAutoRefreshInterval(enabled) {
 }
 
 async function fetchAutoRefreshState() {
+    const requestVersion = autoRefreshUserChangeVersion;
     try {
         const response = await fetch('/api/auto-refresh');
         if (response.ok) {
             const data = await response.json();
+            if (requestVersion !== autoRefreshUserChangeVersion) return;
             const checkbox = document.getElementById('autoRefreshToggle');
-            if (checkbox && data.enabled) {
-                checkbox.checked = true;
-                _manageAutoRefreshInterval(true);
+            if (checkbox) {
+                checkbox.checked = Boolean(data.enabled);
+                _manageAutoRefreshInterval(checkbox.checked);
             }
         }
     } catch (error) {
@@ -652,12 +809,12 @@ async function fetchAutoRefreshState() {
 
 // Fonction pour scanner une URL pour Swagger/OpenAPI
 async function scanSwagger(url, event) {
+    let button = event?.target;
     try {
         // Encode URL for path parameter
         const encodedUrl = encodeURIComponent(url);
 
         // Show loading indicator
-        const button = event.target;
         const originalContent = button.innerHTML;
         button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
         button.disabled = true;
@@ -702,10 +859,44 @@ async function scanSwagger(url, event) {
 // Search term persistence key
 const SEARCH_STORAGE_KEY = 'portal-checker:search';
 
+function matchesStatus(item, filter) {
+    const status = Number(item.status);
+    if (filter === 'success') return status >= 200 && status < 300;
+    if (filter === 'client_errors') return status >= 400 && status < 500;
+    if (filter === 'server_errors') return status >= 500 && status < 600;
+    return true;
+}
+
+function updateDashboardCounts() {
+    ['all', 'success', 'client_errors', 'server_errors'].forEach(filter => {
+        const count = document.getElementById(`count-${filter}`);
+        if (count) count.textContent = window.initialData.filter(item => matchesStatus(item, filter)).length;
+    });
+}
+
+function setStatusFilter(filter) {
+    activeStatusFilter = filter || 'all';
+    document.querySelectorAll('[data-status-filter]').forEach(button => {
+        button.setAttribute('aria-pressed', String(button.dataset.statusFilter === activeStatusFilter));
+    });
+    applySearchFilter(document.getElementById('searchInput')?.value || '');
+}
+
+function clearSearch() {
+    const input = document.getElementById('searchInput');
+    if (!input) return;
+    input.value = '';
+    persistSearchTerm('');
+    applySearchFilter('');
+    input.focus();
+}
+
 // Apply current search filter to the data and re-render
 function applySearchFilter(term) {
+    term = String(term ?? '');
     const searchTerm = term.toLowerCase();
-    currentData = initialData.filter(item => {
+    currentData = window.initialData.filter(item => {
+        if (!matchesStatus(item, activeStatusFilter)) return false;
         const searchableFields = [
             item.url || '',
             item.status ? item.status.toString() : '',
@@ -719,9 +910,12 @@ function applySearchFilter(term) {
         ];
 
         return searchableFields.some(field =>
-            field.toLowerCase().includes(searchTerm)
+            String(field).toLowerCase().includes(searchTerm)
         );
     });
+    sortCurrentData();
+    const clearButton = document.getElementById('clearSearchBtn');
+    if (clearButton) clearButton.hidden = !term;
     renderTable();
 }
 
@@ -729,6 +923,11 @@ function applySearchFilter(term) {
 function persistSearchTerm(term) {
     try {
         localStorage.setItem(SEARCH_STORAGE_KEY, term);
+    } catch (e) {
+        // A storage restriction must not prevent URL persistence.
+    }
+
+    try {
         const url = new URL(window.location.href);
         if (term) {
             url.searchParams.set('search', term);
@@ -737,22 +936,22 @@ function persistSearchTerm(term) {
         }
         window.history.replaceState({}, '', url.toString());
     } catch (e) {
-        // silent fail (private mode, etc.)
+        // URL/history may be unavailable in an embedded document.
     }
 }
 
 // Restore search term from URL or localStorage
 function restoreSearchTerm() {
     const url = new URL(window.location.href);
-    let term = url.searchParams.get('search') || '';
-    if (!term) {
-        try {
-            term = localStorage.getItem(SEARCH_STORAGE_KEY) || '';
-        } catch (e) {
-            term = '';
-        }
+    if (url.searchParams.has('search')) {
+        return url.searchParams.get('search') || '';
     }
-    return term;
+
+    try {
+        return localStorage.getItem(SEARCH_STORAGE_KEY) || '';
+    } catch (e) {
+        return '';
+    }
 }
 
 // Fonction de recherche
@@ -766,6 +965,16 @@ function handleSearch(event) {
 document.addEventListener('DOMContentLoaded', function() {
     // Écouteurs d'événements
     document.getElementById('searchInput').addEventListener('input', handleSearch);
+    document.getElementById('clearSearchBtn').addEventListener('click', clearSearch);
+    document.querySelectorAll('[data-status-filter]').forEach(button => {
+        button.addEventListener('click', () => setStatusFilter(button.dataset.statusFilter));
+    });
+    document.getElementById('mobileSort').addEventListener('change', event => {
+        const [field, direction] = event.target.value.split(':');
+        sortConfig = { field, direction };
+        applySearchFilter(document.getElementById('searchInput')?.value || '');
+        updateSortArrows();
+    });
 
     // Écouteurs pour la modale annotations
     const annotationsModal = document.getElementById('annotationsModal');
@@ -778,6 +987,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Écouteurs pour la modale URLs exclues
     const excludedUrlsModal = document.getElementById('excludedUrlsModal');
     const excludedUrlsCloseBtn = excludedUrlsModal.querySelector('.excluded-modal-close');
+    const actionsMenu = document.querySelector('.actions-menu');
 
     // Fermer les modales avec les boutons X
     annotationsCloseBtn.addEventListener('click', closeAnnotationsModal);
@@ -809,6 +1019,13 @@ document.addEventListener('DOMContentLoaded', function() {
             closeAnnotationsModal();
             closeSwaggerModal();
             closeExcludedUrlsModal();
+            actionsMenu?.removeAttribute('open');
+        }
+    });
+
+    document.addEventListener('click', function(event) {
+        if (actionsMenu?.open && !actionsMenu.contains(event.target)) {
+            actionsMenu.removeAttribute('open');
         }
     });
 
@@ -819,7 +1036,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Rendu initial
     updateSortArrows();
-    renderTable();
+    updateDashboardCounts();
+    applySearchFilter('');
 
     // Restore and apply persisted search term
     const savedSearch = restoreSearchTerm();
@@ -836,6 +1054,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     setInterval(fetchUrlsAndRender, URL_POLL_INTERVAL_MS);
 
-    // Fetch auto-refresh state on page load
+    // Start with the checked default immediately; the API response can stop it.
+    _manageAutoRefreshInterval(document.getElementById('autoRefreshToggle')?.checked === true);
     fetchAutoRefreshState();
 });
