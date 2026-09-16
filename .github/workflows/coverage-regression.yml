@@ -34,14 +34,17 @@ jobs:
         run: |
           set -u
           mkdir -p "$RUNNER_TEMP/coverage-regression"
-          uv sync --extra dev --locked
+          # The regular CI owns lock-file consistency. This gate resolves the
+          # commit as-is so an unrelated stale uv.lock cannot hide coverage drift.
+          uv sync --extra dev
+          set +e
           uv run pytest tests/ \
             --cov=src \
             --cov-report=xml:"$RUNNER_TEMP/coverage-regression/head.xml" \
             -q
           status=$?
+          set -e
           test -s "$RUNNER_TEMP/coverage-regression/head.xml" || exit "$status"
-          exit 0
 
       - name: Measure base coverage
         env:
@@ -52,14 +55,15 @@ jobs:
           rm -rf "$base"
           git worktree add --detach "$base" "$BASE_SHA"
           cd "$base"
-          uv sync --extra dev --locked
+          uv sync --extra dev
+          set +e
           uv run pytest tests/ \
             --cov=src \
             --cov-report=xml:"$RUNNER_TEMP/coverage-regression/base.xml" \
             -q
           status=$?
+          set -e
           test -s "$RUNNER_TEMP/coverage-regression/base.xml" || exit "$status"
-          exit 0
 
       - name: Reject coverage regression
         run: |
