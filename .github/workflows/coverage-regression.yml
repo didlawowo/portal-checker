@@ -1,0 +1,107 @@
+name: Coverage regression
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: coverage-regression-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  coverage-regression:
+    name: Coverage must not decrease
+    runs-on: arc-runner-portal-checker
+    timeout-minutes: 20
+    steps:
+      - name: Checkout prospective merge
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        run: python -m pip install --upgrade pip 'uv==0.11.29'
+
+      - name: Measure PR coverage
+        run: |
+          set -u
+          mkdir -p "$RUNNER_TEMP/coverage-regression"
+          # The regular CI owns lock-file consistency. This gate resolves the
+          # commit as-is so an unrelated stale uv.lock cannot hide coverage drift.
+          uv sync --extra dev
+          set +e
+          uv run pytest tests/ \
+            --cov=src \
+            --cov-report=xml:"$RUNNER_TEMP/coverage-regression/head.xml" \
+            -q
+          status=$?
+          set -e
+          test -s "$RUNNER_TEMP/coverage-regression/head.xml" || exit "$status"
+
+      - name: Measure base coverage
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -u
+          base="$RUNNER_TEMP/coverage-base"
+          rm -rf "$base"
+          git worktree add --detach "$base" "$BASE_SHA"
+          cd "$base"
+          uv sync --extra dev
+          set +e
+          uv run pytest tests/ \
+            --cov=src \
+            --cov-report=xml:"$RUNNER_TEMP/coverage-regression/base.xml" \
+            -q
+          status=$?
+          set -e
+          test -s "$RUNNER_TEMP/coverage-regression/base.xml" || exit "$status"
+
+      - name: Reject coverage regression
+        run: |
+          python - <<'PY'
+          import os
+          import sys
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          root = Path(os.environ["RUNNER_TEMP"]) / "coverage-regression"
+
+          def coverage(path: Path) -> tuple[int, int]:
+              report = ET.parse(path).getroot()
+              return int(report.attrib["lines-covered"]), int(report.attrib["lines-valid"])
+
+          head_covered, head_total = coverage(root / "head.xml")
+          base_covered, base_total = coverage(root / "base.xml")
+          if not head_total or not base_total:
+              raise SystemExit("coverage report has no measurable lines")
+
+          head_pct = 100 * head_covered / head_total
+          base_pct = 100 * base_covered / base_total
+          delta = head_pct - base_pct
+
+          summary = os.environ.get("GITHUB_STEP_SUMMARY")
+          if summary:
+              with open(summary, "a", encoding="utf-8") as stream:
+                  stream.write("## Coverage regression gate\n\n")
+                  stream.write(f"- `main` baseline: **{base_pct:.3f}%** ({base_covered}/{base_total})\n")
+                  stream.write(f"- PR merge result: **{head_pct:.3f}%** ({head_covered}/{head_total})\n")
+                  stream.write(f"- Delta: **{delta:+.3f} points**\n")
+
+          if head_covered * base_total < base_covered * head_total:
+              print(
+                  f"::error::Coverage decreased from {base_pct:.3f}% to {head_pct:.3f}% "
+                  f"({delta:+.3f} points). Add tests before merging."
+              )
+              sys.exit(1)
+
+          print(f"Coverage preserved: {base_pct:.3f}% -> {head_pct:.3f}% ({delta:+.3f})")
+          PY
