@@ -29,12 +29,14 @@ tasks:
   build:
     desc: "🔨 Construire l'image Docker"
     cmds:
-    - docker build -t {{.DOCKER_REGISTRY}}/{{.APP_NAME}}:{{.IMAGE_TAG}} .
-    - docker build -t {{.DOCKER_REGISTRY}}/{{.APP_NAME}}:latest .
+    - docker build -f docker/Dockerfile -t {{.DOCKER_REGISTRY}}/{{.APP_NAME}}:{{.IMAGE_TAG}} -t {{.DOCKER_REGISTRY}}/{{.APP_NAME}}:latest .
     sources:
-    - Dockerfile
-    - app.py
-    - requirements.txt
+    - docker/Dockerfile
+    - pyproject.toml
+    - uv.lock
+    - src/**/*.py
+    - config/excluded-urls.yaml
+    - '*.crt'
     - templates/**/*
     - static/**/*
 

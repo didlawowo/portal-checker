@@ -69,16 +69,80 @@ def test_python_failure_blocks_release(tmp_path):
     assert not workflow["jobs"]["complete-release-process"].get(
         "continue-on-error", False
     )
-    for command, exit_code in [("pip", 0), ("python", 0), ("pytest", 7)]:
+    for command, exit_code in [("python", 0), ("uv", 0)]:
         executable = tmp_path / command
         executable.write_text(f"#!/bin/sh\nexit {exit_code}\n")
         executable.chmod(0o755)
+    (tmp_path / "uv").write_text(
+        '#!/bin/sh\ncase "$1" in run) exit 7 ;; *) exit 0 ;; esac\n'
+    )
     result = subprocess.run(
         ["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", test_step["run"]],
         env={**os.environ, "PATH": f"{tmp_path}:{os.environ['PATH']}"},
         check=False,
     )
     assert result.returncode == 7
+
+
+@pytest.mark.parametrize(
+    "filename", ["full-release-on-main-merge.yml", "changelog.yml"]
+)
+def test_changelog_includes_scoped_and_breaking_commits(tmp_path, filename):
+    workflow = yaml.safe_load((ROOT / ".github/workflows" / filename).read_text())
+    steps = next(iter(workflow["jobs"].values()))["steps"]
+    step = next(
+        step for step in steps if step.get("name", "").lower() == "generate changelog"
+    )
+    git_env = {
+        **os.environ,
+        "GIT_AUTHOR_NAME": "Test",
+        "GIT_AUTHOR_EMAIL": "test@example.com",
+        "GIT_COMMITTER_NAME": "Test",
+        "GIT_COMMITTER_EMAIL": "test@example.com",
+    }
+
+    def git(*args):
+        subprocess.run(
+            ["git", *args], cwd=tmp_path, env=git_env, check=True, capture_output=True
+        )
+
+    git("init")
+    git("commit", "--allow-empty", "-m", "initial")
+    git("tag", "v0.0.0")
+    subjects = [
+        "feat(metrics): expose metrics",
+        "fix(api)!: fix format",
+        "docs(readme): clarify install",
+        "ci: require tests",
+    ]
+    for subject in subjects:
+        git("commit", "--allow-empty", "-m", subject)
+    git("tag", "v1.0.0")
+    command = step["run"].replace(
+        "${{ steps.bump_version.outputs.new_version }}", "1.0.0"
+    )
+    command = command.replace("${{ steps.bump_version.outputs.tag_name }}", "v1.0.0")
+    command = command.replace("${{ github.repository }}", "didlawowo/portal-checker")
+    subprocess.run(
+        ["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", command],
+        cwd=tmp_path,
+        env=git_env,
+        check=True,
+        capture_output=True,
+    )
+    changelog = (tmp_path / "CHANGELOG.md").read_text()
+    for subject in subjects:
+        assert subject in changelog
+
+
+def test_release_serializes_publication():
+    workflow = yaml.safe_load(
+        (ROOT / ".github/workflows/full-release-on-main-merge.yml").read_text()
+    )
+    assert workflow["concurrency"] == {
+        "group": "release-${{ github.repository }}",
+        "cancel-in-progress": False,
+    }
 
 
 @pytest.mark.parametrize(

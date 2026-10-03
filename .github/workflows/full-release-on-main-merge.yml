@@ -12,6 +12,10 @@ permissions:
   packages: write
   pull-requests: write
 
+concurrency:
+  group: release-${{ github.repository }}
+  cancel-in-progress: false
+
 jobs:
   complete-release-process:
     name: Execute Complete Release Process
@@ -55,7 +59,7 @@ jobs:
       - name: Install dependencies
         if: steps.guard-last-commit.outputs.skip == 'false'
         run: |
-          pip install bump2version
+          pip install 'uv==0.11.29'
 
       - name: Determine version bump
         if: steps.guard-last-commit.outputs.skip == 'false'
@@ -141,9 +145,9 @@ jobs:
       - name: Run Python tests
         if: steps.guard-last-commit.outputs.skip == 'false'
         run: |
-          pip install -e '.[dev]'
+          uv sync --extra dev --locked
           python scripts/sync_version.py --check
-          pytest tests/ -v
+          uv run --locked pytest tests/ -v
 
       - name: Set up Node.js
         if: steps.guard-last-commit.outputs.skip == 'false'
@@ -221,7 +225,7 @@ jobs:
           echo "" >> CHANGELOG.md
 
           # Nouvelles fonctionnalités
-          feat_commits=$(git log $RANGE --pretty=format:"- %s (%h)" --grep="^feat:" || true)
+          feat_commits=$(git log "$RANGE" --pretty=format:"- %s (%h)" --extended-regexp --grep='^feat(\([^)]*\))?!?:')
           if [ ! -z "$feat_commits" ]; then
             echo "## ✨ Nouvelles fonctionnalités" >> CHANGELOG.md
             echo "$feat_commits" >> CHANGELOG.md
@@ -229,7 +233,7 @@ jobs:
           fi
 
           # Corrections de bugs
-          fix_commits=$(git log $RANGE --pretty=format:"- %s (%h)" --grep="^fix:" || true)
+          fix_commits=$(git log "$RANGE" --pretty=format:"- %s (%h)" --extended-regexp --grep='^fix(\([^)]*\))?!?:')
           if [ ! -z "$fix_commits" ]; then
             echo "## 🐛 Corrections de bugs" >> CHANGELOG.md
             echo "$fix_commits" >> CHANGELOG.md
@@ -237,7 +241,7 @@ jobs:
           fi
 
           # Autres changements
-          other_commits=$(git log $RANGE --pretty=format:"- %s (%h)" --grep="^(chore|docs|style|refactor|perf|test):" || true)
+          other_commits=$(git log "$RANGE" --pretty=format:"- %s (%h)" --extended-regexp --grep='^(chore|docs|style|refactor|perf|test|ci|build)(\([^)]*\))?!?:')
           if [ ! -z "$other_commits" ]; then
             echo "## 📝 Autres changements" >> CHANGELOG.md
             echo "$other_commits" >> CHANGELOG.md

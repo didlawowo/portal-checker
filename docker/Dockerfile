@@ -1,9 +1,12 @@
 FROM python:3.13-alpine
 
+COPY --from=ghcr.io/astral-sh/uv:0.11.29 /uv /uvx /usr/local/bin/
+
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
+ENV PATH="/app/.venv/bin:$PATH"
 # ENV HTTP_PROXY=http://proxy-cloud.korian.cloud:80
 ENV SSL_CERT_DIR=/etc/ssl/certs
 # ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
@@ -13,7 +16,7 @@ COPY  *.crt /etc/ssl/certs/
 RUN update-ca-certificates
 
 # Add certificates and build tools needed
-RUN apk update && apk add --no-cache ca-certificates uv gcc python3-dev musl-dev linux-headers  
+RUN apk update && apk add --no-cache ca-certificates gcc python3-dev musl-dev linux-headers
 
 # Créer un utilisateur non-root
 RUN addgroup -g 1000 appgroup && adduser -u 1000 -G appgroup -D appuser
@@ -24,11 +27,11 @@ RUN addgroup -g 1000 appgroup && adduser -u 1000 -G appgroup -D appuser
 
 WORKDIR /app
 
-# Copy pyproject.toml first for dependency caching
-COPY pyproject.toml ./
+# Copy locked dependency metadata first for caching.
+COPY pyproject.toml uv.lock ./
 
 # Installation des dépendances Python avec uv
-RUN uv --native-tls pip install --system . && \
+RUN uv --native-tls sync --locked --no-dev --no-install-project && \
     rm -rf /root/.cache/uv
 
 # Copie des fichiers application
