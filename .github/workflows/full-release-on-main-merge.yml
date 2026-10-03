@@ -87,7 +87,7 @@ jobs:
             BUMP_TYPE="major"
           elif echo "$COMMITS" | grep -Eq '^feat(\([^)]*\))?:'; then
             BUMP_TYPE="minor"
-          elif echo "$COMMITS" | grep -q "^fix:\|^chore:\|^docs:\|^style:\|^refactor:\|^perf:\|^test:"; then
+          elif echo "$COMMITS" | grep -Eq '^(fix|chore|docs|style|refactor|perf|test|ci|build)(\([^)]*\))?:'; then
             BUMP_TYPE="patch"
           else
             BUMP_TYPE="patch"  # default
@@ -146,7 +146,7 @@ jobs:
         if: steps.guard-last-commit.outputs.skip == 'false'
         run: |
           uv sync --extra dev --locked
-          python scripts/sync_version.py --check
+          uv run --locked python scripts/sync_version.py --check
           uv run --locked pytest tests/ -v
 
       - name: Set up Node.js

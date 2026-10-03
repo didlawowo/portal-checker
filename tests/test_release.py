@@ -150,6 +150,7 @@ def test_release_serializes_publication():
     [
         ("feat(metrics): expose metrics", "", "minor"),
         ("fix(release): block failures", "", "patch"),
+        ("chore(ci): bump deps", "", "patch"),
         ("feat(api)!: change response", "", "major"),
         ("refactor(api): change response", "BREAKING CHANGE: new format", "major"),
     ],
