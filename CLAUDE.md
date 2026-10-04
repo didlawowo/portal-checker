@@ -107,7 +107,7 @@ Portal Checker v3.0.0 uses a modular architecture with dedicated modules in the 
 #### URL Exclusion Methods
 
 1. **YAML file patterns** (`config/excluded-urls.yaml`):
-   - Exact matches: `infisical.dc-tech.work/ss-webhook`
+   - Exact matches: `infisical.example.com/ss-webhook`
    - Domain wildcards: `monitoring.*`
    - Path patterns: `*.internal/*`
    - Complex patterns using fnmatch
@@ -346,9 +346,9 @@ Autoswagger respects custom SSL certificates for enterprise environments:
 
 ```bash
 # Set custom CA certificate
-CUSTOM_CERT=zscalerroot.crt
-SSL_CERT_FILE=zscalerroot.crt
-REQUESTS_CA_BUNDLE=zscalerroot.crt
+CUSTOM_CERT=/etc/ssl/custom/ca.crt
+SSL_CERT_FILE=/etc/ssl/custom/ca.crt
+REQUESTS_CA_BUNDLE=/etc/ssl/custom/ca.crt
 ```
 
 The integration automatically configures SSL for:
@@ -794,7 +794,7 @@ task cache-status
 | `ENABLE_AUTOSWAGGER` | `true` | Enable API discovery |
 | `LOG_FORMAT` | `text` | `json` or `text` logging |
 | `LOG_LEVEL` | `INFO` | Logging level |
-| `CUSTOM_CERT` | `zscalerroot.crt` | Custom CA certificate |
+| `CUSTOM_CERT` | unset | Optional custom CA certificate |
 
 ### Resource Limits
 

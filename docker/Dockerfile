@@ -12,9 +12,6 @@ ENV SSL_CERT_DIR=/etc/ssl/certs
 # ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 # Create group and user with specific IDs
  
-COPY  *.crt /etc/ssl/certs/
-RUN update-ca-certificates
-
 # Add certificates and build tools needed
 RUN apk update && apk add --no-cache ca-certificates gcc python3-dev musl-dev linux-headers
 

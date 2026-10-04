@@ -5,7 +5,7 @@ silent: true
 # 🎯 Variables globales
 vars:
   APP_NAME: portal-checker
-  NAMESPACE: kube-infra
+  NAMESPACE: monitoring
   DOCKER_REGISTRY: fizzbuzz2
   IMAGE_TAG:
     sh: git rev-parse --short HEAD
@@ -36,7 +36,6 @@ tasks:
     - uv.lock
     - src/**/*.py
     - config/excluded-urls.yaml
-    - '*.crt'
     - templates/**/*
     - static/**/*
 
@@ -109,30 +108,7 @@ tasks:
   test-exclusions:
     desc: "🧪 Tester la logique d'exclusion des URLs"
     cmds:
-    - |
-      python -c "
-      import sys
-      sys.path.append('.')
-      from app import _is_url_excluded, load_excluded_urls
-
-      # Charger les exclusions
-      excluded_urls = load_excluded_urls()
-      print(f'📊 {len(excluded_urls)} URLs d\'exclusion chargées')
-
-      # Tests
-      test_cases = [
-          ('monitoring.example.com/', True),
-          ('test.internal/api', True), 
-          ('infisical.dc-tech.work/ss-webhook', True),
-          ('normal.dc-tech.work/', False),
-          ('grafana.dc-tech.work/metrics', True)
-      ]
-
-      for url, should_exclude in test_cases:
-          result = _is_url_excluded(url)
-          status = '✅' if result == should_exclude else '❌'
-          print(f'{status} {url} -> Exclu: {result} (attendu: {should_exclude})')
-      "
+    - uv run --extra dev pytest tests/test_exclude.py tests/test_excluded_urls.py -v
 
   # 🔧 Développement
   run-dev:

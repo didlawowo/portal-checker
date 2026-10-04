@@ -273,11 +273,14 @@ If your cluster sits behind an enterprise TLS-inspecting proxy (Zscaler, Netskop
 
 | Variable | Default | Description |
 | -------- | ------- | ----------- |
-| `CUSTOM_CERT` | `zscalerroot.crt` | Path to a PEM-encoded CA bundle inside the container |
+| `CUSTOM_CERT` | _(unset)_ | Path to an optional PEM-encoded CA bundle mounted inside the container |
 | `SSL_CERT_FILE` | _(unset)_ | Mirror of `CUSTOM_CERT` for libraries reading this env var |
 | `REQUESTS_CA_BUNDLE` | _(unset)_ | Same, for the `requests` library |
 
 Example values to mount your own CA:
+
+The published image uses the standard public CA trust store. No organization-specific
+CA is bundled. Configure your own CA explicitly when your environment requires one.
 
 ```yaml
 # values.yaml

@@ -1,58 +1,28 @@
-# Helm Values Override Files
+# Helm values overrides
 
-Ce dossier contient les fichiers de valeurs spécifiques à différents environnements et cas d'usage.
+`docker.yaml` provides optional development settings and always pulls the image.
+It inherits the chart's published image version unless you override `image.tag`.
+It contains no fixed branch, commit, build timestamp, or organization-specific domain.
 
-## Fichiers
+## Development branch image
 
-### `docker.yaml`
-- **Usage** : Déploiements de branches de développement
-- **Mise à jour** : Automatique via GitHub Actions sur push de branches non-master
-- **Contenu** :
-  - Tag d'image spécifique à la branche (`version-branch-commit`)
-  - Configuration de développement (`FLASK_ENV=development`)
-  - Annotations Git (branche, commit, timestamp)
-  - Ressources augmentées pour le développement
+The workflow `.github/workflows/docker-build-on-branch-push.yml` publishes branch
+images as `{branch}-{sha8}` and PR images as `pr-{number}` and `pr-{number}-{sha8}`.
+Use an existing tag from Docker Hub; the workflow does not rewrite this values file.
 
-## Utilisation
-
-### Déploiement de branche de développement
 ```bash
-# Via Task
-task helm-install-docker
-
-# Via Helm direct
-helm upgrade --install portal-checker-dev ./helm \
-  --namespace portal-checker-dev \
-  --create-namespace \
-  --values helm/values.yaml \
-  --values helm/values/docker.yaml
+helm upgrade --install portal-checker-dev ./helm --namespace portal-checker-dev --create-namespace --values helm/values/docker.yaml --set image.tag=pr-123-abcdef12
 ```
 
-### Déploiement production
-```bash
-# Via Task (utilise values.yaml seulement)
-task helm-install
+Replace the example tag with the image for your branch or PR. Development mode
+disables TLS verification when no custom CA is configured; use the default chart
+settings for production.
 
-# Via Helm direct
-helm upgrade --install portal-checker ./helm \
-  --namespace portal-checker \
-  --create-namespace \
-  --values helm/values.yaml
+## Published chart defaults
+
+```bash
+helm upgrade --install portal-checker ./helm --namespace monitoring --create-namespace
 ```
 
-## Workflow Automatique
-
-1. **Push sur branche non-master** → Déclenche `.github/workflows/branch-build.yaml`
-2. **Build image** avec tag `version-branch-commit`
-3. **Mise à jour** de `docker.yaml` avec les nouvelles valeurs
-4. **Commit automatique** des changements
-5. **Déploiement possible** avec `task helm-install-docker`
-
-## Structure du tag d'image
-
-Format : `{version}-{branch}-{short_sha}`
-
-Exemples :
-- `2.8.1-feat-perf-f61c328`
-- `2.8.1-bugfix-auth-a1b2c3d`
-- `2.8.1-feature-ui-9x8y7z6`
+Set `excludedUrls`, ingress settings, and optional custom CA mounts in your own
+values file. The chart has no domain-specific exclusions by default.
