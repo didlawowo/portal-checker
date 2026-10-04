@@ -202,3 +202,11 @@ dnsConfig: {}
 # options:
 #   - name: ndots
 #     value: "2"
+
+# Optional: requires an existing Prometheus Operator and ServiceMonitor CRD.
+# No monitoring resources are installed by default.
+serviceMonitor:
+  enabled: false
+  interval: 30s
+  scrapeTimeout: 10s
+  labels: {}

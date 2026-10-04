@@ -451,6 +451,12 @@ task test-coverage
 pytest tests/test_excluded_urls.py -v
 ```
 
+## Prometheus and Grafana
+
+`GET /metrics` exports cached endpoint health, latency, freshness and TLS expiry
+without triggering network checks. An optional Grafana dashboard and optional
+Helm ServiceMonitor are included. See [metrics setup and semantics](docs/metrics.md).
+
 ## API Endpoints
 
 | Endpoint | Method | Description |

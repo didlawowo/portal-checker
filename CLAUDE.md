@@ -873,3 +873,11 @@ from src.kubernetes_client import is_url_excluded
 2. Test with Autoswagger enabled (or explicitly disable if not needed)
 3. Monitor memory usage with new limits
 4. Update CI/CD pipelines to use `task` commands
+
+## Prometheus metrics
+
+`src/metrics.py` renders `/metrics` from the in-memory check snapshot only.
+See `docs/metrics.md` for aggregation, freshness and TLS semantics, and
+`grafana/portal-checker.json` for the optional dashboard. Tests live in
+`tests/test_metrics.py`. Preserve the cache lock and generation guard when
+changing check publication; scrapes must never initiate probes or discovery.

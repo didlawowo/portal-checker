@@ -5,18 +5,32 @@ Flask API routes for Portal Checker
 import asyncio
 import os
 import threading
-from datetime import datetime
+from copy import deepcopy
+from datetime import datetime, timezone
 from typing import Any, Dict, List
 
-from flask import Flask, jsonify, render_template, request, send_from_directory
+from flask import (
+    Flask,
+    Response,
+    jsonify,
+    render_template,
+    request,
+    send_from_directory,
+)
 from loguru import logger
 
-from .config import AUTO_REFRESH_ON_START, ENABLE_AUTOSWAGGER, URLS_FILE
+from .config import (
+    AUTO_REFRESH_ON_START,
+    CACHE_TTL_SECONDS,
+    ENABLE_AUTOSWAGGER,
+    URLS_FILE,
+)
 from .kubernetes_client import (
     get_all_urls_with_details,
     is_url_excluded,
     save_urls_to_file,
 )
+from .metrics import render_metrics
 from .utils import check_urls_async, get_app_version, load_urls_from_file
 
 # Import autoswagger si disponible et activé
@@ -39,6 +53,8 @@ app = Flask(__name__, template_folder="../templates", static_folder="../static")
 
 # Cache for test results
 _test_results_cache: Dict[str, Any] = {"results": [], "last_updated": None}
+_test_results_lock = threading.Lock()
+_test_generation = 0
 
 # Cache for swagger results
 _swagger_cache: Dict[str, Any] = {"results": [], "last_updated": None}
@@ -128,12 +144,28 @@ async def _run_url_tests(
     update_cache: bool = True, run_swagger: bool = False
 ) -> List[Dict[str, Any]]:
     """Run URL tests with optional cache update"""
-    data_urls = load_urls_from_file(URLS_FILE)
-    results = await check_urls_async(data_urls, update_cache, _is_url_excluded_wrapper)
+    global _test_generation
+    data_urls = [
+        data
+        for data in load_urls_from_file(URLS_FILE)
+        if not _is_url_excluded_wrapper(data.get("url", ""))
+    ]
+    if update_cache:
+        with _test_results_lock:
+            _test_generation += 1
+            generation = _test_generation
+            # Checking mutates its input; publish a separate inventory first so
+            # newly discovered endpoints are visible as untested during a pass.
+            _test_results_cache["discovered"] = deepcopy(data_urls)
+    results = await check_urls_async(data_urls, update_cache)
 
     if update_cache:
-        _test_results_cache["results"] = results
-        _test_results_cache["last_updated"] = datetime.now()
+        with _test_results_lock:
+            # A slower, older pass must not overwrite a newer discovery/check.
+            if generation != _test_generation:
+                return results
+            _test_results_cache["results"] = results
+            _test_results_cache["last_updated"] = datetime.now(timezone.utc)
 
         # Only run Swagger discovery if explicitly requested
         if run_swagger and AUTOSWAGGER_AVAILABLE:
@@ -479,6 +511,17 @@ def get_excluded_urls():
     except Exception as e:
         logger.error(f"❌ Erreur lors de la récupération des URLs exclues: {e}")
         return jsonify({"error": str(e), "status": "error"}), 500
+
+
+@app.route("/metrics")
+def metrics():
+    """Expose an in-memory snapshot without discovery, file I/O or probes."""
+    with _test_results_lock:
+        snapshot = dict(_test_results_cache)
+    return Response(
+        render_metrics(snapshot, CACHE_TTL_SECONDS),
+        content_type="text/plain; version=0.0.4; charset=utf-8",
+    )
 
 
 @app.route("/health")
