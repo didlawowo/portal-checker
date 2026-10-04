@@ -145,6 +145,10 @@ async def _run_url_tests(
 ) -> List[Dict[str, Any]]:
     """Run URL tests with optional cache update"""
     global _test_generation
+    if update_cache:
+        with _test_results_lock:
+            _test_generation += 1
+            generation = _test_generation
     data_urls = [
         data
         for data in load_urls_from_file(URLS_FILE)
@@ -152,11 +156,10 @@ async def _run_url_tests(
     ]
     if update_cache:
         with _test_results_lock:
-            _test_generation += 1
-            generation = _test_generation
             # Checking mutates its input; publish a separate inventory first so
             # newly discovered endpoints are visible as untested during a pass.
-            _test_results_cache["discovered"] = deepcopy(data_urls)
+            if generation == _test_generation:
+                _test_results_cache["discovered"] = deepcopy(data_urls)
     results = await check_urls_async(data_urls, update_cache)
 
     if update_cache:

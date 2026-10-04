@@ -5,6 +5,8 @@ import copy
 import json
 import re
 import sys
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import Mock
@@ -299,3 +301,34 @@ def test_dashboard_uses_only_exported_metrics_and_configurable_datasource():
         for target in panel["targets"]:
             assert set(re.findall(r"portal_checker_(\w+)", target["expr"])) <= set(HELP)
             assert 'instance=~"$instance"' in target["expr"]
+
+
+def test_older_delayed_inventory_load_cannot_replace_newer_pass(monkeypatch, cache):
+    entered, release = threading.Event(), threading.Event()
+
+    def load(_):
+        if not entered.is_set():
+            old_inventory = [endpoint("/old")]
+            entered.set()
+            assert release.wait(5)
+            return old_inventory
+        return [endpoint("/new")]
+
+    async def check(rows, update):
+        for row in rows:
+            row["status"] = 200
+        return rows
+
+    monkeypatch.setattr(api, "load_urls_from_file", load)
+    monkeypatch.setattr(api, "_is_url_excluded_wrapper", lambda _: False)
+    monkeypatch.setattr(api, "check_urls_async", check)
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        older = pool.submit(lambda: asyncio.run(api._run_url_tests()))
+        try:
+            assert entered.wait(5)
+            asyncio.run(api._run_url_tests())
+        finally:
+            release.set()
+        older.result(timeout=5)
+    assert cache["discovered"][0]["url"].endswith("/new")
+    assert cache["results"][0]["url"].endswith("/new")
