@@ -780,7 +780,7 @@ wheels = [
 
 [[package]]
 name = "portal-checker"
-version = "3.0.28"
+version = "3.0.29"
 source = { editable = "." }
 dependencies = [
     { name = "aiohappyeyeballs" },
