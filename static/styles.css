@@ -1075,6 +1075,12 @@ a:hover {
     font-size: 16px;
 }
 
+/* Keep the accessible custom clear button instead of a second native cross. */
+#searchInput::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+}
+
 #clearSearchBtn {
     align-items: center;
     background: transparent;

@@ -26,13 +26,13 @@ jobs:
           echo "# Changelog pour $LATEST_TAG" > CHANGELOG.md
           echo "" >> CHANGELOG.md
           echo "## 🚀 Nouvelles fonctionnalités" >> CHANGELOG.md
-          git log $RANGE --pretty=format:"- %s" --grep="^feat:" >> CHANGELOG.md
+          git log "$RANGE" --pretty=format:"- %s" --extended-regexp --grep='^feat(\([^)]*\))?!?:' >> CHANGELOG.md
           echo "" >> CHANGELOG.md
           echo "## 🐛 Corrections de bugs" >> CHANGELOG.md
-          git log $RANGE --pretty=format:"- %s" --grep="^fix:" >> CHANGELOG.md
+          git log "$RANGE" --pretty=format:"- %s" --extended-regexp --grep='^fix(\([^)]*\))?!?:' >> CHANGELOG.md
           echo "" >> CHANGELOG.md
           echo "## 📝 Autres changements" >> CHANGELOG.md
-          git log $RANGE --pretty=format:"- %s" --grep="^(chore|docs|style|refactor|perf|test):" >> CHANGELOG.md
+          git log "$RANGE" --pretty=format:"- %s" --extended-regexp --grep='^(chore|docs|style|refactor|perf|test|ci|build)(\([^)]*\))?!?:' >> CHANGELOG.md
 
       - name: Create Release
         uses: softprops/action-gh-release@v3

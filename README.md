@@ -1,6 +1,6 @@
 # Portal Checker
 
-[![Version](https://img.shields.io/badge/version-3.0.17-blue.svg)](https://github.com/didlawowo/portal-checker/releases)
+[![Version](https://img.shields.io/badge/version-3.0.28-blue.svg)](https://github.com/didlawowo/portal-checker/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/docker-multi--arch-blue.svg)](https://hub.docker.com/r/fizzbuzz2/portal-checker)
 [![Helm](https://img.shields.io/badge/helm-OCI-blue.svg)](https://github.com/didlawowo/portal-checker/pkgs/container/charts%2Fportal-checker)
@@ -91,7 +91,12 @@ metadata:
 | Helm chart (OCI) | GHCR | `oci://ghcr.io/didlawowo/charts/portal-checker` |
 | Helm chart (OCI) | Docker Hub | `oci://registry-1.docker.io/fizzbuzz2/portal-checker-chart` |
 
-Latest version: **3.0.17**
+Latest version: **3.0.28**
+
+`pyproject.toml` is the version source of truth. After changing it, run `task version:sync`
+to update the lockfile, installation examples, and Helm metadata. `task version:check`
+checks consistency without writing files. The release workflow synchronizes these files
+automatically and requires both Python and dashboard tests to pass before publishing.
 
 ### Prerequisites
 
@@ -106,7 +111,7 @@ Latest version: **3.0.17**
 ```bash
 helm install portal-checker \
   oci://ghcr.io/didlawowo/charts/portal-checker \
-  --version 3.0.17 \
+  --version 3.0.28 \
   --namespace monitoring \
   --create-namespace
 ```
@@ -116,7 +121,7 @@ helm install portal-checker \
 ```bash
 helm install portal-checker \
   oci://registry-1.docker.io/fizzbuzz2/portal-checker-chart \
-  --version 3.0.17 \
+  --version 3.0.28 \
   --namespace monitoring \
   --create-namespace
 ```
@@ -134,7 +139,7 @@ helm install portal-checker helm/ \
 ### Pull the Container Image
 
 ```bash
-docker pull fizzbuzz2/portal-checker:3.0.17
+docker pull fizzbuzz2/portal-checker:3.0.28
 docker pull fizzbuzz2/portal-checker:latest
 ```
 

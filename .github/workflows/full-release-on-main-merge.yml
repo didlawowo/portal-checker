@@ -12,6 +12,10 @@ permissions:
   packages: write
   pull-requests: write
 
+concurrency:
+  group: release-${{ github.repository }}
+  cancel-in-progress: false
+
 jobs:
   complete-release-process:
     name: Execute Complete Release Process
@@ -55,7 +59,7 @@ jobs:
       - name: Install dependencies
         if: steps.guard-last-commit.outputs.skip == 'false'
         run: |
-          pip install bump2version
+          pip install 'uv==0.11.29'
 
       - name: Determine version bump
         if: steps.guard-last-commit.outputs.skip == 'false'
@@ -66,16 +70,24 @@ jobs:
           echo "Last tag: $LAST_TAG"
 
           # Récupérer les commits depuis le dernier tag
-          COMMITS=$(git log ${LAST_TAG}..HEAD --oneline)
+          if git rev-parse --verify "$LAST_TAG" >/dev/null 2>&1; then
+            COMMITS=$(git log "${LAST_TAG}..HEAD" --pretty=%s)
+            COMMIT_BODIES=$(git log "${LAST_TAG}..HEAD" --format=%B)
+          else
+            COMMITS=$(git log --pretty=%s)
+            COMMIT_BODIES=$(git log --format=%B)
+          fi
           echo "Commits since last tag:"
           echo "$COMMITS"
 
           # Déterminer le type de bump basé sur les messages de commit
-          if echo "$COMMITS" | grep -q "BREAKING CHANGE\|^feat!:"; then
+          if echo "$COMMIT_BODIES" | grep -q 'BREAKING CHANGE'; then
             BUMP_TYPE="major"
-          elif echo "$COMMITS" | grep -q "^feat:"; then
+          elif echo "$COMMITS" | grep -Eq '^[a-z]+(\([^)]*\))?!:'; then
+            BUMP_TYPE="major"
+          elif echo "$COMMITS" | grep -Eq '^feat(\([^)]*\))?:'; then
             BUMP_TYPE="minor"
-          elif echo "$COMMITS" | grep -q "^fix:\|^chore:\|^docs:\|^style:\|^refactor:\|^perf:\|^test:"; then
+          elif echo "$COMMITS" | grep -Eq '^(fix|chore|docs|style|refactor|perf|test|ci|build)(\([^)]*\))?:'; then
             BUMP_TYPE="patch"
           else
             BUMP_TYPE="patch"  # default
@@ -123,11 +135,9 @@ jobs:
             exit 1
           fi
 
-          # Mettre à jour pyproject.toml et helm/values.yaml
+          # pyproject.toml is the source of truth for every release artifact.
           sed -i "s/^version = \".*\"/version = \"$NEW_VERSION\"/" pyproject.toml
-          sed -i "s/tag: \".*\"/tag: \"$NEW_VERSION\"/" helm/values.yaml
-          sed -i "s/^version: .*/version: $NEW_VERSION/" helm/Chart.yaml
-          sed -i "s/^appVersion: .*/appVersion: \"$NEW_VERSION\"/" helm/Chart.yaml
+          python scripts/sync_version.py
 
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
@@ -135,9 +145,19 @@ jobs:
       - name: Run Python tests
         if: steps.guard-last-commit.outputs.skip == 'false'
         run: |
-          pip install pytest pytest-asyncio
-          pip install -e .
-          pytest tests/ -v || echo "⚠️ Tests completed with issues"
+          uv sync --extra dev --locked
+          uv run --locked python scripts/sync_version.py --check
+          uv run --locked pytest tests/ -v
+
+      - name: Set up Node.js
+        if: steps.guard-last-commit.outputs.skip == 'false'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: '22'
+
+      - name: Run dashboard tests
+        if: steps.guard-last-commit.outputs.skip == 'false'
+        run: node --test tests/dashboard.test.cjs
 
       - name: Set up Docker Buildx
         if: steps.guard-last-commit.outputs.skip == 'false'
@@ -171,7 +191,7 @@ jobs:
       - name: Commit version changes and push tag
         if: steps.guard-last-commit.outputs.skip == 'false'
         run: |
-          git add pyproject.toml helm/values.yaml helm/Chart.yaml
+          git add pyproject.toml uv.lock README.md helm/values.yaml helm/Chart.yaml
           if git diff --staged --quiet; then
             echo "No changes to commit"
             exit 1
@@ -205,7 +225,7 @@ jobs:
           echo "" >> CHANGELOG.md
 
           # Nouvelles fonctionnalités
-          feat_commits=$(git log $RANGE --pretty=format:"- %s (%h)" --grep="^feat:" || true)
+          feat_commits=$(git log "$RANGE" --pretty=format:"- %s (%h)" --extended-regexp --grep='^feat(\([^)]*\))?!?:')
           if [ ! -z "$feat_commits" ]; then
             echo "## ✨ Nouvelles fonctionnalités" >> CHANGELOG.md
             echo "$feat_commits" >> CHANGELOG.md
@@ -213,7 +233,7 @@ jobs:
           fi
 
           # Corrections de bugs
-          fix_commits=$(git log $RANGE --pretty=format:"- %s (%h)" --grep="^fix:" || true)
+          fix_commits=$(git log "$RANGE" --pretty=format:"- %s (%h)" --extended-regexp --grep='^fix(\([^)]*\))?!?:')
           if [ ! -z "$fix_commits" ]; then
             echo "## 🐛 Corrections de bugs" >> CHANGELOG.md
             echo "$fix_commits" >> CHANGELOG.md
@@ -221,7 +241,7 @@ jobs:
           fi
 
           # Autres changements
-          other_commits=$(git log $RANGE --pretty=format:"- %s (%h)" --grep="^(chore|docs|style|refactor|perf|test):" || true)
+          other_commits=$(git log "$RANGE" --pretty=format:"- %s (%h)" --extended-regexp --grep='^(chore|docs|style|refactor|perf|test|ci|build)(\([^)]*\))?!?:')
           if [ ! -z "$other_commits" ]; then
             echo "## 📝 Autres changements" >> CHANGELOG.md
             echo "$other_commits" >> CHANGELOG.md
