@@ -18,7 +18,7 @@ HELP = {
     "endpoint_state": "One-hot state of each resource-host group.",
     "endpoint_up": "1 for healthy or warning; 0 for failed. Absent if untested.",
     "endpoint_tested": "1 when every path in the group has a cached check.",
-    "endpoint_last_check_timestamp_seconds": "Oldest check in the group; 0 if untested.",
+    "endpoint_last_check_timestamp_seconds": "Last completed check batch timestamp; 0 if untested.",
     "endpoint_stale": "1 when a tested group is older than the configured cache TTL.",
     "endpoint_response_time_seconds": "Maximum cached response time across paths.",
     "endpoint_tls_state": "One-hot TLS state: known, unknown or http_only.",
