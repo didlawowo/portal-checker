@@ -24,7 +24,7 @@ class TestExcludedUrls:
                 [
                     "monitoring.*",  # Wildcard at end
                     "*.internal/*",  # Wildcard pattern
-                    "infisical.dc-tech.work/ss-webhook",  # Exact match
+                    "infisical.example.com/ss-webhook",  # Exact match
                     "admin.example.com",  # Domain exact match
                     "api.test.com/private/*",  # Path with wildcard
                     "service.local/",  # With trailing slash
@@ -49,7 +49,7 @@ class TestExcludedUrls:
 
     def test_exact_url_match(self, setup_excluded_urls):
         """Test exact URL matching"""
-        assert is_url_excluded("infisical.dc-tech.work/ss-webhook", {}) is True
+        assert is_url_excluded("infisical.example.com/ss-webhook", {}) is True
         assert is_url_excluded("admin.example.com", {}) is True
         assert is_url_excluded("other.example.com", {}) is False
 
