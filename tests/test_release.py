@@ -36,9 +36,10 @@ def test_next_release_synchronizes_without_changing_dependencies(tmp_path):
     original_version = sync_version.tomllib.loads(project.read_text())["project"][
         "version"
     ]
+    next_version = f"{int(original_version.split('.')[0]) + 1}.0.0"
     project.write_text(
         project.read_text().replace(
-            f'version = "{original_version}"', 'version = "3.1.0"', 1
+            f'version = "{original_version}"', f'version = "{next_version}"', 1
         )
     )
     with pytest.raises(ValueError, match="Versions differ"):
@@ -48,7 +49,7 @@ def test_next_release_synchronizes_without_changing_dependencies(tmp_path):
     sync_version.synchronize(tmp_path, check=True)
     assert (tmp_path / "uv.lock").read_text() == original_lock.replace(
         f'name = "portal-checker"\nversion = "{original_version}"',
-        'name = "portal-checker"\nversion = "3.1.0"',
+        f'name = "portal-checker"\nversion = "{next_version}"',
     )
     assert "Module Structure (v3.0.0+)" in (tmp_path / "README.md").read_text()
 
