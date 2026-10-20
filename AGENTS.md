@@ -1,4 +1,4 @@
-# CLAUDE.md
+# AGENTS.md
 
 Guidance for AI coding agents working on this repository. It is intentionally
 short: the public documentation lives in `README.md` and `docs/`.

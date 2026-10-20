@@ -95,16 +95,21 @@ metadata:
 
 Latest version: **3.1.0**
 
-`pyproject.toml` is the version source of truth. After changing it, run `task version:sync`
-to update the lockfile, installation examples, and Helm metadata. `task version:check`
-checks consistency without writing files. The release workflow synchronizes these files
-automatically and requires both Python and dashboard tests to pass before publishing.
-
 ### Prerequisites
 
-- Kubernetes cluster with RBAC enabled
-- Helm 3.8+ (for OCI registry support)
-- kubectl configured for your cluster
+| Requirement | Notes |
+| ----------- | ----- |
+| Kubernetes | A supported release with `networking.k8s.io/v1` Ingress support |
+| RBAC | The chart ships the `ClusterRole` it needs; you need cluster-wide `get`/`list` on Ingresses |
+| Helm 3.8+ | OCI registry support |
+| `kubectl` | Configured against the target cluster |
+| Gateway API CRDs (optional) | Only needed to discover `HTTPRoute` resources |
+| Prometheus Operator (optional) | Only needed for the `ServiceMonitor` |
+
+> The dashboard has **no built-in authentication** and probes every discovered
+> host. Install it on a private network or behind an authenticating proxy, and
+> read [Security Considerations](#security-considerations) before enabling
+> Autoswagger on a shared cluster.
 
 ### Install the Helm Chart
 
@@ -157,6 +162,18 @@ kubectl port-forward svc/portal-checker 8080:80 -n monitoring
 # Open in browser
 open http://localhost:8080
 ```
+
+### Verify the Installation
+
+```bash
+kubectl rollout status deployment/portal-checker -n monitoring
+```
+
+With the port-forward running, `curl -s http://localhost:8080/health` answers
+`{"status": "ok"}`. The dashboard lists the Ingress/HTTPRoute resources found on
+the first discovery cycle. An empty table usually means missing RBAC, an empty
+namespace set, or everything being filtered by `excludedUrls` / the
+`portal-checker.io/exclude` annotation.
 
 ## Discovered Resources
 
@@ -402,19 +419,39 @@ excludedUrls:
                     └─────────────────────────────────────────┘
 ```
 
-### Module Structure (v3.0.0+)
+### Module Structure
 
 ```text
 src/
-├── main.py                    # Entry point, server configuration
+├── main.py                    # Entry point, server configuration, background loops
 ├── api.py                     # Flask routes and handlers
 ├── config.py                  # Centralized configuration
-├── kubernetes_client.py       # K8s resource discovery
+├── kubernetes_client.py       # K8s resource discovery and exclusions
 ├── utils.py                   # URL testing utilities
-└── autoswagger_integration.py # API documentation discovery
+├── autoswagger_integration.py # API documentation discovery
+└── metrics.py                 # Prometheus rendering from the cached snapshot
 ```
 
+Two independent background loops drive the dashboard, and each has its own
+cadence (see [Polling cadences](#polling-cadences)):
+
+| Loop | What it does | Never does |
+| ---- | ------------ | ---------- |
+| Discovery + health checks | Lists Ingress/HTTPRoute resources, extracts URLs, then checks them concurrently with `aiohttp` | Probe a host it has not discovered |
+| Autoswagger | Fetches well-known API documentation paths on each discovered host, rate-limited | Execute a mutating call from a parsed spec |
+
+`GET /metrics` is a third, passive path: it renders Prometheus text from the
+in-memory snapshot and never triggers a check, a Kubernetes call or a discovery.
+
 ## Development
+
+### Versioning
+
+`pyproject.toml` is the version source of truth. After changing it, run
+`task version:sync` to update the lockfile, installation examples and Helm
+metadata. `task version:check` verifies consistency without writing files. The
+release workflow does both automatically and requires the Python and dashboard
+tests to pass before publishing.
 
 ### Local Development
 
