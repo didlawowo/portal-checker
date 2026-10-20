@@ -1,0 +1,23 @@
+{
+  "workbench.colorTheme": "Winter is Coming (Light)",
+  "workbench.colorCustomizations": {
+    "activityBar.activeBackground": "#ee7852",
+    "activityBar.background": "#ee7852",
+    "activityBar.foreground": "#e7e7e7",
+    "activityBar.inactiveForeground": "#e7e7e799",
+    "activityBarBadge.background": "#c73e13",
+    "activityBarBadge.foreground": "#e7e7e7",
+    "commandCenter.border": "#e7e7e799",
+    "sash.hoverBorder": "#ee7852",
+    "statusBar.background": "#ea5424",
+    "statusBar.foreground": "#e7e7e7",
+    "statusBarItem.hoverBackground": "#c73e13",
+    "statusBarItem.remoteBackground": "#ea5424",
+    "statusBarItem.remoteForeground": "#e7e7e7",
+    "titleBar.activeBackground": "#ea5424",
+    "titleBar.activeForeground": "#e7e7e7",
+    "titleBar.inactiveBackground": "#ea542499",
+    "titleBar.inactiveForeground": "#e7e7e799"
+  },
+  "window.title": "🟠 public · portal-checker ${separator}${activeEditorShort}"
+}
