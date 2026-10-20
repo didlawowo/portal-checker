@@ -6,7 +6,7 @@ silent: true
 vars:
   APP_NAME: portal-checker
   NAMESPACE: monitoring
-  DOCKER_REGISTRY: fizzbuzz2
+  DOCKER_REGISTRY: ghcr.io/didlawowo
   IMAGE_TAG:
     sh: git rev-parse --short HEAD
   HELM_CHART_PATH: ./helm

@@ -90,6 +90,28 @@ Git hook.
 2. Keep the diff scoped; unrelated refactors belong in their own pull request.
 3. A maintainer reviews the change and the CI result before merging.
 
+## Continuous integration and external contributors
+
+CI runs on self-hosted runners owned by the project; no GitHub-hosted runner is
+used. Two consequences for a pull request opened from a fork:
+
+- The run waits for a maintainer to approve it, because the runners are private
+  infrastructure.
+- Publishing secrets (`DOCKER_USERNAME`, `DOCKER_PASSWORD`) are not exposed to
+  fork pull requests, so image jobs build without pushing.
+
+What this means in practice:
+
+1. Open the pull request as usual.
+2. If the checks stay queued, a maintainer approves the run. Nothing is missing
+   on your side.
+3. If you cannot wait, or cannot run the project locally, send a patch instead:
+   `git format-patch -1` and attach it to the issue or pull request. A
+   maintainer applies it and runs the checks for you.
+
+Please run the checks locally before asking for a run: the runners are a shared
+resource and every queue entry costs time for everyone.
+
 ## Reporting security issues
 
 Do not open a public issue for a vulnerability. Follow [SECURITY.md](SECURITY.md).

@@ -88,7 +88,8 @@ metadata:
 
 | Artifact | Registry | Address |
 | -------- | -------- | ------- |
-| Container image (multi-arch `amd64`/`arm64`) | Docker Hub | [`fizzbuzz2/portal-checker`](https://hub.docker.com/r/fizzbuzz2/portal-checker) |
+| Container image (multi-arch `amd64`/`arm64`) | GHCR | `ghcr.io/didlawowo/portal-checker` |
+| Container image (mirror) | Docker Hub | [`fizzbuzz2/portal-checker`](https://hub.docker.com/r/fizzbuzz2/portal-checker) |
 | Helm chart (OCI) | GHCR | `oci://ghcr.io/didlawowo/charts/portal-checker` |
 | Helm chart (OCI) | Docker Hub | `oci://registry-1.docker.io/fizzbuzz2/portal-checker-chart` |
 
@@ -140,8 +141,11 @@ helm install portal-checker helm/ \
 ### Pull the Container Image
 
 ```bash
+docker pull ghcr.io/didlawowo/portal-checker:3.1.0
+docker pull ghcr.io/didlawowo/portal-checker:latest
+
+# Docker Hub mirror, same tags
 docker pull fizzbuzz2/portal-checker:3.1.0
-docker pull fizzbuzz2/portal-checker:latest
 ```
 
 ### Access the Dashboard

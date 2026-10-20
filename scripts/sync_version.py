@@ -19,12 +19,16 @@ def synchronize(root: Path, check: bool = False) -> None:
                 r"(docker pull fizzbuzz2/portal-checker:)\d+\.\d+\.\d+",
                 rf"\g<1>{version}",
             ),
+            (
+                r"(docker pull ghcr\.io/didlawowo/portal-checker:)\d+\.\d+\.\d+",
+                rf"\g<1>{version}",
+            ),
         ],
         "helm/values.yaml": [(r'(?m)^(  tag: )"[^"]+"$', rf'\g<1>"{version}"')],
         "helm/Chart.yaml": [
             (r"(?m)^version: .*$", f"version: {version}"),
             (r"(?m)^appVersion: .*$", f'appVersion: "{version}"'),
-            (r"(image: docker.io/fizzbuzz2/portal-checker:)\S+", rf"\g<1>{version}"),
+            (r"(image: ghcr\.io/didlawowo/portal-checker:)\S+", rf"\g<1>{version}"),
         ],
         "uv.lock": [
             (r'(name = "portal-checker"\nversion = )"[^"]+"', rf'\g<1>"{version}"'),
