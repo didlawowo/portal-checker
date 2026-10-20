@@ -506,6 +506,11 @@ pytest tests/test_excluded_urls.py -v
 without triggering network checks. An optional Grafana dashboard and optional
 Helm ServiceMonitor are included. See [metrics setup and semantics](docs/metrics.md).
 
+The bundled dashboard (`grafana/portal-checker.json`) shows the current state of
+each resource/host group, the slowest groups and the latency history:
+
+![Grafana dashboard](assets/grafana.png)
+
 ## API Endpoints
 
 | Endpoint | Method | Description |
