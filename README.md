@@ -1,7 +1,7 @@
 # Portal Checker
 
 [![CI](https://github.com/didlawowo/portal-checker/actions/workflows/ci.yml/badge.svg)](https://github.com/didlawowo/portal-checker/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-3.1.0-blue.svg)](https://github.com/didlawowo/portal-checker/releases)
+[![Version](https://img.shields.io/badge/version-3.1.1-blue.svg)](https://github.com/didlawowo/portal-checker/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/docker-multi--arch-blue.svg)](https://hub.docker.com/r/fizzbuzz2/portal-checker)
 [![Helm](https://img.shields.io/badge/helm-OCI-blue.svg)](https://github.com/didlawowo/portal-checker/pkgs/container/charts%2Fportal-checker)
@@ -93,7 +93,7 @@ metadata:
 | Helm chart (OCI) | GHCR | `oci://ghcr.io/didlawowo/charts/portal-checker` |
 | Helm chart (OCI) | Docker Hub | `oci://registry-1.docker.io/fizzbuzz2/portal-checker-chart` |
 
-Latest version: **3.1.0**
+Latest version: **3.1.1**
 
 ### Prerequisites
 
@@ -118,7 +118,7 @@ Latest version: **3.1.0**
 ```bash
 helm install portal-checker \
   oci://ghcr.io/didlawowo/charts/portal-checker \
-  --version 3.1.0 \
+  --version 3.1.1 \
   --namespace monitoring \
   --create-namespace
 ```
@@ -128,7 +128,7 @@ helm install portal-checker \
 ```bash
 helm install portal-checker \
   oci://registry-1.docker.io/fizzbuzz2/portal-checker-chart \
-  --version 3.1.0 \
+  --version 3.1.1 \
   --namespace monitoring \
   --create-namespace
 ```
@@ -146,11 +146,11 @@ helm install portal-checker helm/ \
 ### Pull the Container Image
 
 ```bash
-docker pull ghcr.io/didlawowo/portal-checker:3.1.0
+docker pull ghcr.io/didlawowo/portal-checker:3.1.1
 docker pull ghcr.io/didlawowo/portal-checker:latest
 
 # Docker Hub mirror, same tags
-docker pull fizzbuzz2/portal-checker:3.1.0
+docker pull fizzbuzz2/portal-checker:3.1.1
 ```
 
 ### Access the Dashboard
