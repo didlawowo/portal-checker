@@ -1,5 +1,6 @@
 # Portal Checker
 
+[![CI](https://github.com/didlawowo/portal-checker/actions/workflows/ci.yml/badge.svg)](https://github.com/didlawowo/portal-checker/actions/workflows/ci.yml)
 [![Version](https://img.shields.io/badge/version-3.1.0-blue.svg)](https://github.com/didlawowo/portal-checker/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/docker-multi--arch-blue.svg)](https://hub.docker.com/r/fizzbuzz2/portal-checker)
@@ -354,7 +355,7 @@ excludedUrls:
   - "argocd.*/api/*"
   - "monitoring.*"
   - "*.internal/*"
-  - "infisical.*/ss-webhook"
+  - "hooks.example.com/webhook"
 ```
 
 ## Architecture
@@ -422,6 +423,13 @@ task run-dev
 
 # Or manually
 FLASK_ENV=development PORT=5001 python -m src.main
+```
+
+An optional `docker-compose.yaml` builds the image locally and exposes it on
+`http://localhost:5002`:
+
+```bash
+docker compose up --build
 ```
 
 ### Task Commands
@@ -538,7 +546,8 @@ env:
 
 ## Contributing
 
-Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for
+guidelines, and [SECURITY.md](SECURITY.md) to report a vulnerability privately.
 
 ## License
 

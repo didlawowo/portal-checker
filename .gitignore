@@ -1,11 +1,41 @@
-static-analysis.datadog.yml
+# Local artifacts
+.DS_Store
+*.log
+
+# Editors and agent tooling
 .vscode/
-**/certs/*
+.idea/
+.claude/
+.cursor/
+.Serenity/
+
+# Python
 __pycache__/
 *.pyc
 *.egg-info/
 .eggs/
 dist/
 build/
-.scannerwork/report-task.txt
-.scannerwork/.sonar_lock
+.venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Local TLS material (never commit certificates or keys)
+**/certs/*
+*.pem
+*.key
+
+# direnv and other local environment files
+.envrc
+.env
+.env.local
+
+# Task runner cache and Sonar scanner output
+.task/
+.scannerwork/
+
+# Local review notes
+SKILL-FEEDBACK*.md

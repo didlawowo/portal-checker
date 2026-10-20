@@ -7,9 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
 ENV PATH="/app/.venv/bin:$PATH"
-# ENV HTTP_PROXY=http://proxy-cloud.korian.cloud:80
 ENV SSL_CERT_DIR=/etc/ssl/certs
-# ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 # Create group and user with specific IDs
  
 # Add certificates and build tools needed
