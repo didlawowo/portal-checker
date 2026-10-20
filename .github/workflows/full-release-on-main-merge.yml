@@ -144,6 +144,10 @@ jobs:
 
       - name: Run Python tests
         if: steps.guard-last-commit.outputs.skip == 'false'
+        # Pin the index recorded in uv.lock; the ARC runner injects an internal
+        # package mirror, which makes `--locked` fail.
+        env:
+          UV_DEFAULT_INDEX: https://pypi.org/simple
         run: |
           uv sync --extra dev --locked
           uv run --locked python scripts/sync_version.py --check
