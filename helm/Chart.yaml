@@ -29,10 +29,12 @@ annotations:
   artifacthub.io/links: |
     - name: GitHub
       url: https://github.com/didlawowo/portal-checker
-    - name: Docker Image
+    - name: Container image (GHCR)
+      url: https://github.com/didlawowo/portal-checker/pkgs/container/portal-checker
+    - name: Container image (Docker Hub mirror)
       url: https://hub.docker.com/r/fizzbuzz2/portal-checker
     - name: Issues
       url: https://github.com/didlawowo/portal-checker/issues
   artifacthub.io/images: |
     - name: portal-checker
-      image: docker.io/fizzbuzz2/portal-checker:3.1.0
+      image: ghcr.io/didlawowo/portal-checker:3.1.0

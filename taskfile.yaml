@@ -6,7 +6,7 @@ silent: true
 vars:
   APP_NAME: portal-checker
   NAMESPACE: monitoring
-  DOCKER_REGISTRY: fizzbuzz2
+  DOCKER_REGISTRY: ghcr.io/didlawowo
   IMAGE_TAG:
     sh: git rev-parse --short HEAD
   HELM_CHART_PATH: ./helm
@@ -265,7 +265,7 @@ tasks:
     cmds:
     - task: validate-yaml
     - task: helm-dry-run
-    - task: deploy
+    - task: helm-install
     - task: restart
     - echo "✅ URLs d'exclusion mises à jour et application redéployée"
 
@@ -276,7 +276,7 @@ tasks:
     - task: validate-yaml
     - task: build
     - task: push
-    - task: deploy
+    - task: helm-install
     - task: status
     - echo "🎉 Déploiement complet terminé!"
 

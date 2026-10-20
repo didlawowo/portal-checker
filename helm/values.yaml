@@ -9,7 +9,7 @@ application:
     protocol: TCP
 # Image configuration
 image:
-  repository: fizzbuzz2/portal-checker
+  repository: ghcr.io/didlawowo/portal-checker
   tag: "3.1.0"
   pullPolicy: IfNotPresent
   pullSecrets: []

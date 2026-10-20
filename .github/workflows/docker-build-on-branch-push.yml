@@ -97,5 +97,4 @@ jobs:
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             echo "- 🔖 PR Tag (SHA): ${{ steps.extract-metadata.outputs.pr_tag }}" >> $GITHUB_STEP_SUMMARY
             echo "- 🔖 PR Tag (ArgoCD): ${{ steps.extract-metadata.outputs.pr_tag_simple }}" >> $GITHUB_STEP_SUMMARY
-            echo "- 🔗 Preview URL: https://pc-pr-${{ steps.extract-metadata.outputs.pr_number }}.dc-tech.work" >> $GITHUB_STEP_SUMMARY
           fi

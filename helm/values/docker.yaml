@@ -2,6 +2,8 @@
 # Pass image.tag explicitly for a branch image; otherwise use the chart default.
 
 image:
+  # Branch images are published to Docker Hub by the branch build workflow.
+  repository: fizzbuzz2/portal-checker
   pullPolicy: Always
 # Environment for branch testing
 env:

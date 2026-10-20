@@ -64,7 +64,7 @@ dependencies = [
 ]
 
 [tool.setuptools]
-py-modules = ["app"]
+packages = ["src"]
 
 [project.optional-dependencies]
 dev = [

@@ -51,7 +51,7 @@ def test_next_release_synchronizes_without_changing_dependencies(tmp_path):
         f'name = "portal-checker"\nversion = "{original_version}"',
         f'name = "portal-checker"\nversion = "{next_version}"',
     )
-    assert "Module Structure (v3.0.0+)" in (tmp_path / "README.md").read_text()
+    assert "### Module Structure" in (tmp_path / "README.md").read_text()
 
 
 def test_python_failure_blocks_release(tmp_path):

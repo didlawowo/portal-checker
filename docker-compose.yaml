@@ -3,7 +3,6 @@ services:
   portal-checker:
     container_name: portal-checker
     hostname: portal-checker
-    # image: fizzbuzz2/portal-checker:8a14a99
     ports:
       - "5002:5000"
     build:

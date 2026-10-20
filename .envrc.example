@@ -1,0 +1,24 @@
+# Optional development environment variables (copy to .envrc and adapt).
+# direnv users: `direnv allow`. Everyone else: export these manually.
+
+export FLASK_ENV=development
+export FLASK_APP=src.main
+export PORT=5001
+export LOG_FORMAT=text
+export LOG_LEVEL=INFO
+
+# Paths used in development mode
+export URLS_FILE=config/urls.yaml
+export EXCLUDED_URLS_FILE=config/excluded-urls.yaml
+
+# Autoswagger (API discovery)
+export ENABLE_AUTOSWAGGER=false
+export AUTOSWAGGER_RATE_LIMIT=30
+export AUTOSWAGGER_TIMEOUT=10
+export AUTOSWAGGER_MAX_CONCURRENT=5
+export SWAGGER_DISCOVERY_INTERVAL=600
+
+# Optional custom CA bundle (enterprise TLS inspection)
+# export CUSTOM_CERT=/path/to/ca-bundle.crt
+# export SSL_CERT_FILE=/path/to/ca-bundle.crt
+# export REQUESTS_CA_BUNDLE=/path/to/ca-bundle.crt
