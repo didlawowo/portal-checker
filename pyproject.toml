@@ -20,7 +20,7 @@ dependencies = [
     "attrs==25.4.0",
     "blinker==1.9.0",
     "cachetools==6.2.2",
-    "certifi==2025.11.12",
+    "certifi==2026.10.19",
     "charset-normalizer==3.4.1",
     "click==8.1.8",
     "colorama==0.4.6",
